@@ -1,11 +1,13 @@
 
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { Sidebar } from "@/components/layout/Sidebar";
 import PresentationEditor from "@/components/presentation/PresentationEditor";
 import RfpForm from "@/components/RfpForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Presentation } from "lucide-react";
+import { FileText, Presentation, Calculator } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<string>("rfp");
@@ -18,7 +20,15 @@ const Index = () => {
         <div className="flex-1 p-4 md:p-6 overflow-y-auto">
           <div className="max-w-full mx-auto">
             <header className="mb-8">
-              <h1 className="text-3xl font-bold mb-2">RFP Presentation Forge</h1>
+              <div className="flex justify-between items-center mb-2">
+                <h1 className="text-3xl font-bold">RFP Presentation Forge</h1>
+                <Link to="/estimates">
+                  <Button variant="outline" className="flex items-center gap-2">
+                    <Calculator className="h-4 w-4" />
+                    Estimates
+                  </Button>
+                </Link>
+              </div>
               <p className="text-muted-foreground mb-6">
                 Create professional RFPs and presentations for your client proposals
               </p>
