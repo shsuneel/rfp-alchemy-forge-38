@@ -51,7 +51,7 @@ const Requirements: React.FC<RequirementsProps> = ({
   const addRequirement = () => {
     const newRequirements = [
       ...requirements,
-      { id: "req-" + Date.now(), description: "", priority: "Medium" }
+      { id: "req-" + Date.now(), description: "", priority: "Medium" as const }
     ];
     setRequirements(newRequirements);
     onRequirementsChange(newRequirements);
@@ -60,7 +60,14 @@ const Requirements: React.FC<RequirementsProps> = ({
   const updateRequirement = (id: string, field: keyof RequirementItem, value: string) => {
     const newRequirements = requirements.map(req => {
       if (req.id === id) {
-        return { ...req, [field]: value };
+        // Type checking for priority field to ensure it's "High", "Medium", or "Low"
+        if (field === "priority" && (value === "High" || value === "Medium" || value === "Low")) {
+          return { ...req, [field]: value };
+        } else if (field === "priority") {
+          return req; // If invalid priority value, don't update
+        } else {
+          return { ...req, [field]: value };
+        }
       }
       return req;
     });
@@ -177,7 +184,7 @@ const Requirements: React.FC<RequirementsProps> = ({
                         onChange={(e) => updateRequirement(
                           requirement.id, 
                           "priority", 
-                          e.target.value as "High" | "Medium" | "Low"
+                          e.target.value
                         )}
                       >
                         <option value="High">High</option>
