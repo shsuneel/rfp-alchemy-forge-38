@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -51,7 +50,7 @@ const Requirements: React.FC<RequirementsProps> = ({
   const addRequirement = () => {
     const newRequirements = [
       ...requirements,
-      { id: "req-" + Date.now(), description: "", priority: "Medium" as const }
+      { id: "req-" + Date.now(), description: "", priority: "Medium" }
     ];
     setRequirements(newRequirements);
     onRequirementsChange(newRequirements);
@@ -60,14 +59,13 @@ const Requirements: React.FC<RequirementsProps> = ({
   const updateRequirement = (id: string, field: keyof RequirementItem, value: string) => {
     const newRequirements = requirements.map(req => {
       if (req.id === id) {
-        // Type checking for priority field to ensure it's "High", "Medium", or "Low"
-        if (field === "priority" && (value === "High" || value === "Medium" || value === "Low")) {
-          return { ...req, [field]: value };
-        } else if (field === "priority") {
+        if (field === "priority") {
+          if (value === "High" || value === "Medium" || value === "Low") {
+            return { ...req, [field]: value as "High" | "Medium" | "Low" };
+          }
           return req; // If invalid priority value, don't update
-        } else {
-          return { ...req, [field]: value };
         }
+        return { ...req, [field]: value };
       }
       return req;
     });
