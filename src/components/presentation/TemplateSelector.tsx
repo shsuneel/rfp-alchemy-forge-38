@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Template } from "./PresentationEditor";
+import { Template } from "@/store/presentationSlice";
 
 interface TemplateSelectorProps {
   templates: Template[];

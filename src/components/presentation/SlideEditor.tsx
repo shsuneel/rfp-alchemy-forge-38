@@ -7,8 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Image, Square, FileText, Trash2 } from "lucide-react";
-import { Slide, SlideElement, Template } from "./PresentationEditor";
+import { Image, Square, FileText, Trash2, PlusSquare } from "lucide-react";
+import { Slide, SlideElement, Template } from "@/store/presentationSlice";
 import SlidePreview from "./SlidePreview";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -110,6 +110,22 @@ const SlideEditor: React.FC<SlideEditorProps> = ({
     }
   };
 
+  const handleBackgroundImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // In a real application, this would upload to a server
+    // Here we're creating a temporary URL
+    const imageUrl = URL.createObjectURL(file);
+    
+    onUpdate({
+      ...slide,
+      customBackground: imageUrl
+    });
+    
+    toast.success("Background image updated");
+  };
+
   const handleDiagramImport = () => {
     // In a real app, this would integrate with external services like draw.io
     const diagramUrl = "/placeholder.svg";
@@ -121,6 +137,14 @@ const SlideEditor: React.FC<SlideEditorProps> = ({
       });
       toast.success("Diagram updated");
     }
+  };
+
+  const removeBackgroundImage = () => {
+    onUpdate({
+      ...slide,
+      customBackground: undefined
+    });
+    toast.success("Background image removed");
   };
 
   return (
@@ -169,6 +193,7 @@ const SlideEditor: React.FC<SlideEditorProps> = ({
             <TabsList className="w-full mb-4">
               <TabsTrigger value="elements" className="flex-1">Elements</TabsTrigger>
               <TabsTrigger value="style" className="flex-1">Style</TabsTrigger>
+              <TabsTrigger value="background" className="flex-1">Background</TabsTrigger>
             </TabsList>
             
             <TabsContent value="elements">
@@ -381,6 +406,68 @@ const SlideEditor: React.FC<SlideEditorProps> = ({
                   </div>
                 </div>
               )}
+            </TabsContent>
+
+            <TabsContent value="background">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Slide Background</Label>
+                  {slide.customBackground ? (
+                    <div className="border rounded-md p-2 space-y-2">
+                      <div className="aspect-video bg-muted flex items-center justify-center mb-2">
+                        <img
+                          src={slide.customBackground}
+                          alt="Background preview"
+                          className="max-h-full object-cover w-full"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="flex-1"
+                          onClick={removeBackgroundImage}
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" /> Remove
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className="flex-1" 
+                          onClick={() => {
+                            const input = document.createElement("input");
+                            input.type = "file";
+                            input.accept = "image/*";
+                            input.onchange = (e) => handleBackgroundImageUpload(e as any);
+                            input.click();
+                          }}
+                        >
+                          <PlusSquare className="h-4 w-4 mr-1" /> Change
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="border rounded-md p-4 space-y-2">
+                      <div className="aspect-video bg-muted flex items-center justify-center text-muted-foreground">
+                        No custom background
+                      </div>
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleBackgroundImageUpload}
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Template Color</Label>
+                  <div 
+                    className="h-10 rounded-md"
+                    style={{ backgroundColor: template.primaryColor }}
+                  />
+                </div>
+              </div>
             </TabsContent>
           </Tabs>
         </div>

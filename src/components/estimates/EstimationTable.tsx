@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Trash2 } from "lucide-react";
+import { Trash2, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { UserStory, Screen, Api, FormFactor, Browser } from "@/store/estimatesSlice";
@@ -18,12 +18,18 @@ interface EstimationTableProps {
   onDeleteStory?: (id: string) => void;
   onDeleteScreen?: (id: string) => void;
   onDeleteApi?: (id: string) => void;
+  onEditStory?: (story: UserStory) => void;
+  onEditScreen?: (screen: Screen) => void;
+  onEditApi?: (api: Api) => void;
 }
 
 const EstimationTable: React.FC<EstimationTableProps> = ({ 
   onDeleteStory, 
   onDeleteScreen,
-  onDeleteApi 
+  onDeleteApi,
+  onEditStory,
+  onEditScreen,
+  onEditApi 
 }) => {
   const userStories = useAppSelector((state) => state.estimates.userStories);
   const screens = useAppSelector((state) => state.estimates.screens);
@@ -84,7 +90,7 @@ const EstimationTable: React.FC<EstimationTableProps> = ({
               <TableHead className="w-[300px]">Title</TableHead>
               <TableHead>Complexity</TableHead>
               <TableHead className="w-[150px]">Effort (days)</TableHead>
-              <TableHead className="w-[80px]"></TableHead>
+              <TableHead className="w-[100px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -94,15 +100,26 @@ const EstimationTable: React.FC<EstimationTableProps> = ({
                 <TableCell>{getComplexityBadge(story.complexity)}</TableCell>
                 <TableCell>{story.effortDays}</TableCell>
                 <TableCell>
-                  {onDeleteStory && (
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      onClick={() => onDeleteStory(story.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
+                  <div className="flex gap-1">
+                    {onEditStory && (
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => onEditStory(story)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    )}
+                    {onDeleteStory && (
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => onDeleteStory(story.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
@@ -123,7 +140,7 @@ const EstimationTable: React.FC<EstimationTableProps> = ({
               <TableHead className="w-[300px]">Screen</TableHead>
               <TableHead>Complexity</TableHead>
               <TableHead className="w-[150px]">Effort (days)</TableHead>
-              <TableHead className="w-[80px]"></TableHead>
+              <TableHead className="w-[100px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -133,15 +150,26 @@ const EstimationTable: React.FC<EstimationTableProps> = ({
                 <TableCell>{getComplexityBadge(screen.complexity)}</TableCell>
                 <TableCell>{screen.effortDays}</TableCell>
                 <TableCell>
-                  {onDeleteScreen && (
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      onClick={() => onDeleteScreen(screen.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
+                  <div className="flex gap-1">
+                    {onEditScreen && (
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => onEditScreen(screen)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    )}
+                    {onDeleteScreen && (
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => onDeleteScreen(screen.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
@@ -162,7 +190,7 @@ const EstimationTable: React.FC<EstimationTableProps> = ({
               <TableHead className="w-[300px]">API</TableHead>
               <TableHead>Complexity</TableHead>
               <TableHead className="w-[150px]">Effort (days)</TableHead>
-              <TableHead className="w-[80px]"></TableHead>
+              <TableHead className="w-[100px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -172,15 +200,26 @@ const EstimationTable: React.FC<EstimationTableProps> = ({
                 <TableCell>{getComplexityBadge(api.complexity)}</TableCell>
                 <TableCell>{api.effortDays}</TableCell>
                 <TableCell>
-                  {onDeleteApi && (
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      onClick={() => onDeleteApi(api.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
+                  <div className="flex gap-1">
+                    {onEditApi && (
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => onEditApi(api)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                    )}
+                    {onDeleteApi && (
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => onDeleteApi(api.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
