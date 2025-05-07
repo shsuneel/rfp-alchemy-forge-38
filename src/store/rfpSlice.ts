@@ -24,6 +24,14 @@ export interface Phase {
   durationWeeks: number;
 }
 
+export interface TechStackByLayer {
+  frontend: string[];
+  backend: string[];
+  database: string[];
+  infrastructure: string[];
+  other: string[];
+}
+
 export interface RfpData {
   id: string;
   projectName: string;
@@ -31,6 +39,7 @@ export interface RfpData {
   sector: string;
   clientInfo: string;
   techStack: string[];
+  techStackByLayer: TechStackByLayer;
   requirements: RequirementItem[];
   assumptions: AssumptionItem[];
   dependencies: DependencyItem[];
@@ -45,6 +54,7 @@ interface RfpState {
   sector: string;
   clientInfo: string;
   techStack: string[];
+  techStackByLayer: TechStackByLayer;
   requirements: RequirementItem[];
   assumptions: AssumptionItem[];
   dependencies: DependencyItem[];
@@ -66,6 +76,13 @@ const initialState: RfpState = {
   sector: '',
   clientInfo: '',
   techStack: [],
+  techStackByLayer: {
+    frontend: [],
+    backend: [],
+    database: [],
+    infrastructure: [],
+    other: []
+  },
   requirements: [
     { id: "req-default", description: "", priority: "Medium" }
   ],
@@ -96,8 +113,9 @@ export const rfpSlice = createSlice({
       state.sector = action.payload.sector;
       state.clientInfo = action.payload.clientInfo;
     },
-    setTechStack: (state, action: PayloadAction<string[]>) => {
-      state.techStack = action.payload;
+    setTechStack: (state, action: PayloadAction<{ flattenedStack: string[], byLayer: TechStackByLayer }>) => {
+      state.techStack = action.payload.flattenedStack;
+      state.techStackByLayer = action.payload.byLayer;
     },
     setRequirements: (state, action: PayloadAction<RequirementItem[]>) => {
       state.requirements = action.payload;
@@ -120,6 +138,7 @@ export const rfpSlice = createSlice({
         sector: state.sector,
         clientInfo: state.clientInfo,
         techStack: state.techStack,
+        techStackByLayer: state.techStackByLayer,
         requirements: state.requirements,
         assumptions: state.assumptions,
         dependencies: state.dependencies,
@@ -159,6 +178,21 @@ export const rfpSlice = createSlice({
         state.sector = rfpToLoad.sector;
         state.clientInfo = rfpToLoad.clientInfo;
         state.techStack = rfpToLoad.techStack;
+        
+        // Handle compatibility with older saved RFPs that don't have techStackByLayer
+        if (rfpToLoad.techStackByLayer) {
+          state.techStackByLayer = rfpToLoad.techStackByLayer;
+        } else {
+          // Create a default structure with all techs in "other" category
+          state.techStackByLayer = {
+            frontend: [],
+            backend: [],
+            database: [],
+            infrastructure: [],
+            other: rfpToLoad.techStack || []
+          };
+        }
+        
         state.requirements = rfpToLoad.requirements;
         state.assumptions = rfpToLoad.assumptions;
         state.dependencies = rfpToLoad.dependencies;
@@ -179,6 +213,13 @@ export const rfpSlice = createSlice({
       state.sector = '';
       state.clientInfo = '';
       state.techStack = [];
+      state.techStackByLayer = {
+        frontend: [],
+        backend: [],
+        database: [],
+        infrastructure: [],
+        other: []
+      };
       state.requirements = [{ id: "req-default", description: "", priority: "Medium" }];
       state.assumptions = [{ id: "assump-default", description: "" }];
       state.dependencies = [{ id: "dep-default", description: "" }];

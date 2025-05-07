@@ -62,11 +62,24 @@ const RfpForm = () => {
   const [sector, setSector] = useState(rfpState.sector);
   const [clientInfo, setClientInfo] = useState(rfpState.clientInfo);
   const [files, setFiles] = useState<File[]>([]);
-  const [techStack, setTechStack] = useState<string[]>(rfpState.techStack);
-  const [requirements, setRequirements] = useState(rfpState.requirements);
-  const [assumptions, setAssumptions] = useState(rfpState.assumptions);
-  const [dependencies, setDependencies] = useState(rfpState.dependencies);
-  const [timeline, setTimeline] = useState(rfpState.timeline);
+  const [techStack, setTechStackState] = useState<{
+    frontend: string[];
+    backend: string[];
+    database: string[];
+    infrastructure: string[];
+    other: string[];
+  }>(rfpState.techStackByLayer || {
+    frontend: [],
+    backend: [],
+    database: [],
+    infrastructure: [],
+    other: []
+  });
+
+  const [requirements, setRequirementsState] = useState(rfpState.requirements);
+  const [assumptions, setAssumptionsState] = useState(rfpState.assumptions);
+  const [dependencies, setDependenciesState] = useState(rfpState.dependencies);
+  const [timeline, setTimelineState] = useState(rfpState.timeline);
 
   // Update local state when Redux state changes (for imported RFPs)
   useEffect(() => {
@@ -74,11 +87,17 @@ const RfpForm = () => {
     setProjectDescription(rfpState.projectDescription);
     setSector(rfpState.sector);
     setClientInfo(rfpState.clientInfo);
-    setTechStack(rfpState.techStack);
-    setRequirements(rfpState.requirements);
-    setAssumptions(rfpState.assumptions);
-    setDependencies(rfpState.dependencies);
-    setTimeline(rfpState.timeline);
+    setTechStackState(rfpState.techStackByLayer || {
+      frontend: [],
+      backend: [],
+      database: [],
+      infrastructure: [],
+      other: []
+    });
+    setRequirementsState(rfpState.requirements);
+    setAssumptionsState(rfpState.assumptions);
+    setDependenciesState(rfpState.dependencies);
+    setTimelineState(rfpState.timeline);
   }, [rfpState]);
 
   const handleNext = () => {
@@ -96,7 +115,18 @@ const RfpForm = () => {
         clientInfo
       }));
     } else if (currentStep === 2) {
-      dispatch(setTechStack(techStack));
+      // Get flattened tech stack for backward compatibility
+      const flattenedTechStack = [
+        ...techStack.frontend, 
+        ...techStack.backend, 
+        ...techStack.database,
+        ...techStack.infrastructure,
+        ...techStack.other
+      ];
+      dispatch(setTechStack({
+        flattenedStack: flattenedTechStack,
+        byLayer: techStack
+      }));
     } else if (currentStep === 3) {
       dispatch(setRequirements(requirements));
       dispatch(setAssumptions(assumptions));
@@ -126,7 +156,21 @@ const RfpForm = () => {
       sector,
       clientInfo
     }));
-    dispatch(setTechStack(techStack));
+    
+    // Get flattened tech stack for backward compatibility
+    const flattenedTechStack = [
+      ...techStack.frontend, 
+      ...techStack.backend, 
+      ...techStack.database,
+      ...techStack.infrastructure,
+      ...techStack.other
+    ];
+    
+    dispatch(setTechStack({
+      flattenedStack: flattenedTechStack,
+      byLayer: techStack
+    }));
+    
     dispatch(setRequirements(requirements));
     dispatch(setAssumptions(assumptions));
     dispatch(setDependencies(dependencies));
@@ -217,14 +261,17 @@ const RfpForm = () => {
         return <FileUpload onFilesChange={setFiles} />;
         
       case 2:
-        return <TechStack onTechStackChange={setTechStack} techStack={techStack} />;
+        return <TechStack 
+          onTechStackChange={setTechStackState} 
+          techStackByLayer={techStack} 
+        />;
         
       case 3:
         return (
           <Requirements 
-            onRequirementsChange={setRequirements}
-            onAssumptionsChange={setAssumptions}
-            onDependenciesChange={setDependencies}
+            onRequirementsChange={setRequirementsState}
+            onAssumptionsChange={setAssumptionsState}
+            onDependenciesChange={setDependenciesState}
             initialRequirements={requirements}
             initialAssumptions={assumptions}
             initialDependencies={dependencies}
@@ -232,7 +279,7 @@ const RfpForm = () => {
         );
         
       case 4:
-        return <Timeline onTimelineChange={setTimeline} initialTimeline={timeline} />;
+        return <Timeline onTimelineChange={setTimelineState} initialTimeline={timeline} />;
         
       case 5:
         return (
@@ -242,7 +289,7 @@ const RfpForm = () => {
             sector={sector}
             clientInfo={clientInfo}
             files={files}
-            techStack={techStack}
+            techStack={[...techStack.frontend, ...techStack.backend, ...techStack.database, ...techStack.infrastructure, ...techStack.other]}
             requirements={requirements}
             assumptions={assumptions}
             dependencies={dependencies}

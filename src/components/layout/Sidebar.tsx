@@ -14,7 +14,17 @@ import {
   SidebarTrigger
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { FileText, FilePlus, Settings, Calculator, ChevronRight, ChevronLeft, Presentation, Layout, Layers } from "lucide-react";
+import { 
+  FileText, 
+  FilePlus, 
+  Settings, 
+  Calculator, 
+  ChevronRight, 
+  ChevronLeft, 
+  Presentation, 
+  Layout, 
+  Layers 
+} from "lucide-react";
 
 export const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(true);
