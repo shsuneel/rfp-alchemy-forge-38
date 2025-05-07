@@ -16,9 +16,10 @@ export interface Slide {
   id: string;
   title: string;
   content: string;
-  type: "title" | "content" | "image" | "diagram" | "master";
+  type: "title" | "content" | "image" | "diagram" | "master" | "section" | "template";
   template: string;
   background?: string;
+  customBackground?: string;
   elements: SlideElement[];
 }
 
@@ -150,6 +151,12 @@ export const presentationSlice = createSlice({
         template: action.payload.id
       }));
     },
+    updateSlideBackground: (state, action: PayloadAction<{slideId: string, background: string}>) => {
+      const index = state.slides.findIndex(slide => slide.id === action.payload.slideId);
+      if (index !== -1) {
+        state.slides[index].customBackground = action.payload.background;
+      }
+    },
     createFromRfp: (state, action: PayloadAction<{
       projectName: string;
       projectDescription: string;
@@ -250,6 +257,7 @@ export const {
   deleteSlide,
   setSelectedSlideId,
   setTemplate,
+  updateSlideBackground,
   createFromRfp
 } = presentationSlice.actions;
 
