@@ -94,13 +94,13 @@ const PresentationEditor: React.FC = () => {
 
       <Tabs defaultValue="editor" className="flex-1 flex flex-col">
         <TabsList className="mb-4">
-          <TabsTrigger value="editor" className="flex items-center gap-2">
-            <Layout className="h-4 w-4" />
-            Editor
-          </TabsTrigger>
           <TabsTrigger value="templates" className="flex items-center gap-2">
             <SquareDashed className="h-4 w-4" />
             Templates
+          </TabsTrigger>
+          <TabsTrigger value="editor" className="flex items-center gap-2">
+            <Layout className="h-4 w-4" />
+            Editor
           </TabsTrigger>
           <TabsTrigger value="diagrams" className="flex items-center gap-2">
             <Square className="h-4 w-4" />
@@ -154,7 +154,7 @@ const PresentationEditor: React.FC = () => {
         
         <TabsContent value="templates">
           <TemplateSelector 
-            templates={[selectedTemplate]} 
+            templates={[selectedTemplate, selectedTemplate, selectedTemplate, selectedTemplate, selectedTemplate]} 
             selectedTemplate={selectedTemplate} 
             onSelectTemplate={handleChangeTemplate}
           />
