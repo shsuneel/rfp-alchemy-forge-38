@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { 
   Sidebar as SidebarComponent, 
   SidebarContent, 
@@ -13,18 +14,49 @@ import {
   SidebarTrigger
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { FileText, FilePlus, Settings, Calendar, ChevronRight, ChevronLeft, Presentation, Layout, Layers } from "lucide-react";
+import { FileText, FilePlus, Settings, Calculator, ChevronRight, ChevronLeft, Presentation, Layout, Layers } from "lucide-react";
 
 export const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(true);
+  const location = useLocation();
+  const navigate = useNavigate();
   
   const menuItems = [
-    { title: "My Presentations", icon: <Presentation className="h-5 w-5" />, active: true },
-    { title: "New Presentation", icon: <FilePlus className="h-5 w-5" /> },
-    { title: "Templates", icon: <Layout className="h-5 w-5" /> },
-    { title: "Master Slides", icon: <Layers className="h-5 w-5" /> },
-    { title: "Settings", icon: <Settings className="h-5 w-5" /> },
+    { 
+      title: "RFP Builder", 
+      icon: <FileText className="h-5 w-5" />, 
+      path: "/?tab=rfp",
+      active: location.pathname === "/" && (!location.search || location.search.includes("tab=rfp"))
+    },
+    { 
+      title: "Presentations", 
+      icon: <Presentation className="h-5 w-5" />,
+      path: "/?tab=presentation",
+      active: location.pathname === "/" && location.search.includes("tab=presentation")
+    },
+    { 
+      title: "Estimates", 
+      icon: <Calculator className="h-5 w-5" />,
+      path: "/estimates",
+      active: location.pathname === "/estimates"
+    },
+    { 
+      title: "Templates", 
+      icon: <Layout className="h-5 w-5" />,
+      path: "#",
+      active: false
+    },
+    { 
+      title: "Settings", 
+      icon: <Settings className="h-5 w-5" />,
+      path: "#",
+      active: false
+    },
   ];
+
+  const handleNavigation = (path: string) => {
+    navigate(path);
+  };
 
   return (
     <SidebarComponent>
@@ -54,11 +86,15 @@ export const Sidebar = () => {
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild className={item.active ? "bg-sidebar-accent" : ""}>
-                    <a href="#" className="flex items-center space-x-2">
+                  <SidebarMenuButton 
+                    asChild 
+                    className={item.active ? "bg-sidebar-accent" : ""}
+                    onClick={() => handleNavigation(item.path)}
+                  >
+                    <button className="flex items-center space-x-2">
                       {item.icon}
                       {isOpen && <span>{item.title}</span>}
-                    </a>
+                    </button>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}

@@ -1,212 +1,162 @@
 
-import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2, Calendar } from "lucide-react";
-
-interface Phase {
-  id: string;
-  name: string;
-  description: string;
-  durationWeeks: number;
-}
+import { Slider } from "@/components/ui/slider";
+import { Trash2, Plus, GripVertical } from "lucide-react";
+import { Phase } from "@/store/rfpSlice";
 
 interface TimelineProps {
-  onTimelineChange: (phases: Phase[]) => void;
+  onTimelineChange: (timeline: Phase[]) => void;
+  initialTimeline?: Phase[];
 }
 
-const Timeline: React.FC<TimelineProps> = ({ onTimelineChange }) => {
-  const [phases, setPhases] = useState<Phase[]>([
-    {
-      id: "phase-" + Date.now(),
-      name: "Discovery",
-      description: "Initial requirements gathering and analysis",
-      durationWeeks: 2
+const Timeline = ({ onTimelineChange, initialTimeline = [{
+  id: "phase-1",
+  name: "Discovery", 
+  description: "Initial requirements gathering and analysis",
+  durationWeeks: 2
+}] }: TimelineProps) => {
+  const [phases, setPhases] = useState<Phase[]>(initialTimeline);
+  const [totalWeeks, setTotalWeeks] = useState(0);
+
+  // Update local state when props change
+  useEffect(() => {
+    if (initialTimeline) {
+      setPhases(initialTimeline);
     }
-  ]);
+  }, [initialTimeline]);
+
+  // Calculate total duration
+  useEffect(() => {
+    const total = phases.reduce((sum, phase) => sum + phase.durationWeeks, 0);
+    setTotalWeeks(total);
+  }, [phases]);
+
+  // Update parent component when phases change
+  useEffect(() => {
+    onTimelineChange(phases);
+  }, [phases, onTimelineChange]);
 
   const addPhase = () => {
-    const newPhases = [
+    setPhases([
       ...phases,
       {
-        id: "phase-" + Date.now(),
+        id: `phase-${Date.now()}`,
         name: "",
         description: "",
         durationWeeks: 2
       }
-    ];
-    setPhases(newPhases);
-    onTimelineChange(newPhases);
+    ]);
   };
 
-  const updatePhase = (id: string, field: keyof Phase, value: string | number) => {
-    const newPhases = phases.map(phase => {
-      if (phase.id === id) {
-        return { ...phase, [field]: value };
-      }
-      return phase;
-    });
+  const updatePhase = (index: number, field: keyof Phase, value: any) => {
+    const newPhases = [...phases];
+    newPhases[index] = { ...newPhases[index], [field]: value };
     setPhases(newPhases);
-    onTimelineChange(newPhases);
   };
 
-  const removePhase = (id: string) => {
+  const removePhase = (index: number) => {
     if (phases.length > 1) {
-      const newPhases = phases.filter(phase => phase.id !== id);
-      setPhases(newPhases);
-      onTimelineChange(newPhases);
+      setPhases(phases.filter((_, i) => i !== index));
     }
   };
 
-  const totalWeeks = phases.reduce((sum, phase) => sum + phase.durationWeeks, 0);
-
   return (
-    <div className="space-y-6 animate-fade-in">
-      <Card>
-        <CardHeader>
-          <CardTitle>Implementation Timeline</CardTitle>
-          <CardDescription>
-            Define the implementation phases and their estimated duration.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            {phases.map((phase, index) => (
-              <div key={phase.id} className="border p-4 rounded-md bg-muted/30">
-                <div className="grid grid-cols-12 gap-4">
-                  <div className="col-span-11 sm:col-span-6">
-                    <Label htmlFor={`phase-name-${phase.id}`} className="block mb-1">
-                      Phase {index + 1} Name
-                    </Label>
-                    <Input
-                      id={`phase-name-${phase.id}`}
-                      placeholder="e.g., Discovery, Development"
-                      value={phase.name}
-                      onChange={(e) => updatePhase(phase.id, "name", e.target.value)}
-                    />
+    <Card>
+      <CardHeader>
+        <CardTitle>Project Timeline</CardTitle>
+        <CardDescription>Define the phases and timeline for your project</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="bg-muted/50 p-3 rounded-md flex items-center justify-between">
+          <div>
+            <span className="font-medium text-sm">Total Project Duration</span>
+            <div className="text-2xl font-bold">{totalWeeks} Weeks</div>
+          </div>
+          <div className="text-right">
+            <span className="font-medium text-sm">Estimated Completion</span>
+            <div className="text-lg">
+              {totalWeeks > 0 ? `${Math.ceil(totalWeeks / 4)} Months` : "-"}
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          {phases.map((phase, index) => (
+            <div key={phase.id} className="bg-card border p-4 rounded-md">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center">
+                  <GripVertical className="h-5 w-5 text-muted-foreground mr-2" />
+                  <h3 className="font-semibold">Phase {index + 1}</h3>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => removePhase(index)}
+                  disabled={phases.length === 1}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor={`phase-name-${index}`}>Phase Name</Label>
+                  <Input
+                    id={`phase-name-${index}`}
+                    value={phase.name}
+                    onChange={(e) => updatePhase(index, "name", e.target.value)}
+                    placeholder="e.g., Discovery, Development, Testing"
+                    className="mt-1"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor={`phase-description-${index}`}>Description</Label>
+                  <Textarea
+                    id={`phase-description-${index}`}
+                    value={phase.description}
+                    onChange={(e) => updatePhase(index, "description", e.target.value)}
+                    placeholder="Describe what will be accomplished during this phase"
+                    rows={2}
+                    className="mt-1"
+                  />
+                </div>
+                
+                <div>
+                  <div className="flex justify-between mb-1">
+                    <Label htmlFor={`phase-duration-${index}`}>Duration (Weeks)</Label>
+                    <span className="text-sm">{phase.durationWeeks} Weeks</span>
                   </div>
-                  
-                  <div className="col-span-11 sm:col-span-5">
-                    <Label htmlFor={`phase-duration-${phase.id}`} className="block mb-1">
-                      Duration (Weeks): {phase.durationWeeks}
-                    </Label>
-                    <div className="pt-2">
-                      <Slider
-                        id={`phase-duration-${phase.id}`}
-                        value={[phase.durationWeeks]}
-                        min={1}
-                        max={26}
-                        step={1}
-                        onValueChange={(value) => updatePhase(phase.id, "durationWeeks", value[0])}
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="col-span-1 flex justify-end sm:items-center">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removePhase(phase.id)}
-                      disabled={phases.length <= 1}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  
-                  <div className="col-span-12">
-                    <Label htmlFor={`phase-desc-${phase.id}`} className="block mb-1">
-                      Description
-                    </Label>
-                    <Textarea
-                      id={`phase-desc-${phase.id}`}
-                      placeholder="Describe what happens during this phase"
-                      value={phase.description}
-                      onChange={(e) => updatePhase(phase.id, "description", e.target.value)}
-                      rows={2}
-                    />
-                  </div>
+                  <Slider
+                    id={`phase-duration-${index}`}
+                    min={1}
+                    max={12}
+                    step={1}
+                    value={[phase.durationWeeks]}
+                    onValueChange={(value) => updatePhase(index, "durationWeeks", value[0])}
+                  />
                 </div>
               </div>
-            ))}
-
-            <Button type="button" variant="outline" onClick={addPhase} className="flex items-center">
-              <Plus className="h-4 w-4 mr-2" /> Add Phase
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Calendar className="h-5 w-5 mr-2" />
-            Timeline Summary
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <div className="w-full bg-muted h-10 rounded-md relative overflow-hidden">
-              {phases.map((phase, index) => {
-                const previousPhasesDuration = phases
-                  .slice(0, index)
-                  .reduce((sum, p) => sum + p.durationWeeks, 0);
-                
-                const phaseWidth = (phase.durationWeeks / totalWeeks) * 100;
-                const phaseOffset = (previousPhasesDuration / totalWeeks) * 100;
-                
-                return (
-                  <div
-                    key={phase.id}
-                    className="absolute top-0 bottom-0 flex items-center justify-center text-xs font-medium overflow-hidden"
-                    style={{
-                      left: `${phaseOffset}%`,
-                      width: `${phaseWidth}%`,
-                      backgroundColor: getPhaseColor(index),
-                      color: index % 2 === 0 ? "white" : "black",
-                      borderRight: "1px solid white"
-                    }}
-                    title={`${phase.name}: ${phase.durationWeeks} weeks`}
-                  >
-                    {phaseWidth > 10 ? phase.name : ""}
-                  </div>
-                );
-              })}
             </div>
-            
-            <div className="flex justify-between text-sm text-muted-foreground">
-              <span>Week 1</span>
-              <span>Week {totalWeeks}</span>
-            </div>
-            
-            <div className="pt-2">
-              <p className="text-sm">
-                <span className="font-semibold">Estimated timeline:</span>{" "}
-                {totalWeeks} {totalWeeks === 1 ? "week" : "weeks"} ({(totalWeeks / 4).toFixed(1)} months)
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+          ))}
+        </div>
+        
+        <Button
+          type="button"
+          variant="outline"
+          onClick={addPhase}
+          className="w-full"
+        >
+          <Plus className="h-4 w-4 mr-2" /> Add Phase
+        </Button>
+      </CardContent>
+    </Card>
   );
 };
-
-// Helper function to get a color for each phase
-function getPhaseColor(index: number): string {
-  const colors = [
-    "hsl(var(--primary))",
-    "hsl(var(--secondary))",
-    "hsl(var(--accent))",
-    "#4a6fa5",
-    "#6b8e23",
-    "#9370db"
-  ];
-  return colors[index % colors.length];
-}
 
 export default Timeline;

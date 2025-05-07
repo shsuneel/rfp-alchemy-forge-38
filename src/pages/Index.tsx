@@ -1,16 +1,32 @@
 
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { Sidebar } from "@/components/layout/Sidebar";
 import PresentationEditor from "@/components/presentation/PresentationEditor";
 import RfpForm from "@/components/RfpForm";
+import RfpList from "@/components/RfpList";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Presentation, Calculator } from "lucide-react";
+import { FileText, Presentation, Calculator, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const Index = () => {
-  const [activeTab, setActiveTab] = useState<string>("rfp");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabFromUrl = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState<string>(tabFromUrl || "rfpList");
+
+  // Update URL when tab changes
+  useEffect(() => {
+    setSearchParams({ tab: activeTab });
+  }, [activeTab, setSearchParams]);
+
+  // Update tab when URL changes
+  useEffect(() => {
+    if (tabFromUrl) {
+      setActiveTab(tabFromUrl);
+    }
+  }, [tabFromUrl]);
 
   return (
     <SidebarProvider>
@@ -35,6 +51,10 @@ const Index = () => {
               
               <Tabs value={activeTab} onValueChange={setActiveTab}>
                 <TabsList className="mb-4">
+                  <TabsTrigger value="rfpList" className="flex items-center gap-2">
+                    <List className="h-4 w-4" />
+                    RFP List
+                  </TabsTrigger>
                   <TabsTrigger value="rfp" className="flex items-center gap-2">
                     <FileText className="h-4 w-4" />
                     RFP Builder
@@ -44,6 +64,10 @@ const Index = () => {
                     Presentation Editor
                   </TabsTrigger>
                 </TabsList>
+                
+                <TabsContent value="rfpList" className="mt-0">
+                  <RfpList />
+                </TabsContent>
                 
                 <TabsContent value="rfp" className="mt-0">
                   <RfpForm />

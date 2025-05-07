@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -17,7 +17,8 @@ import {
   setRequirements, 
   setAssumptions, 
   setDependencies, 
-  setTimeline 
+  setTimeline,
+  saveRfp
 } from "@/store/rfpSlice";
 import { createFromRfp } from "@/store/presentationSlice";
 
@@ -66,6 +67,19 @@ const RfpForm = () => {
   const [assumptions, setAssumptions] = useState(rfpState.assumptions);
   const [dependencies, setDependencies] = useState(rfpState.dependencies);
   const [timeline, setTimeline] = useState(rfpState.timeline);
+
+  // Update local state when Redux state changes (for imported RFPs)
+  useEffect(() => {
+    setProjectName(rfpState.projectName);
+    setProjectDescription(rfpState.projectDescription);
+    setSector(rfpState.sector);
+    setClientInfo(rfpState.clientInfo);
+    setTechStack(rfpState.techStack);
+    setRequirements(rfpState.requirements);
+    setAssumptions(rfpState.assumptions);
+    setDependencies(rfpState.dependencies);
+    setTimeline(rfpState.timeline);
+  }, [rfpState]);
 
   const handleNext = () => {
     if (currentStep === 0 && !projectName.trim()) {
@@ -117,6 +131,9 @@ const RfpForm = () => {
     dispatch(setAssumptions(assumptions));
     dispatch(setDependencies(dependencies));
     dispatch(setTimeline(timeline));
+    
+    // Save to storage
+    dispatch(saveRfp());
     
     toast.success("RFP saved successfully!");
   };
@@ -200,7 +217,7 @@ const RfpForm = () => {
         return <FileUpload onFilesChange={setFiles} />;
         
       case 2:
-        return <TechStack onTechStackChange={setTechStack} />;
+        return <TechStack onTechStackChange={setTechStack} techStack={techStack} />;
         
       case 3:
         return (
@@ -208,11 +225,14 @@ const RfpForm = () => {
             onRequirementsChange={setRequirements}
             onAssumptionsChange={setAssumptions}
             onDependenciesChange={setDependencies}
+            initialRequirements={requirements}
+            initialAssumptions={assumptions}
+            initialDependencies={dependencies}
           />
         );
         
       case 4:
-        return <Timeline onTimelineChange={setTimeline} />;
+        return <Timeline onTimelineChange={setTimeline} initialTimeline={timeline} />;
         
       case 5:
         return (
@@ -257,21 +277,19 @@ const RfpForm = () => {
         </Button>
         
         <div className="flex space-x-2">
+          <Button type="button" onClick={handleSave} className="flex items-center">
+            <Save className="h-4 w-4 mr-2" /> Save RFP
+          </Button>
+          
           {isLastStep && (
-            <>
-              <Button type="button" onClick={handleSave} className="flex items-center">
-                <Save className="h-4 w-4 mr-2" /> Save RFP
-              </Button>
-              
-              <Button 
-                type="button" 
-                onClick={handleCreatePresentation} 
-                variant="secondary"
-                className="flex items-center"
-              >
-                <Presentation className="h-4 w-4 mr-2" /> Create Presentation
-              </Button>
-            </>
+            <Button 
+              type="button" 
+              onClick={handleCreatePresentation} 
+              variant="secondary"
+              className="flex items-center"
+            >
+              <Presentation className="h-4 w-4 mr-2" /> Create Presentation
+            </Button>
           )}
           
           {!isLastStep && (
