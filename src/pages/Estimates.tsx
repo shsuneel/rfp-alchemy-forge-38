@@ -23,6 +23,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Save, Calculator, Edit, FileDown } from "lucide-react";
 import { toast } from "sonner";
+import { SidebarProvider } from "@/components/ui/sidebar";
+import { Sidebar } from "@/components/layout/Sidebar";
 
 import UserStoryForm from "@/components/estimates/UserStoryForm";
 import ScreenForm from "@/components/estimates/ScreenForm";
@@ -131,114 +133,119 @@ const Estimates = () => {
   };
 
   return (
-    <div className="container mx-auto py-6">
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Project Estimates</h1>
-        <p className="text-muted-foreground mb-6">
-          Calculate project estimates based on user stories, screens, APIs, and technical requirements
-        </p>
-      </header>
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full">
+        <Sidebar />
+        
+        <div className="flex-1 p-4 md:p-6 overflow-y-auto">
+          <div className="container mx-auto">
+            <header className="mb-8">
+              <h1 className="text-3xl font-bold mb-2">Project Estimates</h1>
+              <p className="text-muted-foreground mb-6">
+                Calculate project estimates based on user stories, screens, APIs, and technical requirements
+              </p>
+            </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1">
-          <div className="space-y-6 sticky top-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>
-                  {editingItem ? `Edit ${
-                    editingItem.type === 'story' ? 'User Story' : 
-                    editingItem.type === 'screen' ? 'Screen' : 'API'
-                  }` : "Add Components"}
-                </CardTitle>
-                <CardDescription>
-                  {editingItem 
-                    ? `Update the ${editingItem.type === 'story' ? 'user story' : editingItem.type} details` 
-                    : "Add items to include in your estimate"}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Tabs value={activeTab} onValueChange={setActiveTab}>
-                  <TabsList className="mb-4 w-full">
-                    <TabsTrigger value="userStories" className="flex-1">User Stories</TabsTrigger>
-                    <TabsTrigger value="screens" className="flex-1">Screens</TabsTrigger>
-                    <TabsTrigger value="apis" className="flex-1">APIs</TabsTrigger>
-                  </TabsList>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-1">
+                <div className="space-y-6 sticky top-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>
+                        {editingItem ? `Edit ${
+                          editingItem.type === 'story' ? 'User Story' : 
+                          editingItem.type === 'screen' ? 'Screen' : 'API'
+                        }` : "Add Components"}
+                      </CardTitle>
+                      <CardDescription>
+                        {editingItem 
+                          ? `Update the ${editingItem.type === 'story' ? 'user story' : editingItem.type} details` 
+                          : "Add items to include in your estimate"}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Tabs value={activeTab} onValueChange={setActiveTab}>
+                        <TabsList className="mb-4 w-full">
+                          <TabsTrigger value="userStories" className="flex-1">User Stories</TabsTrigger>
+                          <TabsTrigger value="screens" className="flex-1">Screens</TabsTrigger>
+                          <TabsTrigger value="apis" className="flex-1">APIs</TabsTrigger>
+                        </TabsList>
+                        
+                        <TabsContent value="userStories" className="mt-0">
+                          <UserStoryForm 
+                            onAdd={handleAddUserStory} 
+                            onCancel={editingItem ? handleCancelEdit : undefined}
+                          />
+                        </TabsContent>
+                        
+                        <TabsContent value="screens" className="mt-0">
+                          <ScreenForm 
+                            onAdd={handleAddScreen} 
+                            onCancel={editingItem ? handleCancelEdit : undefined}
+                          />
+                        </TabsContent>
+                        
+                        <TabsContent value="apis" className="mt-0">
+                          <ApiForm 
+                            onAdd={handleAddApi} 
+                            onCancel={editingItem ? handleCancelEdit : undefined}
+                          />
+                        </TabsContent>
+                      </Tabs>
+                    </CardContent>
+                  </Card>
                   
-                  <TabsContent value="userStories" className="mt-0">
-                    <UserStoryForm 
-                      onAdd={handleAddUserStory} 
-                      initialData={editingItem?.type === 'story' ? editingItem.item : undefined}
-                      onCancel={editingItem ? handleCancelEdit : undefined}
-                    />
-                  </TabsContent>
+                  <PlatformConfigForm />
                   
-                  <TabsContent value="screens" className="mt-0">
-                    <ScreenForm 
-                      onAdd={handleAddScreen} 
-                      initialData={editingItem?.type === 'screen' ? editingItem.item : undefined}
-                      onCancel={editingItem ? handleCancelEdit : undefined}
-                    />
-                  </TabsContent>
-                  
-                  <TabsContent value="apis" className="mt-0">
-                    <ApiForm 
-                      onAdd={handleAddApi} 
-                      initialData={editingItem?.type === 'api' ? editingItem.item : undefined}
-                      onCancel={editingItem ? handleCancelEdit : undefined}
-                    />
-                  </TabsContent>
-                </Tabs>
-              </CardContent>
-            </Card>
-            
-            <PlatformConfigForm />
-            
-            <div className="flex flex-col gap-2">
-              <Button 
-                onClick={handleSaveEstimate} 
-                className="flex items-center justify-center" 
-                size="lg"
-              >
-                <Save className="h-4 w-4 mr-2" /> Save Estimate
-              </Button>
+                  <div className="flex flex-col gap-2">
+                    <Button 
+                      onClick={handleSaveEstimate} 
+                      className="flex items-center justify-center" 
+                      size="lg"
+                    >
+                      <Save className="h-4 w-4 mr-2" /> Save Estimate
+                    </Button>
+                    
+                    <Button 
+                      onClick={handleExportEstimate} 
+                      variant="outline"
+                      className="flex items-center justify-center" 
+                      size="lg"
+                    >
+                      <FileDown className="h-4 w-4 mr-2" /> Export Estimate
+                    </Button>
+                  </div>
+                </div>
+              </div>
               
-              <Button 
-                onClick={handleExportEstimate} 
-                variant="outline"
-                className="flex items-center justify-center" 
-                size="lg"
-              >
-                <FileDown className="h-4 w-4 mr-2" /> Export Estimate
-              </Button>
+              <div className="lg:col-span-2">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <div>
+                      <CardTitle>Estimation Summary</CardTitle>
+                      <CardDescription>
+                        Detailed breakdown of the project estimate
+                      </CardDescription>
+                    </div>
+                    <Calculator className="h-5 w-5 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <EstimationTable 
+                      onDeleteStory={handleDeleteUserStory}
+                      onDeleteScreen={handleDeleteScreen}
+                      onDeleteApi={handleDeleteApi}
+                      onEditStory={handleEditUserStory}
+                      onEditScreen={handleEditScreen}
+                      onEditApi={handleEditApi}
+                    />
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </div>
         </div>
-        
-        <div className="lg:col-span-2">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle>Estimation Summary</CardTitle>
-                <CardDescription>
-                  Detailed breakdown of the project estimate
-                </CardDescription>
-              </div>
-              <Calculator className="h-5 w-5 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <EstimationTable 
-                onDeleteStory={handleDeleteUserStory}
-                onDeleteScreen={handleDeleteScreen}
-                onDeleteApi={handleDeleteApi}
-                onEditStory={handleEditUserStory}
-                onEditScreen={handleEditScreen}
-                onEditApi={handleEditApi}
-              />
-            </CardContent>
-          </Card>
-        </div>
       </div>
-    </div>
+    </SidebarProvider>
   );
 };
 
