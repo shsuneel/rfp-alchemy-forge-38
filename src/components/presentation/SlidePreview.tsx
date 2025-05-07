@@ -131,22 +131,77 @@ const SlidePreview: React.FC<SlidePreviewProps> = ({
         );
       
       case "section":
-        return (
-          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
-            {slide.elements.map(element => renderElement(element))}
-          </div>
-        );
+        // Use agenda style from the uploaded image
+        if (template.id === "agenda") {
+          return (
+            <div className="absolute inset-0 flex">
+              <div className="w-1/2 h-full bg-cover bg-center" 
+                   style={{ backgroundImage: "url('/lovable-uploads/7d958b51-2c47-49c4-ad1c-03bcf81b4262.png')" }}>
+              </div>
+              <div className="w-1/2 bg-[#1E293B] p-8 flex flex-col justify-center">
+                <h2 className="text-4xl font-bold text-white mb-12">AGENDA</h2>
+                <div className="space-y-8">
+                  {[1, 2, 3, 4].map(num => (
+                    <div key={num} className="flex items-center gap-6">
+                      <div className="w-12 h-12 rounded-full border-2 border-white text-white flex items-center justify-center text-xl">
+                        {num}
+                      </div>
+                      <div className="text-xl text-white">
+                        {slide.elements.find(e => e.id === `agenda-item-${num}`)?.content || 
+                         ["Our Understanding", "Overall Process & Approach", "Technical Architecture", "Implementation Plan"][num-1]}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          );
+        } else if (template.id === "understanding") {
+          return (
+            <div className="absolute inset-0 flex">
+              <div className="w-[45%] h-full bg-[#002060] p-10 flex flex-col justify-center">
+                <div className="text-8xl font-bold text-white mb-4">00</div>
+                <h2 className="text-3xl font-bold text-white">
+                  {slide.elements.find(e => e.id.includes("title"))?.content || "Understanding of Ask"}
+                </h2>
+              </div>
+              <div className="w-[55%] h-full bg-cover bg-center"
+                   style={{ backgroundImage: "url('/lovable-uploads/f9b25e6f-fbcf-4ead-b44f-cd069f221d2d.png')" }}>
+              </div>
+            </div>
+          );
+        } else {
+          return (
+            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
+              {slide.elements.map(element => renderElement(element))}
+            </div>
+          );
+        }
       
       case "template":
-        return (
-          <div className="absolute inset-0">
-            {/* Pre-defined layout placeholders */}
-            <div className="absolute top-0 left-0 right-0 h-16 bg-white bg-opacity-20" />
-            <div className="absolute bottom-0 left-0 right-0 h-12 bg-white bg-opacity-10" />
-            
-            {slide.elements.map(element => renderElement(element))}
-          </div>
-        );
+        if (template.id === "blank") {
+          return (
+            <div className="absolute inset-0 flex"
+                 style={{ backgroundImage: "url('/lovable-uploads/919105d7-797a-4abc-8b18-b7a547e61870.png')" }}>
+              <div className="absolute bottom-8 left-16">
+                <img src="/lovable-uploads/f9b25e6f-fbcf-4ead-b44f-cd069f221d2d.png" 
+                     alt="Logo" 
+                     className="h-12 object-contain" />
+              </div>
+              {slide.elements.map(element => renderElement(element))}
+            </div>
+          );
+        } else {
+          return (
+            <div className="absolute inset-0">
+              {/* Pre-defined layout placeholders */}
+              <div className="absolute top-0 left-0 right-0 h-16 bg-white bg-opacity-20" />
+              <div className="absolute bottom-0 left-0 right-0 h-12 bg-white bg-opacity-10" />
+              
+              {slide.elements.map(element => renderElement(element))}
+            </div>
+          );
+        }
         
       default:
         return slide.elements.map(element => renderElement(element));

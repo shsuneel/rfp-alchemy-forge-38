@@ -1,4 +1,3 @@
-
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export interface SlideElement {
@@ -64,6 +63,30 @@ const defaultTemplates: Template[] = [
     secondaryColor: "#F2F2F2",
     accentColor: "#D9D9D9",
   },
+  {
+    id: "agenda",
+    name: "Agenda Template",
+    thumbnail: "/lovable-uploads/7d958b51-2c47-49c4-ad1c-03bcf81b4262.png",
+    primaryColor: "#1E293B",
+    secondaryColor: "#00B0F0",
+    accentColor: "#FFFFFF",
+  },
+  {
+    id: "understanding",
+    name: "Understanding Template",
+    thumbnail: "/lovable-uploads/f9b25e6f-fbcf-4ead-b44f-cd069f221d2d.png",
+    primaryColor: "#1E293B",
+    secondaryColor: "#00B0F0",
+    accentColor: "#002060",
+  },
+  {
+    id: "blank",
+    name: "Blank Template",
+    thumbnail: "/lovable-uploads/919105d7-797a-4abc-8b18-b7a547e61870.png",
+    primaryColor: "#1E293B",
+    secondaryColor: "#00B0F0",
+    accentColor: "#002060",
+  }
 ];
 
 const defaultSlides: Slide[] = [

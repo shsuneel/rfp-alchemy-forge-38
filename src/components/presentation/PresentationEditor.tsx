@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -44,6 +43,58 @@ const PresentationEditor: React.FC = () => {
     dispatch(setTitle(e.target.value));
   };
 
+  // Get all available templates from the store
+  const allTemplates = [
+    {
+      id: "corporate",
+      name: "Corporate Blue",
+      thumbnail: "/lovable-uploads/def60ec4-37af-47fd-b27a-ed307e1a96c3.png",
+      primaryColor: "#002060",
+      secondaryColor: "#0078D4",
+      accentColor: "#00B0F0",
+    },
+    {
+      id: "modern",
+      name: "Modern Purple",
+      thumbnail: "/placeholder.svg",
+      primaryColor: "#7030A0",
+      secondaryColor: "#9b87f5",
+      accentColor: "#C5A5CF",
+    },
+    {
+      id: "minimalist",
+      name: "Minimalist White",
+      thumbnail: "/placeholder.svg",
+      primaryColor: "#FFFFFF",
+      secondaryColor: "#F2F2F2",
+      accentColor: "#D9D9D9",
+    },
+    {
+      id: "agenda",
+      name: "Agenda Template",
+      thumbnail: "/lovable-uploads/7d958b51-2c47-49c4-ad1c-03bcf81b4262.png",
+      primaryColor: "#1E293B",
+      secondaryColor: "#00B0F0",
+      accentColor: "#FFFFFF",
+    },
+    {
+      id: "understanding",
+      name: "Understanding Template",
+      thumbnail: "/lovable-uploads/f9b25e6f-fbcf-4ead-b44f-cd069f221d2d.png",
+      primaryColor: "#1E293B",
+      secondaryColor: "#00B0F0",
+      accentColor: "#002060",
+    },
+    {
+      id: "blank",
+      name: "Blank Template",
+      thumbnail: "/lovable-uploads/919105d7-797a-4abc-8b18-b7a547e61870.png",
+      primaryColor: "#1E293B",
+      secondaryColor: "#00B0F0",
+      accentColor: "#002060",
+    }
+  ];
+
   const addNewSlide = (type: Slide["type"] = "content") => {
     const newSlide: Slide = {
       id: `slide-${Date.now()}`,
@@ -56,16 +107,73 @@ const PresentationEditor: React.FC = () => {
     
     // Add default elements based on slide type
     if (type === "section") {
-      newSlide.elements.push({
-        id: `elem-${Date.now()}-title`,
-        type: "text",
-        content: "Section Title",
-        x: 50,
-        y: 240,
-        width: 860,
-        height: 80,
-        style: { fontSize: "64px", fontWeight: "bold", color: "#ffffff", textAlign: "center" }
-      });
+      if (selectedTemplate.id === "agenda") {
+        // Create agenda slide with numbered items
+        newSlide.elements.push(
+          {
+            id: `agenda-item-1`,
+            type: "text",
+            content: "Our Understanding",
+            x: 600,
+            y: 200,
+            width: 300,
+            height: 40,
+            style: { fontSize: "20px", color: "#ffffff" }
+          },
+          {
+            id: `agenda-item-2`,
+            type: "text",
+            content: "Overall Process & Approach",
+            x: 600,
+            y: 270,
+            width: 300,
+            height: 40,
+            style: { fontSize: "20px", color: "#ffffff" }
+          },
+          {
+            id: `agenda-item-3`,
+            type: "text",
+            content: "Technical Architecture",
+            x: 600,
+            y: 340,
+            width: 300,
+            height: 40,
+            style: { fontSize: "20px", color: "#ffffff" }
+          },
+          {
+            id: `agenda-item-4`,
+            type: "text",
+            content: "Implementation Plan",
+            x: 600,
+            y: 410,
+            width: 300,
+            height: 40,
+            style: { fontSize: "20px", color: "#ffffff" }
+          }
+        );
+      } else if (selectedTemplate.id === "understanding") {
+        newSlide.elements.push({
+          id: `elem-${Date.now()}-title`,
+          type: "text",
+          content: "Understanding of Ask",
+          x: 100,
+          y: 300,
+          width: 300,
+          height: 60,
+          style: { fontSize: "32px", fontWeight: "bold", color: "#ffffff" }
+        });
+      } else {
+        newSlide.elements.push({
+          id: `elem-${Date.now()}-title`,
+          type: "text",
+          content: "Section Title",
+          x: 50,
+          y: 240,
+          width: 860,
+          height: 80,
+          style: { fontSize: "64px", fontWeight: "bold", color: "#ffffff", textAlign: "center" }
+        });
+      }
     } else if (type === "template") {
       newSlide.elements.push({
         id: `elem-${Date.now()}-layout`,
@@ -206,7 +314,7 @@ const PresentationEditor: React.FC = () => {
         
         <TabsContent value="templates">
           <TemplateSelector 
-            templates={[selectedTemplate]} 
+            templates={allTemplates} 
             selectedTemplate={selectedTemplate} 
             onSelectTemplate={handleChangeTemplate}
           />
