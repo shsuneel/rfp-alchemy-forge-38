@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { v4 as uuidv4 } from "@reduxjs/toolkit";
+// import { v4 as uuidv4 } from "@reduxjs/toolkit";
 import { ResourceLevel } from "@/store/rfpSlice";
 
 interface ResourcesProps {
@@ -27,7 +27,7 @@ const Resources = ({ onResourcesChange, initialResources }: ResourcesProps) => {
   
   const handleAddResource = () => {
     const newResource: ResourceLevel = {
-      id: uuidv4(),
+      id: Math.random().toString(36).substring(2, 9), // Generate a random ID
       title: "",
       level: "Mid",
       hourlyRate: 100
@@ -57,7 +57,6 @@ const Resources = ({ onResourcesChange, initialResources }: ResourcesProps) => {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <DollarSign className="h-5 w-5" />
           Resource Levels
         </CardTitle>
         <CardDescription>
@@ -124,22 +123,6 @@ const Resources = ({ onResourcesChange, initialResources }: ResourcesProps) => {
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
-                
-                <div>
-                  <Label htmlFor={`resource-rate-${index}`}>Hourly Rate ($)</Label>
-                  <Input
-                    id={`resource-rate-${index}`}
-                    value={resource.hourlyRate}
-                    onChange={(e) => handleResourceChange(
-                      resource.id, 
-                      'hourlyRate',
-                      Number(e.target.value) || 0
-                    )}
-                    type="number"
-                    min="0"
-                    className="mt-1"
-                  />
                 </div>
               </div>
             </div>

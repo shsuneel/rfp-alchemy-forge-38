@@ -41,7 +41,7 @@ export interface TeamMember {
 export interface ResourceLevel {
   id: string;
   title: string;
-  level: "Junior" | "Mid" | "Senior" | "Lead";
+  level: "Junior" | "Mid" | "Senior" | "Lead" | "";
   hourlyRate: number;
 }
 
@@ -121,15 +121,10 @@ const initialState: RfpState = {
     }
   ],
   team: [
-    { id: "team-default", name: "", email: "", role: "Project Manager" }
+    { id: "team-default", name: "", email: "", role: "" }
   ],
   resources: [
-    { id: "res-consultant", title: "Consultant", level: "Mid", hourlyRate: 75 },
-    { id: "res-sr-consultant", title: "Senior Consultant", level: "Senior", hourlyRate: 125 },
-    { id: "res-architect", title: "Architect", level: "Senior", hourlyRate: 150 },
-    { id: "res-solution-architect", title: "Solution Architect", level: "Lead", hourlyRate: 175 },
-    { id: "res-ba", title: "Business Analyst", level: "Mid", hourlyRate: 100 },
-    { id: "res-tester", title: "Tester", level: "Junior", hourlyRate: 60 }
+    { id: "res-consultant", title: "", level: "", hourlyRate: 75 },
   ],
   savedRfps: getSavedRfps()
 };

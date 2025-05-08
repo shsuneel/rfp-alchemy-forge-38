@@ -11,12 +11,12 @@ import { toast } from "sonner";
 
 import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { useAppSelector } from "@/hooks/useAppSelector";
-import { 
-  setProjectInfo, 
-  setTechStack, 
-  setRequirements, 
-  setAssumptions, 
-  setDependencies, 
+import {
+  setProjectInfo,
+  setTechStack,
+  setRequirements,
+  setAssumptions,
+  setDependencies,
   setTimeline,
   setTeam,
   setResources,
@@ -33,14 +33,15 @@ import Timeline from "./Timeline";
 import Team from "./Team";
 import Resources from "./Resources";
 import Preview from "./Preview";
+import { set } from "date-fns";
 
 const STEPS = [
-  "Project Info", 
-  "Upload Files", 
-  "Tech Stack", 
-  "Requirements", 
+  "Project Info",
+  "Upload Files",
+  "Tech Stack",
+  "Requirements",
   "Timeline",
-  "Team & Resources", 
+  "Team & Resources",
   "Preview"
 ];
 
@@ -61,9 +62,9 @@ const SECTORS = [
 const RfpForm = () => {
   const dispatch = useAppDispatch();
   const rfpState = useAppSelector(state => state.rfp);
-  
+
   const [currentStep, setCurrentStep] = useState(0);
-  const [thorId, setThorIdState] = useState(rfpState.thorId);
+  const [thorId, setThorIdState] = useState('');
   const [projectName, setProjectName] = useState(rfpState.projectName);
   const [projectDescription, setProjectDescription] = useState(rfpState.projectDescription);
   const [sector, setSector] = useState(rfpState.sector);
@@ -92,7 +93,6 @@ const RfpForm = () => {
 
   // Update local state when Redux state changes (for imported RFPs)
   useEffect(() => {
-    setThorIdState(rfpState.thorId);
     setProjectName(rfpState.projectName);
     setProjectDescription(rfpState.projectDescription);
     setSector(rfpState.sector);
@@ -117,11 +117,11 @@ const RfpForm = () => {
       toast.error("Project name is required");
       return;
     }
-    
+
     // Save data to Redux based on current step
     if (currentStep === 0) {
-      dispatch(setProjectInfo({ 
-        name: projectName, 
+      dispatch(setProjectInfo({
+        name: projectName,
         description: projectDescription,
         sector,
         clientInfo
@@ -129,8 +129,8 @@ const RfpForm = () => {
     } else if (currentStep === 2) {
       // Get flattened tech stack for backward compatibility
       const flattenedTechStack = [
-        ...techStack.frontend, 
-        ...techStack.backend, 
+        ...techStack.frontend,
+        ...techStack.backend,
         ...techStack.database,
         ...techStack.infrastructure,
         ...techStack.other
@@ -148,14 +148,14 @@ const RfpForm = () => {
     } else if (currentStep === 5) {
       dispatch(setTeam(team));
       dispatch(setResources(resources));
-      
+
       // Also set Thor ID if it exists
       const thorIdMember = team.find(m => m.id === "thor-id");
       if (thorIdMember) {
         dispatch(setThorId(thorIdMember.name));
       }
     }
-    
+
     if (currentStep < STEPS.length - 1) {
       setCurrentStep(currentStep + 1);
       window.scrollTo(0, 0);
@@ -171,48 +171,48 @@ const RfpForm = () => {
 
   const handleSave = () => {
     // Save all data to Redux
-    dispatch(setProjectInfo({ 
-      name: projectName, 
+    dispatch(setProjectInfo({
+      name: projectName,
       description: projectDescription,
       sector,
       clientInfo
     }));
-    
+
     // Get flattened tech stack for backward compatibility
     const flattenedTechStack = [
-      ...techStack.frontend, 
-      ...techStack.backend, 
+      ...techStack.frontend,
+      ...techStack.backend,
       ...techStack.database,
       ...techStack.infrastructure,
       ...techStack.other
     ];
-    
+
     dispatch(setTechStack({
       flattenedStack: flattenedTechStack,
       byLayer: techStack
     }));
-    
+
     dispatch(setRequirements(requirements));
     dispatch(setAssumptions(assumptions));
     dispatch(setDependencies(dependencies));
     dispatch(setTimeline(timeline));
-    
+
     // Save team and resources
     dispatch(setTeam(team));
     dispatch(setResources(resources));
-    
+
     // Also set Thor ID if it exists
     const thorIdMember = team.find(m => m.id === "thor-id");
     if (thorIdMember) {
       dispatch(setThorId(thorIdMember.name));
     }
-    
+
     // Save to storage
     dispatch(saveRfp());
-    
+
     toast.success("RFP saved successfully!");
   };
-  
+
   const handleCreatePresentation = () => {
     dispatch(createFromRfp({
       projectName,
@@ -220,7 +220,7 @@ const RfpForm = () => {
       clientInfo,
       requirements
     }));
-    
+
     toast.success("Presentation created from RFP data!");
   };
 
@@ -239,25 +239,25 @@ const RfpForm = () => {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="project-name">Project Name <span className="text-red-500">*</span></Label>
-                <Input 
-                  id="project-name" 
+                <Input
+                  id="project-name"
                   placeholder="e.g., Customer Portal Modernization"
                   value={projectName}
                   onChange={(e) => setProjectName(e.target.value)}
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="project-description">Project Description</Label>
-                <Textarea 
-                  id="project-description" 
+                <Textarea
+                  id="project-description"
                   placeholder="Briefly describe the project and its objectives"
                   rows={4}
                   value={projectDescription}
                   onChange={(e) => setProjectDescription(e.target.value)}
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="sector">Sector</Label>
                 <Select value={sector} onValueChange={setSector}>
@@ -273,10 +273,22 @@ const RfpForm = () => {
                   </SelectContent>
                 </Select>
               </div>
-              
+
+              <div className="space-y-4">
+                <Label htmlFor="thorId">Thor ID</Label>
+                <Input
+                  id="thorId"
+                  placeholder="Enter Thor ID"
+                  value={thorId}
+                  onChange={(e) => {
+                    setThorIdState(e.target.value);
+                  }}
+                />
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="client-info">Client Information</Label>
-                <Textarea 
+                <Textarea
                   id="client-info"
                   placeholder="Information about the client and stakeholders"
                   rows={3}
@@ -287,19 +299,19 @@ const RfpForm = () => {
             </CardContent>
           </Card>
         );
-        
+
       case 1:
         return <FileUpload onFilesChange={setFiles} />;
-        
+
       case 2:
-        return <TechStack 
-          onTechStackChange={setTechStackState} 
-          techStackByLayer={techStack} 
+        return <TechStack
+          onTechStackChange={setTechStackState}
+          techStackByLayer={techStack}
         />;
-        
+
       case 3:
         return (
-          <Requirements 
+          <Requirements
             onRequirementsChange={setRequirementsState}
             onAssumptionsChange={setAssumptionsState}
             onDependenciesChange={setDependenciesState}
@@ -308,7 +320,7 @@ const RfpForm = () => {
             initialDependencies={dependencies}
           />
         );
-        
+
       case 4:
         return <Timeline onTimelineChange={setTimelineState} initialTimeline={timeline} />;
 
@@ -319,7 +331,7 @@ const RfpForm = () => {
             <Resources onResourcesChange={setResourcesState} initialResources={resources} />
           </div>
         );
-        
+
       case 6:
         return (
           <Preview
@@ -337,7 +349,7 @@ const RfpForm = () => {
             resources={resources}
           />
         );
-        
+
       default:
         return null;
     }
@@ -348,13 +360,13 @@ const RfpForm = () => {
   return (
     <div>
       <StepIndicator steps={STEPS} currentStep={currentStep} />
-      
+
       <div className="mb-6">
         {renderFormStep()}
       </div>
-      
+
       <div className="flex justify-between mt-6">
-        <Button 
+        <Button
           type="button"
           variant="outline"
           onClick={handlePrevious}
@@ -363,23 +375,23 @@ const RfpForm = () => {
         >
           <ChevronLeft className="h-4 w-4 mr-2" /> Previous
         </Button>
-        
+
         <div className="flex space-x-2">
           <Button type="button" onClick={handleSave} className="flex items-center">
             <Save className="h-4 w-4 mr-2" /> Save RFP
           </Button>
-          
+
           {isLastStep && (
-            <Button 
-              type="button" 
-              onClick={handleCreatePresentation} 
+            <Button
+              type="button"
+              onClick={handleCreatePresentation}
               variant="secondary"
               className="flex items-center"
             >
               <Presentation className="h-4 w-4 mr-2" /> Create Presentation
             </Button>
           )}
-          
+
           {!isLastStep && (
             <Button type="button" onClick={handleNext} className="flex items-center">
               Next <ChevronRight className="h-4 w-4 ml-2" />

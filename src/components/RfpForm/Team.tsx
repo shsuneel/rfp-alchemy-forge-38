@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { v4 as uuidv4 } from "@reduxjs/toolkit";
 import { TeamMember } from "@/store/rfpSlice";
 
 interface TeamProps {
@@ -38,7 +37,7 @@ const Team = ({ onTeamChange, initialTeam }: TeamProps) => {
   
   const handleAddMember = () => {
     const newMember: TeamMember = {
-      id: uuidv4(),
+      id: Math.random().toString(36).substring(2, 9), // Generate a random ID
       name: "",
       email: "",
       role: "Developer"
@@ -76,30 +75,6 @@ const Team = ({ onTeamChange, initialTeam }: TeamProps) => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-4">
-          <Label htmlFor="thorId">Thor ID</Label>
-          <Input 
-            id="thorId" 
-            placeholder="Enter Thor ID"
-            value={team[0]?.id === "thor-id" ? team[0].name : ""}
-            onChange={(e) => {
-              // Special handling for Thor ID as a hidden team member
-              const thorId = e.target.value;
-              let newTeam = [...team];
-              const thorIdIndex = newTeam.findIndex(m => m.id === "thor-id");
-              
-              if (thorIdIndex >= 0) {
-                newTeam[thorIdIndex] = { ...newTeam[thorIdIndex], name: thorId };
-              } else {
-                newTeam.push({ id: "thor-id", name: thorId, email: "", role: "ThorID" });
-              }
-              
-              setTeam(newTeam);
-              onTeamChange(newTeam);
-            }}
-          />
-        </div>
-        
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <Label>Team Members</Label>
