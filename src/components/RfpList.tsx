@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { FileText, Trash2, Clock, Calendar } from "lucide-react";
+import { FileText, Trash2, Clock, Calendar, User } from "lucide-react";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { useAppSelector } from "@/hooks/useAppSelector";
 import { RfpData, loadRfp, deleteRfp, clearCurrentRfp } from "@/store/rfpSlice";
@@ -74,8 +74,14 @@ const RfpList = () => {
                 {rfp.projectDescription || "No description provided"}
               </CardDescription>
             </CardHeader>
-            <CardContent className="pb-3">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
+            <CardContent className="pb-3 space-y-2">
+              {rfp.thorId && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <User className="h-4 w-4" />
+                  <span>Thor ID: {rfp.thorId}</span>
+                </div>
+              )}
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Calendar className="h-4 w-4" />
                 <span>Created: {format(new Date(rfp.createdAt), 'MMM d, yyyy')}</span>
               </div>

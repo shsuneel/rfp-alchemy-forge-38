@@ -18,6 +18,9 @@ import {
   setAssumptions, 
   setDependencies, 
   setTimeline,
+  setTeam,
+  setResources,
+  setThorId,
   saveRfp
 } from "@/store/rfpSlice";
 import { createFromRfp } from "@/store/presentationSlice";
@@ -27,6 +30,8 @@ import FileUpload from "./FileUpload";
 import TechStack from "./TechStack";
 import Requirements from "./Requirements";
 import Timeline from "./Timeline";
+import Team from "./Team";
+import Resources from "./Resources";
 import Preview from "./Preview";
 
 const STEPS = [
@@ -34,7 +39,8 @@ const STEPS = [
   "Upload Files", 
   "Tech Stack", 
   "Requirements", 
-  "Timeline", 
+  "Timeline",
+  "Team & Resources", 
   "Preview"
 ];
 
@@ -57,6 +63,7 @@ const RfpForm = () => {
   const rfpState = useAppSelector(state => state.rfp);
   
   const [currentStep, setCurrentStep] = useState(0);
+  const [thorId, setThorIdState] = useState(rfpState.thorId);
   const [projectName, setProjectName] = useState(rfpState.projectName);
   const [projectDescription, setProjectDescription] = useState(rfpState.projectDescription);
   const [sector, setSector] = useState(rfpState.sector);
@@ -80,9 +87,12 @@ const RfpForm = () => {
   const [assumptions, setAssumptionsState] = useState(rfpState.assumptions);
   const [dependencies, setDependenciesState] = useState(rfpState.dependencies);
   const [timeline, setTimelineState] = useState(rfpState.timeline);
+  const [team, setTeamState] = useState(rfpState.team);
+  const [resources, setResourcesState] = useState(rfpState.resources);
 
   // Update local state when Redux state changes (for imported RFPs)
   useEffect(() => {
+    setThorIdState(rfpState.thorId);
     setProjectName(rfpState.projectName);
     setProjectDescription(rfpState.projectDescription);
     setSector(rfpState.sector);
@@ -98,6 +108,8 @@ const RfpForm = () => {
     setAssumptionsState(rfpState.assumptions);
     setDependenciesState(rfpState.dependencies);
     setTimelineState(rfpState.timeline);
+    setTeamState(rfpState.team);
+    setResourcesState(rfpState.resources);
   }, [rfpState]);
 
   const handleNext = () => {
@@ -133,6 +145,15 @@ const RfpForm = () => {
       dispatch(setDependencies(dependencies));
     } else if (currentStep === 4) {
       dispatch(setTimeline(timeline));
+    } else if (currentStep === 5) {
+      dispatch(setTeam(team));
+      dispatch(setResources(resources));
+      
+      // Also set Thor ID if it exists
+      const thorIdMember = team.find(m => m.id === "thor-id");
+      if (thorIdMember) {
+        dispatch(setThorId(thorIdMember.name));
+      }
     }
     
     if (currentStep < STEPS.length - 1) {
@@ -175,6 +196,16 @@ const RfpForm = () => {
     dispatch(setAssumptions(assumptions));
     dispatch(setDependencies(dependencies));
     dispatch(setTimeline(timeline));
+    
+    // Save team and resources
+    dispatch(setTeam(team));
+    dispatch(setResources(resources));
+    
+    // Also set Thor ID if it exists
+    const thorIdMember = team.find(m => m.id === "thor-id");
+    if (thorIdMember) {
+      dispatch(setThorId(thorIdMember.name));
+    }
     
     // Save to storage
     dispatch(saveRfp());
@@ -280,8 +311,16 @@ const RfpForm = () => {
         
       case 4:
         return <Timeline onTimelineChange={setTimelineState} initialTimeline={timeline} />;
-        
+
       case 5:
+        return (
+          <div className="space-y-6">
+            <Team onTeamChange={setTeamState} initialTeam={team} />
+            <Resources onResourcesChange={setResourcesState} initialResources={resources} />
+          </div>
+        );
+        
+      case 6:
         return (
           <Preview
             projectName={projectName}
@@ -294,6 +333,8 @@ const RfpForm = () => {
             assumptions={assumptions}
             dependencies={dependencies}
             timeline={timeline}
+            team={team}
+            resources={resources}
           />
         );
         

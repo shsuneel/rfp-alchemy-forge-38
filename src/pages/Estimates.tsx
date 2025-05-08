@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { useAppSelector } from "@/hooks/useAppSelector";
@@ -173,22 +172,25 @@ const Estimates = () => {
                         
                         <TabsContent value="userStories" className="mt-0">
                           <UserStoryForm 
-                            onAdd={handleAddUserStory} 
-                            onCancel={editingItem ? handleCancelEdit : undefined}
+                            onAdd={handleAddUserStory}
+                            editMode={!!editingItem && editingItem.type === 'story'}
+                            initialData={editingItem?.type === 'story' ? editingItem.item : undefined}
                           />
                         </TabsContent>
                         
                         <TabsContent value="screens" className="mt-0">
                           <ScreenForm 
-                            onAdd={handleAddScreen} 
-                            onCancel={editingItem ? handleCancelEdit : undefined}
+                            onAdd={handleAddScreen}
+                            editMode={!!editingItem && editingItem.type === 'screen'}
+                            initialData={editingItem?.type === 'screen' ? editingItem.item : undefined}
                           />
                         </TabsContent>
                         
                         <TabsContent value="apis" className="mt-0">
                           <ApiForm 
-                            onAdd={handleAddApi} 
-                            onCancel={editingItem ? handleCancelEdit : undefined}
+                            onAdd={handleAddApi}
+                            editMode={!!editingItem && editingItem.type === 'api'}
+                            initialData={editingItem?.type === 'api' ? editingItem.item : undefined}
                           />
                         </TabsContent>
                       </Tabs>
