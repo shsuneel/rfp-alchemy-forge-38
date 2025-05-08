@@ -14,7 +14,8 @@ import {
   FileImage, 
   FileMinus, 
   FilePlus, 
-  Heading
+  Heading,
+  PlusCircle
 } from "lucide-react";
 
 import { RequirementItem, AssumptionItem, DependencyItem } from "@/store/rfpSlice"; 
@@ -53,6 +54,7 @@ const Requirements = ({
   const [assumptions, setAssumptions] = useState<AssumptionItem[]>(initialAssumptions);
   const [dependencies, setDependencies] = useState<DependencyItem[]>(initialDependencies);
   const [sections, setSections] = useState<SectionItem[]>(initialSections);
+  const [showSectionMenu, setShowSectionMenu] = useState(false);
 
   // Use useEffect to update local state when props change
   useEffect(() => {
@@ -159,6 +161,7 @@ const Requirements = ({
     };
     
     setSections([...sections, newSection]);
+    setShowSectionMenu(false);
   };
 
   const updateSection = (index: number, field: keyof SectionItem, value: any) => {
@@ -324,106 +327,106 @@ const Requirements = ({
 
   return (
     <div className="space-y-8">
-      {/* Add new section button */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Add New Section</CardTitle>
-          <CardDescription>Select the type of section you want to add</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-            <Button 
-              variant="outline" 
-              onClick={() => addSection('title')}
-              className="flex items-center gap-2 h-auto py-3"
-            >
-              <Heading className="h-4 w-4" /> Title
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => addSection('agenda')}
-              className="flex items-center gap-2 h-auto py-3"
-            >
-              <FileText className="h-4 w-4" /> Agenda
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => addSection('summary')}
-              className="flex items-center gap-2 h-auto py-3"
-            >
-              <FileText className="h-4 w-4" /> Summary
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => addSection('diagram')}
-              className="flex items-center gap-2 h-auto py-3"
-            >
-              <FileImage className="h-4 w-4" /> Diagram
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => addSection('assumption')}
-              className="flex items-center gap-2 h-auto py-3"
-            >
-              <FileMinus className="h-4 w-4" /> Assumption
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => addSection('dependency')}
-              className="flex items-center gap-2 h-auto py-3"
-            >
-              <FilePlus className="h-4 w-4" /> Dependency
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={() => addSection('requirement')}
-              className="flex items-center gap-2 h-auto py-3"
-            >
-              <FileText className="h-4 w-4" /> Requirement
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Custom Sections */}
-      {sections.length > 0 && (
-        <Card>
-          <CardHeader>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
             <CardTitle>Custom Sections</CardTitle>
             <CardDescription>Your added content sections</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Accordion type="multiple" className="w-full">
-              {sections.map((section, index) => (
-                <AccordionItem key={section.id} value={section.id} className="border p-2 mb-3 rounded-lg">
-                  <div className="flex justify-between items-center">
-                    <AccordionTrigger className="flex-1">
-                      <div className="flex items-center gap-2">
-                        {getSectionIcon(section.type)}
-                        <span>{getSectionTitle(section.type)}</span>
-                      </div>
-                    </AccordionTrigger>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeSection(index);
-                      }}
-                      className="mr-2"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <AccordionContent>
-                    {renderSectionContent(section, index)}
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+          <Button 
+            variant="outline" 
+            onClick={() => setShowSectionMenu(!showSectionMenu)} 
+            className="flex items-center gap-1"
+          >
+            <PlusCircle className="h-4 w-4" /> Add Section
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {showSectionMenu && (
+            <div className="mb-6 p-4 border rounded-lg bg-gray-50">
+              <h3 className="text-sm font-medium mb-2">Select section type</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => addSection('title')}
+                  className="flex items-center gap-2 h-auto py-3"
+                >
+                  <Heading className="h-4 w-4" /> Title
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => addSection('agenda')}
+                  className="flex items-center gap-2 h-auto py-3"
+                >
+                  <FileText className="h-4 w-4" /> Agenda
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => addSection('summary')}
+                  className="flex items-center gap-2 h-auto py-3"
+                >
+                  <FileText className="h-4 w-4" /> Summary
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => addSection('diagram')}
+                  className="flex items-center gap-2 h-auto py-3"
+                >
+                  <FileImage className="h-4 w-4" /> Diagram
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => addSection('assumption')}
+                  className="flex items-center gap-2 h-auto py-3"
+                >
+                  <FileMinus className="h-4 w-4" /> Assumption
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => addSection('dependency')}
+                  className="flex items-center gap-2 h-auto py-3"
+                >
+                  <FilePlus className="h-4 w-4" /> Dependency
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => addSection('requirement')}
+                  className="flex items-center gap-2 h-auto py-3"
+                >
+                  <FileText className="h-4 w-4" /> Requirement
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {sections.length === 0 && !showSectionMenu && (
+            <div className="text-center py-8 text-gray-500">
+              <p>No custom sections added yet.</p>
+              <p className="text-sm">Click "Add Section" to create your first section.</p>
+            </div>
+          )}
+
+          {sections.map((section, index) => (
+            <div key={section.id} className="mb-6 border rounded-lg p-4">
+              <div className="flex justify-between items-center mb-3">
+                <div className="flex items-center gap-2 font-medium">
+                  {getSectionIcon(section.type)}
+                  <span>{getSectionTitle(section.type)}</span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => removeSection(index)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+              {renderSectionContent(section, index)}
+            </div>
+          ))}
+        </CardContent>
+      </Card>
 
       {/* Requirements */}
       <Card>
