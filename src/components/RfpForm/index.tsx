@@ -41,7 +41,7 @@ const STEPS = [
   "Tech Stack",
   "Requirements",
   "Timeline",
-  "Team & Resources",
+  "Resources",
   "Preview"
 ];
 
@@ -126,6 +126,17 @@ const RfpForm = () => {
         sector,
         clientInfo
       }));
+      
+      // Also save team when moving from step 0
+      dispatch(setTeam(team));
+      
+      // Also set Thor ID if it exists
+      const thorIdMember = team.find(m => m.id === "thor-id");
+      if (thorIdMember) {
+        dispatch(setThorId(thorIdMember.name));
+      } else if (thorId) {
+        dispatch(setThorId(thorId));
+      }
     } else if (currentStep === 2) {
       // Get flattened tech stack for backward compatibility
       const flattenedTechStack = [
@@ -146,14 +157,8 @@ const RfpForm = () => {
     } else if (currentStep === 4) {
       dispatch(setTimeline(timeline));
     } else if (currentStep === 5) {
-      dispatch(setTeam(team));
+      // Now only set resources here, team is set in step 0
       dispatch(setResources(resources));
-
-      // Also set Thor ID if it exists
-      const thorIdMember = team.find(m => m.id === "thor-id");
-      if (thorIdMember) {
-        dispatch(setThorId(thorIdMember.name));
-      }
     }
 
     if (currentStep < STEPS.length - 1) {
@@ -205,6 +210,8 @@ const RfpForm = () => {
     const thorIdMember = team.find(m => m.id === "thor-id");
     if (thorIdMember) {
       dispatch(setThorId(thorIdMember.name));
+    } else if (thorId) {
+      dispatch(setThorId(thorId));
     }
 
     // Save to storage
@@ -285,6 +292,9 @@ const RfpForm = () => {
                   }}
                 />
               </div>
+              
+              {/* Team component moved to Project Info */}
+              <Team onTeamChange={setTeamState} initialTeam={team} />
 
               <div className="space-y-2">
                 <Label htmlFor="client-info">Client Information</Label>
@@ -325,12 +335,7 @@ const RfpForm = () => {
         return <Timeline onTimelineChange={setTimelineState} initialTimeline={timeline} />;
 
       case 5:
-        return (
-          <div className="space-y-6">
-            <Team onTeamChange={setTeamState} initialTeam={team} />
-            <Resources onResourcesChange={setResourcesState} initialResources={resources} />
-          </div>
-        );
+        return <Resources onResourcesChange={setResourcesState} initialResources={resources} />;
 
       case 6:
         return (
