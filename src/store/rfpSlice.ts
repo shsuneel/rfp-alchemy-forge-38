@@ -1,3 +1,4 @@
+
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export interface RequirementItem {
@@ -14,6 +15,14 @@ export interface AssumptionItem {
 export interface DependencyItem {
   id: string;
   description: string;
+}
+
+export interface SectionItem {
+  id: string;
+  type: 'title' | 'agenda' | 'summary' | 'diagram' | 'assumption' | 'dependency' | 'requirement';
+  content: string;
+  priority?: "High" | "Medium" | "Low"; // Only for requirements
+  imageUrl?: string; // Only for diagrams
 }
 
 export interface Phase {
@@ -57,6 +66,7 @@ export interface RfpData {
   requirements: RequirementItem[];
   assumptions: AssumptionItem[];
   dependencies: DependencyItem[];
+  sections: SectionItem[];
   timeline: Phase[];
   team: TeamMember[];
   resources: ResourceLevel[];
@@ -75,6 +85,7 @@ interface RfpState {
   requirements: RequirementItem[];
   assumptions: AssumptionItem[];
   dependencies: DependencyItem[];
+  sections: SectionItem[];
   timeline: Phase[];
   team: TeamMember[];
   resources: ResourceLevel[];
@@ -112,6 +123,7 @@ const initialState: RfpState = {
   dependencies: [
     { id: "dep-default", description: "" }
   ],
+  sections: [],
   timeline: [
     {
       id: "phase-default",
@@ -155,6 +167,9 @@ export const rfpSlice = createSlice({
     setDependencies: (state, action: PayloadAction<DependencyItem[]>) => {
       state.dependencies = action.payload;
     },
+    setSections: (state, action: PayloadAction<SectionItem[]>) => {
+      state.sections = action.payload;
+    },
     setTimeline: (state, action: PayloadAction<Phase[]>) => {
       state.timeline = action.payload;
     },
@@ -178,6 +193,7 @@ export const rfpSlice = createSlice({
         requirements: state.requirements,
         assumptions: state.assumptions,
         dependencies: state.dependencies,
+        sections: state.sections,
         timeline: state.timeline,
         team: state.team,
         resources: state.resources,
@@ -235,6 +251,8 @@ export const rfpSlice = createSlice({
         state.requirements = rfpToLoad.requirements;
         state.assumptions = rfpToLoad.assumptions;
         state.dependencies = rfpToLoad.dependencies;
+        // Handle compatibility with older saved RFPs that don't have sections
+        state.sections = rfpToLoad.sections || [];
         state.timeline = rfpToLoad.timeline;
         // Handle compatibility with older saved RFPs that don't have team and resources
         state.team = rfpToLoad.team || initialState.team;
@@ -266,6 +284,7 @@ export const rfpSlice = createSlice({
       state.requirements = [{ id: "req-default", description: "", priority: "Medium" }];
       state.assumptions = [{ id: "assump-default", description: "" }];
       state.dependencies = [{ id: "dep-default", description: "" }];
+      state.sections = [];
       state.timeline = [{
         id: "phase-default",
         name: "Discovery",
@@ -286,6 +305,7 @@ export const {
   setRequirements,
   setAssumptions,
   setDependencies,
+  setSections,
   setTimeline,
   setTeam,
   setResources,

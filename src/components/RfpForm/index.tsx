@@ -17,11 +17,13 @@ import {
   setRequirements,
   setAssumptions,
   setDependencies,
+  setSections,
   setTimeline,
   setTeam,
   setResources,
   setThorId,
-  saveRfp
+  saveRfp,
+  SectionItem
 } from "@/store/rfpSlice";
 import { createFromRfp } from "@/store/presentationSlice";
 
@@ -33,7 +35,6 @@ import Timeline from "./Timeline";
 import Team from "./Team";
 import Resources from "./Resources";
 import Preview from "./Preview";
-import { set } from "date-fns";
 
 const STEPS = [
   "Project Info",
@@ -87,6 +88,7 @@ const RfpForm = () => {
   const [requirements, setRequirementsState] = useState(rfpState.requirements);
   const [assumptions, setAssumptionsState] = useState(rfpState.assumptions);
   const [dependencies, setDependenciesState] = useState(rfpState.dependencies);
+  const [sections, setSectionsState] = useState<SectionItem[]>(rfpState.sections || []);
   const [timeline, setTimelineState] = useState(rfpState.timeline);
   const [team, setTeamState] = useState(rfpState.team);
   const [resources, setResourcesState] = useState(rfpState.resources);
@@ -107,6 +109,7 @@ const RfpForm = () => {
     setRequirementsState(rfpState.requirements);
     setAssumptionsState(rfpState.assumptions);
     setDependenciesState(rfpState.dependencies);
+    setSectionsState(rfpState.sections || []);
     setTimelineState(rfpState.timeline);
     setTeamState(rfpState.team);
     setResourcesState(rfpState.resources);
@@ -154,6 +157,7 @@ const RfpForm = () => {
       dispatch(setRequirements(requirements));
       dispatch(setAssumptions(assumptions));
       dispatch(setDependencies(dependencies));
+      dispatch(setSections(sections));
     } else if (currentStep === 4) {
       dispatch(setTimeline(timeline));
     } else if (currentStep === 5) {
@@ -200,6 +204,7 @@ const RfpForm = () => {
     dispatch(setRequirements(requirements));
     dispatch(setAssumptions(assumptions));
     dispatch(setDependencies(dependencies));
+    dispatch(setSections(sections));
     dispatch(setTimeline(timeline));
 
     // Save team and resources
@@ -325,9 +330,11 @@ const RfpForm = () => {
             onRequirementsChange={setRequirementsState}
             onAssumptionsChange={setAssumptionsState}
             onDependenciesChange={setDependenciesState}
+            onSectionsChange={setSectionsState}
             initialRequirements={requirements}
             initialAssumptions={assumptions}
             initialDependencies={dependencies}
+            initialSections={sections}
           />
         );
 
@@ -352,6 +359,7 @@ const RfpForm = () => {
             timeline={timeline}
             team={team}
             resources={resources}
+            sections={sections}
           />
         );
 
