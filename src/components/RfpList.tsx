@@ -102,6 +102,7 @@ const RfpList = () => {
               <TableRow>
                 <TableHead>Project Name</TableHead>
                 <TableHead>Thor ID</TableHead>
+                <TableHead>Client</TableHead>
                 <TableHead>Created</TableHead>
                 <TableHead>Updated</TableHead>
                 <TableHead>Status</TableHead>
@@ -114,6 +115,7 @@ const RfpList = () => {
                 <TableRow key={rfp.id}>
                   <TableCell className="font-medium">{rfp.projectName}</TableCell>
                   <TableCell>{rfp.thorId || "-"}</TableCell>
+                  <TableCell>{rfp.client}</TableCell>
                   <TableCell>{format(new Date(rfp.createdAt), 'MMM d, yyyy')}</TableCell>
                   <TableCell>{format(new Date(rfp.updatedAt), 'MMM d, yyyy')}</TableCell>
                   <TableCell>

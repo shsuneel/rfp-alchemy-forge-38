@@ -68,7 +68,7 @@ const RfpForm = () => {
   const rfpState = useAppSelector(state => state.rfp);
 
   const [currentStep, setCurrentStep] = useState(0);
-  const [thorId, setThorIdState] = useState('');
+  const [thorId, setThorIdState] = useState(rfpState.thorId || "");
   const [projectName, setProjectName] = useState(rfpState.projectName);
   const [projectDescription, setProjectDescription] = useState(rfpState.projectDescription);
   const [sector, setSector] = useState(rfpState.sector);

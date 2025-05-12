@@ -62,6 +62,7 @@ export type RfpStatus = "InProgress" | "Completed" | "OnHold" | "Draft";
 export interface RfpData {
   id: string;
   thorId: string;
+  client: string;
   projectName: string;
   projectDescription: string;
   sector: string;

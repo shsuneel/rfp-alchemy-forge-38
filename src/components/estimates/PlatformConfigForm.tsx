@@ -4,8 +4,8 @@ import {
   Browser, 
   updateFormFactors, 
   updateBrowsers,
-  setContingency,
-  setRiskFactor
+  //setContingency,
+  //setRiskFactor
 } from "@/store/estimatesSlice";
 import { useAppSelector } from "@/hooks/useAppSelector";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
@@ -37,11 +37,11 @@ const PlatformConfigForm: React.FC = () => {
   };
   
   const handleContingencyChange = (value: number[]) => {
-    dispatch(setContingency(value[0]));
+    //dispatch(setContingency(value[0]));
   };
   
   const handleRiskFactorChange = (value: number[]) => {
-    dispatch(setRiskFactor(value[0]));
+   // dispatch(setRiskFactor(value[0]));
   };
 
   return (
