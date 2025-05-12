@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,6 +22,8 @@ import {
   setTeam,
   setResources,
   setThorId,
+  setStatus,
+  setRemarks,
   saveRfp,
   SectionItem,
   RfpStatus
@@ -231,6 +234,17 @@ const RfpForm = () => {
     dispatch(saveRfp());
 
     toast.success("RFP saved successfully!");
+  };
+
+  // Add handlers for status and remarks
+  const handleStatusChange = (newStatus: RfpStatus) => {
+    setStatusState(newStatus);
+    dispatch(setStatus(newStatus));
+  };
+
+  const handleRemarksChange = (newRemarks: string) => {
+    setRemarksState(newRemarks);
+    dispatch(setRemarks(newRemarks));
   };
 
   const handleCreatePresentation = () => {

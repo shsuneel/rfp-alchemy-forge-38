@@ -13,17 +13,19 @@ import { RfpData, loadRfp, deleteRfp, clearCurrentRfp } from "@/store/rfpSlice";
 import { format } from "date-fns";
 import { toast } from "sonner";
 
-// Define badge colors based on status
-const getStatusBadgeStyle = (status: string) => {
+// Define badge variants based on status
+const getStatusBadgeVariant = (status: string) => {
   switch (status) {
     case "InProgress":
-      return "bg-amber-100 text-amber-800 hover:bg-amber-100";
+      return "warning";
     case "Completed":
-      return "bg-green-100 text-green-800 hover:bg-green-100";
+      return "success";
     case "OnHold":
-      return "bg-gray-100 text-gray-800 hover:bg-gray-100";
+      return "neutral";
+    case "Draft":
+      return "info";
     default:
-      return "bg-blue-100 text-blue-800 hover:bg-blue-100";
+      return "info";
   }
 };
 
@@ -114,7 +116,7 @@ const RfpList = () => {
                   <TableCell>{format(new Date(rfp.createdAt), 'MMM d, yyyy')}</TableCell>
                   <TableCell>{format(new Date(rfp.updatedAt), 'MMM d, yyyy')}</TableCell>
                   <TableCell>
-                    <Badge variant="outline" className={getStatusBadgeStyle(rfp.status || 'InProgress')}>
+                    <Badge variant={getStatusBadgeVariant(rfp.status || 'InProgress')}>
                       {rfp.status || "InProgress"}
                     </Badge>
                   </TableCell>
