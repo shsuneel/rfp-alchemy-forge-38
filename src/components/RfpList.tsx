@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,6 +11,8 @@ import { useAppSelector } from "@/hooks/useAppSelector";
 import { RfpData, loadRfp, deleteRfp, clearCurrentRfp } from "@/store/rfpSlice";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { useNavigation } from "@/hooks/useNavigation";
+import { ROUTES } from "@/routes";
 
 // Define badge variants based on status
 const getStatusBadgeVariant = (status: string) => {
@@ -31,7 +32,7 @@ const getStatusBadgeVariant = (status: string) => {
 
 const RfpList = () => {
   const dispatch = useAppDispatch();
-  const navigate = useNavigate();
+  const { navigateTo } = useNavigation();
   const savedRfps = useAppSelector(state => state.rfp.savedRfps);
   const [rfpToDelete, setRfpToDelete] = useState<string | null>(null);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
@@ -39,7 +40,7 @@ const RfpList = () => {
   const handleLoadRfp = (rfpId: string) => {
     dispatch(loadRfp(rfpId));
     toast.success("RFP loaded successfully");
-    navigate("/?tab=rfp");
+    navigateTo(ROUTES.HOME, undefined, { replace: false, state: { tab: "rfp" } });
   };
 
   const handleDeleteRfp = (rfpId: string) => {
@@ -59,13 +60,13 @@ const RfpList = () => {
   const handleCreateNew = () => {
     dispatch(clearCurrentRfp());
     toast.success("Started a new RFP");
-    navigate("/?tab=rfp");
+    navigateTo(ROUTES.HOME, undefined, { replace: false, state: { tab: "rfp" } });
   };
 
   const handleEditRfp = (rfpId: string) => {
     dispatch(loadRfp(rfpId));
     toast.success("RFP loaded for editing");
-    navigate("/?tab=rfp");
+    navigateTo(ROUTES.HOME, undefined, { replace: false, state: { tab: "rfp" } });
   };
 
   if (savedRfps.length === 0) {
