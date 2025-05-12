@@ -18,8 +18,11 @@ const Index = () => {
 
   // Update URL when tab changes
   useEffect(() => {
+  const tab = searchParams.get('tab');
+    if(tab !== activeTab) {
     setSearchParams({ tab: activeTab });
-  }, [activeTab, setSearchParams]);
+    }
+  }, [activeTab, searchParams, setSearchParams]);
 
   // Update tab when URL changes
   useEffect(() => {
@@ -27,6 +30,10 @@ const Index = () => {
       setActiveTab(tabFromUrl);
     }
   }, [tabFromUrl]);
+
+  const onTabChanged = (value: string) => {
+    return setActiveTab(value);
+  }
 
   return (
     <SidebarProvider>

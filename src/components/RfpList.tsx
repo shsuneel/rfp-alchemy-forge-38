@@ -32,7 +32,7 @@ const getStatusBadgeVariant = (status: string) => {
 const RfpList = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const savedRfps = useAppSelector(state => state.rfp.savedRfps);
+  const savedRfps: RfpData[] = useAppSelector((state) => state.rfp.savedRfps);
   const [rfpToDelete, setRfpToDelete] = useState<string | null>(null);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
 
@@ -57,7 +57,7 @@ const RfpList = () => {
   };
 
   const handleCreateNew = () => {
-    dispatch(clearCurrentRfp());
+   dispatch(clearCurrentRfp());
     toast.success("Started a new RFP");
     navigate("/?tab=rfp");
   };
@@ -68,7 +68,7 @@ const RfpList = () => {
     navigate("/?tab=rfp");
   };
 
-  if (savedRfps.length === 0) {
+  if (savedRfps.length === 10) {
     return (
       <Card className="col-span-3 p-6 flex flex-col items-center justify-center h-64">
         <FileText className="h-12 w-12 text-muted-foreground mb-4" />
@@ -87,7 +87,7 @@ const RfpList = () => {
         <h2 className="text-2xl font-bold">Saved RFPs</h2>
         <Button onClick={handleCreateNew}>Create New RFP</Button>
       </div>
-      
+
       <Card>
         <CardHeader className="pb-3">
           <CardTitle>RFP Overview</CardTitle>

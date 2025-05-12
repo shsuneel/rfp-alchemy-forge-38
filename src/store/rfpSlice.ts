@@ -1,4 +1,8 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
+
+import axios from 'axios';
+
 
 export interface RequirementItem {
   id: string;
@@ -94,13 +98,14 @@ interface RfpState {
   resources: ResourceLevel[];
   status: RfpStatus;
   remarks: string;
+  initialData: any;
   savedRfps: RfpData[];
 }
 
 // Load saved RFPs from localStorage if available
 const getSavedRfps = (): RfpData[] => {
   if (typeof window === 'undefined') return [];
-  
+
   const savedRfps = localStorage.getItem('savedRfps');
   return savedRfps ? JSON.parse(savedRfps) : [];
 };
@@ -145,8 +150,20 @@ const initialState: RfpState = {
   ],
   status: "Draft",
   remarks: "",
+  initialData: {},
   savedRfps: getSavedRfps()
 };
+
+
+export const fetchInitialData = createAsyncThunk(
+  'data/fetchInitialData',
+  async () => {
+    const baseData = await axios.get('http://localhost:3020/rfp/basedata');
+    const rfps = await axios.get('http://localhost:3020/rfp/rfps');
+    return { baseData: baseData.data, rfps: rfps.data.rfps };
+  }
+);
+
 
 export const rfpSlice = createSlice({
   name: 'rfp',
@@ -215,11 +232,11 @@ export const rfpSlice = createSlice({
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
-      
+
       // Check if this RFP already exists (by projectName)
-      const existingIndex = state.savedRfps.findIndex(rfp => 
+      const existingIndex = state.savedRfps.findIndex(rfp =>
         rfp.projectName === state.projectName && rfp.projectName !== '');
-      
+
       if (existingIndex !== -1 && state.projectName !== '') {
         // Update existing RFP
         state.savedRfps[existingIndex] = {
@@ -231,7 +248,7 @@ export const rfpSlice = createSlice({
         // Add new RFP
         state.savedRfps.push(newRfp);
       }
-      
+
       // Save to localStorage
       if (typeof window !== 'undefined') {
         localStorage.setItem('savedRfps', JSON.stringify(state.savedRfps));
@@ -240,7 +257,7 @@ export const rfpSlice = createSlice({
     loadRfp: (state, action: PayloadAction<string>) => {
       const rfpId = action.payload;
       const rfpToLoad = state.savedRfps.find(rfp => rfp.id === rfpId);
-      
+
       if (rfpToLoad) {
         state.thorId = rfpToLoad.thorId || '';
         state.projectName = rfpToLoad.projectName;
@@ -248,7 +265,7 @@ export const rfpSlice = createSlice({
         state.sector = rfpToLoad.sector;
         state.clientInfo = rfpToLoad.clientInfo;
         state.techStack = rfpToLoad.techStack;
-        
+
         // Handle compatibility with older saved RFPs that don't have techStackByLayer
         if (rfpToLoad.techStackByLayer) {
           state.techStackByLayer = rfpToLoad.techStackByLayer;
@@ -262,7 +279,7 @@ export const rfpSlice = createSlice({
             other: rfpToLoad.techStack || []
           };
         }
-        
+
         state.requirements = rfpToLoad.requirements;
         state.assumptions = rfpToLoad.assumptions;
         state.dependencies = rfpToLoad.dependencies;
@@ -279,7 +296,7 @@ export const rfpSlice = createSlice({
     },
     deleteRfp: (state, action: PayloadAction<string>) => {
       state.savedRfps = state.savedRfps.filter(rfp => rfp.id !== action.payload);
-      
+
       // Update localStorage
       if (typeof window !== 'undefined') {
         localStorage.setItem('savedRfps', JSON.stringify(state.savedRfps));
@@ -314,6 +331,21 @@ export const rfpSlice = createSlice({
       state.resources = initialState.resources;
     }
   },
+  extraReducers: (builder) => {
+    builder
+    .addCase(fetchInitialData.fulfilled, (state, action) => {
+      state.initialData = action.payload;
+      state.savedRfps = action.payload.rfps;
+    })
+    .addCase(fetchInitialData.rejected, (state, action) => {
+      console.error("Error fetching initial data:", action.error.message);
+    })
+    .addCase(fetchInitialData.pending, (state) => {
+      // Optionally handle loading state
+    })
+  },
+  // Add any additional reducers if needed
+  // e.g., for handling async actions or other state updates
 });
 
 export const {

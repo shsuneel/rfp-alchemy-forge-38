@@ -74,7 +74,7 @@ const TechStack = ({
         other: techStackByLayer.other || [],
       });
     }
-  }, [techStackByLayer]);
+  }, []);
 
   // Update parent component when local state changes
   useEffect(() => {

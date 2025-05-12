@@ -10,26 +10,31 @@ import { store } from "./store";
 import Index from "./pages/Index";
 import Estimates from "./pages/Estimates";
 import NotFound from "./pages/NotFound";
+import { fetchInitialData } from "./store/rfpSlice"; // Import your action to fetch initial data
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <Provider store={store}>
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider delayDuration={0}>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/estimates" element={<Estimates />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
-  </Provider>
-);
+const App = () => {
+  store.dispatch(fetchInitialData())
+    return (
+      <Provider store={store}>
+        <QueryClientProvider client={queryClient}>
+          <TooltipProvider delayDuration={0}>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/estimates" element={<Estimates />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </QueryClientProvider>
+      </Provider>
+    );
+  //})
+};
 
 export default App;

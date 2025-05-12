@@ -7,18 +7,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { 
-  Trash2, 
-  Plus, 
-  FileText, 
-  FileImage, 
-  FileMinus, 
-  FilePlus, 
+import {
+  Trash2,
+  Plus,
+  FileText,
+  FileImage,
+  FileMinus,
+  FilePlus,
   Heading,
   PlusCircle
 } from "lucide-react";
 
-import { RequirementItem, AssumptionItem, DependencyItem } from "@/store/rfpSlice"; 
+import { RequirementItem, AssumptionItem, DependencyItem } from "@/store/rfpSlice";
 
 // Define section types
 export interface SectionItem {
@@ -159,7 +159,7 @@ const Requirements = ({
       content: "",
       priority: type === 'requirement' ? "Medium" : undefined,
     };
-    
+
     setSections([...sections, newSection]);
     setShowSectionMenu(false);
   };
@@ -174,138 +174,199 @@ const Requirements = ({
     setSections(sections.filter((_, i) => i !== index));
   };
 
+  const removeSectionItem = (index: number) => {
+    setSections(sections.filter((_, i) => i !== index));
+  };
+  
+
   // Render section based on type
   const renderSectionContent = (section: SectionItem, index: number) => {
-    switch (section.type) {
-      case 'title':
-        return (
-          <div className="space-y-2">
-            <Label>Title</Label>
-            <Input 
-              value={section.content} 
-              onChange={(e) => updateSection(index, 'content', e.target.value)}
-              placeholder="Enter title"
-              className="font-bold text-lg"
-            />
-          </div>
-        );
-      
-      case 'agenda':
-        return (
-          <div className="space-y-2">
-            <Label>Agenda</Label>
-            <Textarea 
-              value={section.content} 
-              onChange={(e) => updateSection(index, 'content', e.target.value)}
-              placeholder="Enter agenda items"
-              rows={4}
-            />
-          </div>
-        );
-      
-      case 'summary':
-        return (
-          <div className="space-y-2">
-            <Label>Summary</Label>
-            <Textarea 
-              value={section.content} 
-              onChange={(e) => updateSection(index, 'content', e.target.value)}
-              placeholder="Enter summary text"
-              rows={4}
-            />
-          </div>
-        );
-      
-      case 'diagram':
-        return (
-          <div className="space-y-2">
-            <Label>Diagram</Label>
-            <Input 
-              type="file" 
-              accept="image/*"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  const reader = new FileReader();
-                  reader.onloadend = () => {
-                    updateSection(index, 'imageUrl', reader.result as string);
-                    updateSection(index, 'content', file.name);
-                  };
-                  reader.readAsDataURL(file);
-                }
-              }}
-            />
-            {section.imageUrl && (
-              <div className="mt-2">
-                <img 
-                  src={section.imageUrl} 
-                  alt="Diagram" 
-                  className="max-w-full h-auto border rounded" 
-                />
-              </div>
-            )}
-          </div>
-        );
-      
-      case 'assumption':
-        return (
-          <div className="space-y-2">
-            <Label>Assumption</Label>
-            <Textarea 
-              value={section.content} 
-              onChange={(e) => updateSection(index, 'content', e.target.value)}
-              placeholder="Enter assumption"
-              rows={3}
-            />
-          </div>
-        );
-      
-      case 'dependency':
-        return (
-          <div className="space-y-2">
-            <Label>Dependency</Label>
-            <Textarea 
-              value={section.content} 
-              onChange={(e) => updateSection(index, 'content', e.target.value)}
-              placeholder="Enter dependency"
-              rows={3}
-            />
-          </div>
-        );
-      
-      case 'requirement':
-        return (
-          <div className="space-y-2">
-            <Label>Requirement</Label>
-            <Textarea 
-              value={section.content} 
-              onChange={(e) => updateSection(index, 'content', e.target.value)}
-              placeholder="Enter requirement"
-              rows={3}
-              className="mb-2"
-            />
-            <div className="flex items-center">
-              <Label htmlFor={`priority-${index}`} className="mr-2">Priority:</Label>
-              <Select
-                value={section.priority || "Medium"}
-                onValueChange={(value) => updateSection(index, 'priority', value)}
-              >
-                <SelectTrigger id={`priority-${index}`} className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="High">High</SelectItem>
-                  <SelectItem value="Medium">Medium</SelectItem>
-                  <SelectItem value="Low">Low</SelectItem>
-                </SelectContent>
-              </Select>
+    return (
+      <div>
+        <div className="space-y-2">
+          <div className="flex justify-between items-center mb-3">
+            <div className="flex items-center gap-2 font-medium">
+              <span>Section Title</span>
             </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => removeSection(index)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
           </div>
-        );
-      
-      default:
-        return null;
-    }
+          <Input
+            value={section.content}
+            onChange={(e) => updateSection(index, 'content', e.target.value)}
+            placeholder="Enter title"
+            className="font-bold text-lg"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex justify-between items-center mb-3">
+            <div className="flex items-center gap-2 font-medium">
+              <Label>Agenda</Label>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => removeSection(index)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+          <Textarea
+            value={section.content}
+            onChange={(e) => updateSection(index, 'content', e.target.value)}
+            placeholder="Enter agenda items"
+            rows={4}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex justify-between items-center mb-3">
+            <div className="flex items-center gap-2 font-medium">
+              <Label>Summary</Label>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => removeSection(index)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+          <Textarea
+            value={section.content}
+            onChange={(e) => updateSection(index, 'content', e.target.value)}
+            placeholder="Enter summary text"
+            rows={4}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex justify-between items-center mb-3">
+            <div className="flex items-center gap-2 font-medium">
+              <Label>Diagram</Label>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => removeSection(index)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+          <Input
+            type="file"
+            accept="image/*"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                  updateSection(index, 'imageUrl', reader.result as string);
+                  updateSection(index, 'content', file.name);
+                };
+                reader.readAsDataURL(file);
+              }
+            }}
+          />
+          {section.imageUrl && (
+            <div className="mt-2">
+              <img
+                src={section.imageUrl}
+                alt="Diagram"
+                className="max-w-full h-auto border rounded"
+              />
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex justify-between items-center mb-3">
+            <div className="flex items-center gap-2 font-medium">
+              <Label>Assumption</Label>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => removeSection(index)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+          <Textarea
+            value={section.content}
+            onChange={(e) => updateSection(index, 'content', e.target.value)}
+            placeholder="Enter assumption"
+            rows={3}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex justify-between items-center mb-3">
+            <div className="flex items-center gap-2 font-medium">
+              <Label>Dependency</Label>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => removeSection(index)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+          <Textarea
+            value={section.content}
+            onChange={(e) => updateSection(index, 'content', e.target.value)}
+            placeholder="Enter dependency"
+            rows={3}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex justify-between items-center mb-3">
+            <div className="flex items-center gap-2 font-medium">
+              <Label>Requirement</Label>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => removeSection(index)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+          <Textarea
+            value={section.content}
+            onChange={(e) => updateSection(index, 'content', e.target.value)}
+            placeholder="Enter requirement"
+            rows={3}
+            className="mb-2"
+          />
+          <div className="flex items-center">
+            <Label htmlFor={`priority-${index}`} className="mr-2">Priority:</Label>
+            <Select
+              value={section.priority || "Medium"}
+              onValueChange={(value) => updateSection(index, 'priority', value)}
+            >
+              <SelectTrigger id={`priority-${index}`} className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="High">High</SelectItem>
+                <SelectItem value="Medium">Medium</SelectItem>
+                <SelectItem value="Low">Low</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
+    );
+
   };
 
   const getSectionIcon = (type: SectionItem['type']) => {
@@ -327,107 +388,6 @@ const Requirements = ({
 
   return (
     <div className="space-y-8">
-      {/* Custom Sections */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle>Custom Sections</CardTitle>
-            <CardDescription>Your added content sections</CardDescription>
-          </div>
-          <Button 
-            variant="outline" 
-            onClick={() => setShowSectionMenu(!showSectionMenu)} 
-            className="flex items-center gap-1"
-          >
-            <PlusCircle className="h-4 w-4" /> Add Section
-          </Button>
-        </CardHeader>
-        <CardContent>
-          {showSectionMenu && (
-            <div className="mb-6 p-4 border rounded-lg bg-gray-50">
-              <h3 className="text-sm font-medium mb-2">Select section type</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                <Button 
-                  variant="outline" 
-                  onClick={() => addSection('title')}
-                  className="flex items-center gap-2 h-auto py-3"
-                >
-                  <Heading className="h-4 w-4" /> Title
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => addSection('agenda')}
-                  className="flex items-center gap-2 h-auto py-3"
-                >
-                  <FileText className="h-4 w-4" /> Agenda
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => addSection('summary')}
-                  className="flex items-center gap-2 h-auto py-3"
-                >
-                  <FileText className="h-4 w-4" /> Summary
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => addSection('diagram')}
-                  className="flex items-center gap-2 h-auto py-3"
-                >
-                  <FileImage className="h-4 w-4" /> Diagram
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => addSection('assumption')}
-                  className="flex items-center gap-2 h-auto py-3"
-                >
-                  <FileMinus className="h-4 w-4" /> Assumption
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => addSection('dependency')}
-                  className="flex items-center gap-2 h-auto py-3"
-                >
-                  <FilePlus className="h-4 w-4" /> Dependency
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => addSection('requirement')}
-                  className="flex items-center gap-2 h-auto py-3"
-                >
-                  <FileText className="h-4 w-4" /> Requirement
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {sections.length === 0 && !showSectionMenu && (
-            <div className="text-center py-8 text-gray-500">
-              <p>No custom sections added yet.</p>
-              <p className="text-sm">Click "Add Section" to create your first section.</p>
-            </div>
-          )}
-
-          {sections.map((section, index) => (
-            <div key={section.id} className="mb-6 border rounded-lg p-4">
-              <div className="flex justify-between items-center mb-3">
-                <div className="flex items-center gap-2 font-medium">
-                  {getSectionIcon(section.type)}
-                  <span>{getSectionTitle(section.type)}</span>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => removeSection(index)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-              {renderSectionContent(section, index)}
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-
       {/* Requirements */}
       <Card>
         <CardHeader>
@@ -556,6 +516,50 @@ const Requirements = ({
           </Button>
         </CardContent>
       </Card>
+      {/* Custom Sections */}
+      {/* <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Custom Sections</CardTitle>
+            <CardDescription>Your added content sections</CardDescription>
+          </div>
+          <Button
+            variant="outline"
+            onClick={() => addSection("title")}
+            className="flex items-center gap-1"
+          >
+            <PlusCircle className="h-4 w-4" /> Add Section
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {sections.length === 0 && !showSectionMenu && (
+            <div className="text-center py-8 text-gray-500">
+              <p>No custom sections added yet.</p>
+              <p className="text-sm">Click "Add Section" to create your first section.</p>
+            </div>
+          )}
+
+          {sections.map((section, index) => (
+            <div key={section.id} className="mb-6 border rounded-lg p-4">
+              <div className="flex justify-between items-center mb-3">
+                <div className="flex items-center gap-2 font-medium">
+                  {'Section: ' + (index + 1)}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => removeSection(index)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+              {renderSectionContent(section, index)}
+            </div>
+          ))}
+        </CardContent>
+      </Card> */}
+
+      
     </div>
   );
 };
