@@ -1,225 +1,168 @@
-
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import React from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Section } from "@/components/ui/Section";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RfpStatus } from "@/store/rfpSlice";
 
-interface RequirementItem {
-  id: string;
-  description: string;
-  priority: "High" | "Medium" | "Low";
-}
-
-interface AssumptionItem {
-  id: string;
-  description: string;
-}
-
-interface DependencyItem {
-  id: string;
-  description: string;
-}
-
-interface Phase {
-  id: string;
-  name: string;
-  description: string;
-  durationWeeks: number;
-}
-
-interface PreviewProps {
+export interface PreviewProps {
   projectName: string;
   projectDescription: string;
   sector: string;
   clientInfo: string;
   files: File[];
   techStack: string[];
-  requirements: RequirementItem[];
-  assumptions: AssumptionItem[];
-  dependencies: DependencyItem[];
-  timeline: Phase[];
+  requirements: any[];
+  assumptions: any[];
+  dependencies: any[];
+  timeline: any[];
+  team: any[];
+  resources: any[];
+  sections: any[];
+  thorId: string;
+  status?: RfpStatus;
+  remarks?: string;
+  onStatusChange?: (status: RfpStatus) => void;
+  onRemarksChange?: (remarks: string) => void;
 }
 
-const Preview: React.FC<PreviewProps> = ({
-  projectName,
-  projectDescription,
-  sector,
-  clientInfo,
-  files,
-  techStack,
-  requirements,
-  assumptions,
-  dependencies,
-  timeline
-}) => {
-  const totalWeeks = timeline.reduce((sum, phase) => sum + phase.durationWeeks, 0);
-  const formattedDate = new Date().toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric"
-  });
-
+const Preview: React.FC<PreviewProps> = (props) => {
   return (
-    <div className="space-y-6 animate-scale-in print:p-8">
-      <div className="print:hidden flex justify-between mb-4">
-        <h2 className="text-2xl font-bold">RFP Preview</h2>
-        <button
-          onClick={() => window.print()}
-          className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
-        >
-          Print / Export PDF
-        </button>
-      </div>
-
-      <div className="border rounded-md p-8 bg-white shadow-sm">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">{projectName || "Request for Proposal"}</h1>
-          <p className="text-muted-foreground mb-2">{sector || "Technology"} Sector</p>
-          <p className="text-sm">Generated on {formattedDate}</p>
-        </div>
-
-        <div className="space-y-8">
-          {/* Project Overview */}
-          <section>
-            <h2 className="text-xl font-bold border-b pb-2 mb-4">1. Project Overview</h2>
-            <p className="mb-4">{projectDescription || "No project description provided."}</p>
-            
-            <h3 className="text-lg font-semibold mb-2">Client Information</h3>
-            <p>{clientInfo || "No client information provided."}</p>
-          </section>
-
-          {/* Technical Requirements */}
-          <section>
-            <h2 className="text-xl font-bold border-b pb-2 mb-4">2. Technical Requirements</h2>
-            
-            <div className="mb-4">
-              <h3 className="text-lg font-semibold mb-2">Technology Stack</h3>
-              {techStack.length > 0 ? (
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {techStack.map((tech) => (
-                    <Badge key={tech} variant="outline">
-                      {tech}
-                    </Badge>
-                  ))}
-                </div>
-              ) : (
-                <p>No technologies specified.</p>
-              )}
-            </div>
-            
-            <div className="mb-4">
-              <h3 className="text-lg font-semibold mb-2">Functional Requirements</h3>
-              {requirements.filter(r => r.description).length > 0 ? (
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr className="bg-muted">
-                      <th className="border px-3 py-2 text-left">ID</th>
-                      <th className="border px-3 py-2 text-left">Requirement</th>
-                      <th className="border px-3 py-2 text-left">Priority</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {requirements
-                      .filter(req => req.description)
-                      .map((req, index) => (
-                        <tr key={req.id}>
-                          <td className="border px-3 py-2">REQ-{index + 1}</td>
-                          <td className="border px-3 py-2">{req.description}</td>
-                          <td className="border px-3 py-2">
-                            <Badge variant={
-                              req.priority === "High" ? "destructive" :
-                              req.priority === "Medium" ? "default" : "outline"
-                            }>
-                              {req.priority}
-                            </Badge>
-                          </td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
-              ) : (
-                <p>No requirements specified.</p>
-              )}
-            </div>
-          </section>
-
-          {/* Assumptions and Dependencies */}
-          <section>
-            <h2 className="text-xl font-bold border-b pb-2 mb-4">3. Assumptions and Dependencies</h2>
-            
-            <div className="mb-4">
-              <h3 className="text-lg font-semibold mb-2">Assumptions</h3>
-              {assumptions.filter(a => a.description).length > 0 ? (
-                <ul className="list-disc pl-5 space-y-1">
-                  {assumptions
-                    .filter(assumption => assumption.description)
-                    .map((assumption, index) => (
-                      <li key={assumption.id}>{assumption.description}</li>
-                    ))}
-                </ul>
-              ) : (
-                <p>No assumptions specified.</p>
-              )}
-            </div>
-            
-            <div className="mb-4">
-              <h3 className="text-lg font-semibold mb-2">Dependencies</h3>
-              {dependencies.filter(d => d.description).length > 0 ? (
-                <ul className="list-disc pl-5 space-y-1">
-                  {dependencies
-                    .filter(dependency => dependency.description)
-                    .map((dependency, index) => (
-                      <li key={dependency.id}>{dependency.description}</li>
-                    ))}
-                </ul>
-              ) : (
-                <p>No dependencies specified.</p>
-              )}
-            </div>
-          </section>
-
-          {/* Implementation Timeline */}
-          <section>
-            <h2 className="text-xl font-bold border-b pb-2 mb-4">4. Implementation Timeline</h2>
-            
-            <p className="mb-4">
-              Estimated project duration: {totalWeeks} {totalWeeks === 1 ? "week" : "weeks"}
-              ({(totalWeeks / 4).toFixed(1)} months)
-            </p>
-            
-            {timeline.length > 0 ? (
-              <div className="space-y-4">
-                {timeline.map((phase, index) => (
-                  <div key={phase.id} className="border rounded p-3">
-                    <h4 className="font-semibold mb-1">
-                      Phase {index + 1}: {phase.name} 
-                      <span className="text-sm font-normal ml-2">
-                        ({phase.durationWeeks} {phase.durationWeeks === 1 ? "week" : "weeks"})
-                      </span>
-                    </h4>
-                    <p className="text-sm">{phase.description}</p>
-                  </div>
-                ))}
+    <div>
+      <Card className="animate-fade-in">
+        <CardHeader>
+          <CardTitle>RFP Preview</CardTitle>
+          <CardDescription>
+            Review the information before saving
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Section title="Project Overview">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <h4 className="text-sm font-medium mb-1">Project Name</h4>
+                <p>{props.projectName || "N/A"}</p>
               </div>
-            ) : (
-              <p>No timeline phases specified.</p>
-            )}
-          </section>
+              <div>
+                <h4 className="text-sm font-medium mb-1">Sector</h4>
+                <p>{props.sector || "N/A"}</p>
+              </div>
+            </div>
+            <div>
+              <h4 className="text-sm font-medium mb-1">Project Description</h4>
+              <p>{props.projectDescription || "N/A"}</p>
+            </div>
+          </Section>
 
-          {/* Supporting Documents */}
-          <section>
-            <h2 className="text-xl font-bold border-b pb-2 mb-4">5. Supporting Documents</h2>
-            
-            {files.length > 0 ? (
-              <ul className="list-disc pl-5">
-                {files.map((file, index) => (
-                  <li key={index}>{file.name}</li>
-                ))}
-              </ul>
-            ) : (
-              <p>No supporting documents attached.</p>
-            )}
-          </section>
-        </div>
-      </div>
+          <Section title="Client Information">
+            <h4 className="text-sm font-medium mb-1">Client Info</h4>
+            <p>{props.clientInfo || "N/A"}</p>
+          </Section>
+
+          <Section title="Thor ID">
+            <h4 className="text-sm font-medium mb-1">Thor ID</h4>
+            <p>{props.thorId || "N/A"}</p>
+          </Section>
+
+          <Section title="Status & Remarks">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div>
+                <h4 className="text-sm font-medium mb-1">Status</h4>
+                <Select 
+                  value={props.status || "InProgress"} 
+                  onValueChange={props.onStatusChange}
+                  disabled={!props.onStatusChange}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Draft">Draft</SelectItem>
+                    <SelectItem value="InProgress">In Progress</SelectItem>
+                    <SelectItem value="OnHold">On Hold</SelectItem>
+                    <SelectItem value="Completed">Completed</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <h4 className="text-sm font-medium mb-1">Remarks</h4>
+                <Textarea 
+                  value={props.remarks || ""} 
+                  onChange={e => props.onRemarksChange?.(e.target.value)}
+                  placeholder="Add any additional notes or remarks"
+                  disabled={!props.onRemarksChange}
+                />
+              </div>
+            </div>
+          </Section>
+
+          <Section title="Tech Stack">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+              {props.techStack.map((tech, index) => (
+                <Badge key={index}>{tech}</Badge>
+              ))}
+            </div>
+          </Section>
+
+          <Section title="Requirements">
+            {props.requirements.map((req, index) => (
+              <div key={index} className="mb-2">
+                <h4 className="text-sm font-medium">Requirement {index + 1}</h4>
+                <p>{req.description || "N/A"}</p>
+              </div>
+            ))}
+          </Section>
+
+          <Section title="Assumptions">
+            {props.assumptions.map((assumption, index) => (
+              <div key={index} className="mb-2">
+                <h4 className="text-sm font-medium">Assumption {index + 1}</h4>
+                <p>{assumption.description || "N/A"}</p>
+              </div>
+            ))}
+          </Section>
+
+          <Section title="Dependencies">
+            {props.dependencies.map((dependency, index) => (
+              <div key={index} className="mb-2">
+                <h4 className="text-sm font-medium">Dependency {index + 1}</h4>
+                <p>{dependency.description || "N/A"}</p>
+              </div>
+            ))}
+          </Section>
+
+          <Section title="Timeline">
+            {props.timeline.map((phase, index) => (
+              <div key={index} className="mb-2">
+                <h4 className="text-sm font-medium">{phase.name}</h4>
+                <p>{phase.description || "N/A"}</p>
+                <p>Duration: {phase.durationWeeks} weeks</p>
+              </div>
+            ))}
+          </Section>
+
+          <Section title="Team">
+            {props.team.map((member, index) => (
+              <div key={index} className="mb-2">
+                <h4 className="text-sm font-medium">{member.name}</h4>
+                <p>Role: {member.role || "N/A"}</p>
+                <p>Email: {member.email || "N/A"}</p>
+              </div>
+            ))}
+          </Section>
+
+          <Section title="Resources">
+            {props.resources.map((resource, index) => (
+              <div key={index} className="mb-2">
+                <h4 className="text-sm font-medium">{resource.title}</h4>
+                <p>Level: {resource.level || "N/A"}</p>
+                <p>Hourly Rate: ${resource.hourlyRate || "N/A"}</p>
+              </div>
+            ))}
+          </Section>
+        </CardContent>
+      </Card>
     </div>
   );
 };

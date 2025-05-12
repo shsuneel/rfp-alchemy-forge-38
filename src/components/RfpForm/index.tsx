@@ -22,7 +22,8 @@ import {
   setResources,
   setThorId,
   saveRfp,
-  SectionItem
+  SectionItem,
+  RfpStatus
 } from "@/store/rfpSlice";
 import { createFromRfp } from "@/store/presentationSlice";
 
@@ -91,6 +92,8 @@ const RfpForm = () => {
   const [timeline, setTimelineState] = useState(rfpState.timeline);
   const [team, setTeamState] = useState(rfpState.team);
   const [resources, setResourcesState] = useState(rfpState.resources);
+  const [status, setStatusState] = useState<RfpStatus>(rfpState.status || "Draft");
+  const [remarks, setRemarksState] = useState(rfpState.remarks || "");
 
   // Update local state when Redux state changes (for imported RFPs)
   useEffect(() => {
@@ -112,6 +115,8 @@ const RfpForm = () => {
     setTimelineState(rfpState.timeline);
     setTeamState(rfpState.team);
     setResourcesState(rfpState.resources);
+    setStatusState(rfpState.status || "Draft");
+    setRemarksState(rfpState.remarks || "");
   }, [rfpState]);
 
   const handleNext = () => {
@@ -217,6 +222,10 @@ const RfpForm = () => {
     } else if (thorId) {
       dispatch(setThorId(thorId));
     }
+
+    // Save status and remarks
+    dispatch(setStatus(status));
+    dispatch(setRemarks(remarks));
 
     // Save to storage
     dispatch(saveRfp());
@@ -360,6 +369,10 @@ const RfpForm = () => {
             resources={resources}
             sections={sections}
             thorId={thorId}
+            status={status}
+            remarks={remarks}
+            onStatusChange={handleStatusChange}
+            onRemarksChange={handleRemarksChange}
           />
         );
 

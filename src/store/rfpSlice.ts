@@ -1,4 +1,3 @@
-
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export interface RequirementItem {
@@ -54,6 +53,8 @@ export interface ResourceLevel {
   hourlyRate: number;
 }
 
+export type RfpStatus = "InProgress" | "Completed" | "OnHold" | "Draft";
+
 export interface RfpData {
   id: string;
   thorId: string;
@@ -70,6 +71,8 @@ export interface RfpData {
   timeline: Phase[];
   team: TeamMember[];
   resources: ResourceLevel[];
+  status: RfpStatus;
+  remarks: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -89,6 +92,8 @@ interface RfpState {
   timeline: Phase[];
   team: TeamMember[];
   resources: ResourceLevel[];
+  status: RfpStatus;
+  remarks: string;
   savedRfps: RfpData[];
 }
 
@@ -138,6 +143,8 @@ const initialState: RfpState = {
   resources: [
     { id: "res-consultant", title: "", level: "", hourlyRate: 75 },
   ],
+  status: "Draft",
+  remarks: "",
   savedRfps: getSavedRfps()
 };
 
@@ -179,6 +186,12 @@ export const rfpSlice = createSlice({
     setResources: (state, action: PayloadAction<ResourceLevel[]>) => {
       state.resources = action.payload;
     },
+    setStatus: (state, action: PayloadAction<RfpStatus>) => {
+      state.status = action.payload;
+    },
+    setRemarks: (state, action: PayloadAction<string>) => {
+      state.remarks = action.payload;
+    },
     saveRfp: (state) => {
       // Generate a new RFP data object with current state
       const newRfp: RfpData = {
@@ -197,6 +210,8 @@ export const rfpSlice = createSlice({
         timeline: state.timeline,
         team: state.team,
         resources: state.resources,
+        status: state.status,
+        remarks: state.remarks,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -257,6 +272,9 @@ export const rfpSlice = createSlice({
         // Handle compatibility with older saved RFPs that don't have team and resources
         state.team = rfpToLoad.team || initialState.team;
         state.resources = rfpToLoad.resources || initialState.resources;
+        // Handle compatibility with older saved RFPs that don't have status and remarks
+        state.status = rfpToLoad.status || "InProgress";
+        state.remarks = rfpToLoad.remarks || "";
       }
     },
     deleteRfp: (state, action: PayloadAction<string>) => {
@@ -309,6 +327,8 @@ export const {
   setTimeline,
   setTeam,
   setResources,
+  setStatus,
+  setRemarks,
   saveRfp,
   loadRfp,
   deleteRfp,

@@ -3,14 +3,29 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { FileText, Trash2, Clock, Calendar, User } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { FileText, Trash2, Clock, Calendar, User, Edit } from "lucide-react";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { useAppSelector } from "@/hooks/useAppSelector";
 import { RfpData, loadRfp, deleteRfp, clearCurrentRfp } from "@/store/rfpSlice";
 import { format } from "date-fns";
 import { toast } from "sonner";
+
+// Define badge colors based on status
+const getStatusBadgeStyle = (status: string) => {
+  switch (status) {
+    case "InProgress":
+      return "bg-amber-100 text-amber-800 hover:bg-amber-100";
+    case "Completed":
+      return "bg-green-100 text-green-800 hover:bg-green-100";
+    case "OnHold":
+      return "bg-gray-100 text-gray-800 hover:bg-gray-100";
+    default:
+      return "bg-blue-100 text-blue-800 hover:bg-blue-100";
+  }
+};
 
 const RfpList = () => {
   const dispatch = useAppDispatch();
@@ -45,6 +60,12 @@ const RfpList = () => {
     navigate("/?tab=rfp");
   };
 
+  const handleEditRfp = (rfpId: string) => {
+    dispatch(loadRfp(rfpId));
+    toast.success("RFP loaded for editing");
+    navigate("/?tab=rfp");
+  };
+
   if (savedRfps.length === 0) {
     return (
       <Card className="col-span-3 p-6 flex flex-col items-center justify-center h-64">
@@ -65,42 +86,55 @@ const RfpList = () => {
         <Button onClick={handleCreateNew}>Create New RFP</Button>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {savedRfps.map((rfp) => (
-          <Card key={rfp.id} className="overflow-hidden hover:shadow-md transition-shadow">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg">{rfp.projectName}</CardTitle>
-              <CardDescription className="line-clamp-2">
-                {rfp.projectDescription || "No description provided"}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pb-3 space-y-2">
-              {rfp.thorId && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <User className="h-4 w-4" />
-                  <span>Thor ID: {rfp.thorId}</span>
-                </div>
-              )}
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Calendar className="h-4 w-4" />
-                <span>Created: {format(new Date(rfp.createdAt), 'MMM d, yyyy')}</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Clock className="h-4 w-4" />
-                <span>Updated: {format(new Date(rfp.updatedAt), 'MMM d, yyyy')}</span>
-              </div>
-            </CardContent>
-            <CardFooter className="flex justify-between pt-2 border-t">
-              <Button variant="outline" onClick={() => handleLoadRfp(rfp.id)}>
-                Open
-              </Button>
-              <Button variant="ghost" size="icon" onClick={() => handleDeleteRfp(rfp.id)}>
-                <Trash2 className="h-4 w-4 text-red-500" />
-              </Button>
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle>RFP Overview</CardTitle>
+          <CardDescription>
+            Manage and track all your Request For Proposals
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Project Name</TableHead>
+                <TableHead>Thor ID</TableHead>
+                <TableHead>Created</TableHead>
+                <TableHead>Updated</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Remarks</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {savedRfps.map((rfp) => (
+                <TableRow key={rfp.id}>
+                  <TableCell className="font-medium">{rfp.projectName}</TableCell>
+                  <TableCell>{rfp.thorId || "-"}</TableCell>
+                  <TableCell>{format(new Date(rfp.createdAt), 'MMM d, yyyy')}</TableCell>
+                  <TableCell>{format(new Date(rfp.updatedAt), 'MMM d, yyyy')}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className={getStatusBadgeStyle(rfp.status || 'InProgress')}>
+                      {rfp.status || "InProgress"}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="max-w-xs truncate">
+                    {rfp.remarks || "-"}
+                  </TableCell>
+                  <TableCell className="text-right space-x-2">
+                    <Button variant="outline" size="icon" onClick={() => handleEditRfp(rfp.id)} title="Edit">
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button variant="outline" size="icon" onClick={() => handleDeleteRfp(rfp.id)} title="Delete">
+                      <Trash2 className="h-4 w-4 text-red-500" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
         <AlertDialogContent>
