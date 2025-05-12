@@ -1,134 +1,74 @@
-import { useState } from "react";
+import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import { SidebarProvider } from '@/components/ui/sidebar';
+import { Sidebar } from '@/components/layout/Sidebar';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { useAppSelector } from "@/hooks/useAppSelector";
-import { 
-  addUserStory, 
-  deleteUserStory, 
-  addScreen, 
-  deleteScreen,
-  addApi,
-  deleteApi,
-  updateUserStory,
-  updateScreen,
-  updateApi,
-  setContingency,
-  setRiskFactor,
-  UserStory,
-  Screen,
-  Api
-} from "@/store/estimatesSlice";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Save, Calculator, Edit, FileDown } from "lucide-react";
-import { toast } from "sonner";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { Sidebar } from "@/components/layout/Sidebar";
-
+import { UserStory, Screen, Api } from '@/store/estimatesSlice';
+import EstimationTable from "@/components/estimates/EstimationTable";
 import UserStoryForm from "@/components/estimates/UserStoryForm";
 import ScreenForm from "@/components/estimates/ScreenForm";
 import ApiForm from "@/components/estimates/ApiForm";
-import EstimationTable from "@/components/estimates/EstimationTable";
 import PlatformConfigForm from "@/components/estimates/PlatformConfigForm";
+import { ArrowLeft } from 'lucide-react';
+import { useNavigation } from '@/hooks/useNavigation';
+import { ROUTES } from '@/routes';
+
+interface EstimatesProps {
+  // Define any props here
+}
 
 const Estimates = () => {
+  const [activeTab, setActiveTab] = useState('userStories');
+  const location = useLocation();
+  const { goToHome } = useNavigation();
+  
+  // Get the estimates data from the Redux store
+  const {
+    userStories,
+    screens,
+    apis,
+    platformConfig,
+    totalEffort,
+    totalCost,
+  } = useAppSelector(state => state.estimates);
+  
   const dispatch = useAppDispatch();
-  const [activeTab, setActiveTab] = useState<string>("userStories");
-  const [editingItem, setEditingItem] = useState<{ type: 'story' | 'screen' | 'api', item: any } | null>(null);
   
-  const userStories = useAppSelector(state => state.estimates.userStories);
-  const screens = useAppSelector(state => state.estimates.screens);
-  const apis = useAppSelector(state => state.estimates.apis);
-  const contingency = useAppSelector(state => state.estimates.contingency);
-  const riskFactor = useAppSelector(state => state.estimates.riskFactor);
-  
+  // Handle form submissions for different components
   const handleAddUserStory = (story: UserStory) => {
-    if (editingItem && editingItem.type === 'story') {
-      dispatch(updateUserStory({ ...story, id: editingItem.item.id }));
-      setEditingItem(null);
-      toast.success("User story updated");
-      return;
-    }
-    
-    dispatch(addUserStory(story));
-    toast.success("User story added");
+    dispatch({
+      type: 'estimates/addUserStory',
+      payload: story,
+    });
   };
-  
-  const handleEditUserStory = (story: UserStory) => {
-    setEditingItem({ type: 'story', item: story });
-    setActiveTab("userStories");
-  };
-  
-  const handleDeleteUserStory = (id: string) => {
-    dispatch(deleteUserStory(id));
-    toast.success("User story removed");
-    if (editingItem?.type === 'story' && editingItem.item.id === id) {
-      setEditingItem(null);
-    }
-  };
-  
+
   const handleAddScreen = (screen: Screen) => {
-    if (editingItem && editingItem.type === 'screen') {
-      dispatch(updateScreen({ ...screen, id: editingItem.item.id }));
-      setEditingItem(null);
-      toast.success("Screen updated");
-      return;
-    }
-    
-    dispatch(addScreen(screen));
-    toast.success("Screen added");
+    dispatch({
+      type: 'estimates/addScreen',
+      payload: screen,
+    });
   };
-  
-  const handleEditScreen = (screen: Screen) => {
-    setEditingItem({ type: 'screen', item: screen });
-    setActiveTab("screens");
-  };
-  
-  const handleDeleteScreen = (id: string) => {
-    dispatch(deleteScreen(id));
-    toast.success("Screen removed");
-    if (editingItem?.type === 'screen' && editingItem.item.id === id) {
-      setEditingItem(null);
-    }
-  };
-  
+
   const handleAddApi = (api: Api) => {
-    if (editingItem && editingItem.type === 'api') {
-      dispatch(updateApi({ ...api, id: editingItem.item.id }));
-      setEditingItem(null);
-      toast.success("API updated");
-      return;
-    }
-    
-    dispatch(addApi(api));
-    toast.success("API added");
+    dispatch({
+      type: 'estimates/addApi',
+      payload: api,
+    });
   };
-  
-  const handleEditApi = (api: Api) => {
-    setEditingItem({ type: 'api', item: api });
-    setActiveTab("apis");
+
+  const handleUpdatePlatformConfig = (config: any) => {
+    dispatch({
+      type: 'estimates/updatePlatformConfig',
+      payload: config,
+    });
   };
-  
-  const handleDeleteApi = (id: string) => {
-    dispatch(deleteApi(id));
-    toast.success("API removed");
-    if (editingItem?.type === 'api' && editingItem.item.id === id) {
-      setEditingItem(null);
-    }
-  };
-  
-  const handleSaveEstimate = () => {
-    // In a real app, this would save to a database
-    toast.success("Estimate saved successfully!");
-  };
-  
-  const handleExportEstimate = () => {
-    // In a real app, this would export the estimate to a PDF or Excel file
-    toast.success("Estimate exported successfully!");
-  };
-  
-  const handleCancelEdit = () => {
-    setEditingItem(null);
+
+  const handleGoBack = () => {
+    goToHome();
   };
 
   return (
@@ -137,112 +77,75 @@ const Estimates = () => {
         <Sidebar />
         
         <div className="flex-1 p-4 md:p-6 overflow-y-auto">
-          <div className="container mx-auto">
+          <Button 
+            variant="outline" 
+            onClick={handleGoBack}
+            className="mb-4" 
+            size="sm"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back to RFP Builder
+          </Button>
+          
+          <div className="max-w-full mx-auto">
             <header className="mb-8">
-              <h1 className="text-3xl font-bold mb-2">Project Estimates</h1>
-              <p className="text-muted-foreground mb-6">
-                Calculate project estimates based on user stories, screens, APIs, and technical requirements
+              <h1 className="text-3xl font-bold mb-2">Project Estimations</h1>
+              <p className="text-muted-foreground">
+                Build detailed project estimates for RFPs
               </p>
             </header>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-1">
-                <div className="space-y-6 sticky top-6">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>
-                        {editingItem ? `Edit ${
-                          editingItem.type === 'story' ? 'User Story' : 
-                          editingItem.type === 'screen' ? 'Screen' : 'API'
-                        }` : "Add Components"}
-                      </CardTitle>
-                      <CardDescription>
-                        {editingItem 
-                          ? `Update the ${editingItem.type === 'story' ? 'user story' : editingItem.type} details` 
-                          : "Add items to include in your estimate"}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <Tabs value={activeTab} onValueChange={setActiveTab}>
-                        <TabsList className="mb-4 w-full">
-                          <TabsTrigger value="userStories" className="flex-1">User Stories</TabsTrigger>
-                          <TabsTrigger value="screens" className="flex-1">Screens</TabsTrigger>
-                          <TabsTrigger value="apis" className="flex-1">APIs</TabsTrigger>
-                        </TabsList>
-                        
-                        <TabsContent value="userStories" className="mt-0">
-                          <UserStoryForm 
-                            onAdd={handleAddUserStory}
-                            editMode={!!editingItem && editingItem.type === 'story'}
-                            initialData={editingItem?.type === 'story' ? editingItem.item : undefined}
-                          />
-                        </TabsContent>
-                        
-                        <TabsContent value="screens" className="mt-0">
-                          <ScreenForm 
-                            onAdd={handleAddScreen}
-                            editMode={!!editingItem && editingItem.type === 'screen'}
-                            initialData={editingItem?.type === 'screen' ? editingItem.item : undefined}
-                          />
-                        </TabsContent>
-                        
-                        <TabsContent value="apis" className="mt-0">
-                          <ApiForm 
-                            onAdd={handleAddApi}
-                            editMode={!!editingItem && editingItem.type === 'api'}
-                            initialData={editingItem?.type === 'api' ? editingItem.item : undefined}
-                          />
-                        </TabsContent>
-                      </Tabs>
-                    </CardContent>
-                  </Card>
-                  
-                  <PlatformConfigForm />
-                  
-                  <div className="flex flex-col gap-2">
-                    <Button 
-                      onClick={handleSaveEstimate} 
-                      className="flex items-center justify-center" 
-                      size="lg"
-                    >
-                      <Save className="h-4 w-4 mr-2" /> Save Estimate
-                    </Button>
+            
+            <div className="grid grid-cols-1 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Effort Estimation</CardTitle>
+                </CardHeader>
+                
+                <CardContent>
+                  <Tabs defaultValue={activeTab} onValueChange={setActiveTab}>
+                    <TabsList className="mb-4 grid grid-cols-4 lg:w-[600px]">
+                      <TabsTrigger value="userStories">User Stories</TabsTrigger>
+                      <TabsTrigger value="screens">Screens</TabsTrigger>
+                      <TabsTrigger value="apis">APIs</TabsTrigger>
+                      <TabsTrigger value="platform">Platform</TabsTrigger>
+                    </TabsList>
                     
-                    <Button 
-                      onClick={handleExportEstimate} 
-                      variant="outline"
-                      className="flex items-center justify-center" 
-                      size="lg"
-                    >
-                      <FileDown className="h-4 w-4 mr-2" /> Export Estimate
-                    </Button>
-                  </div>
-                </div>
-              </div>
+                    <TabsContent value="userStories">
+                      <UserStoryForm 
+                        onAdd={handleAddUserStory} 
+                      />
+                    </TabsContent>
+                    
+                    <TabsContent value="screens">
+                      <ScreenForm 
+                        onAdd={handleAddScreen} 
+                      />
+                    </TabsContent>
+                    
+                    <TabsContent value="apis">
+                      <ApiForm 
+                        onAdd={handleAddApi} 
+                      />
+                    </TabsContent>
+                    
+                    <TabsContent value="platform">
+                      <PlatformConfigForm 
+                        config={platformConfig}
+                        onUpdate={handleUpdatePlatformConfig}
+                      />
+                    </TabsContent>
+                  </Tabs>
+                </CardContent>
+              </Card>
               
-              <div className="lg:col-span-2">
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between">
-                    <div>
-                      <CardTitle>Estimation Summary</CardTitle>
-                      <CardDescription>
-                        Detailed breakdown of the project estimate
-                      </CardDescription>
-                    </div>
-                    <Calculator className="h-5 w-5 text-muted-foreground" />
-                  </CardHeader>
-                  <CardContent>
-                    <EstimationTable 
-                      onDeleteStory={handleDeleteUserStory}
-                      onDeleteScreen={handleDeleteScreen}
-                      onDeleteApi={handleDeleteApi}
-                      onEditStory={handleEditUserStory}
-                      onEditScreen={handleEditScreen}
-                      onEditApi={handleEditApi}
-                    />
-                  </CardContent>
-                </Card>
-              </div>
+              {/* Display estimation results */}
+              <EstimationTable 
+                userStories={userStories}
+                screens={screens}
+                apis={apis}
+                platformConfig={platformConfig}
+                totalEffort={totalEffort}
+                totalCost={totalCost}
+              />
             </div>
           </div>
         </div>

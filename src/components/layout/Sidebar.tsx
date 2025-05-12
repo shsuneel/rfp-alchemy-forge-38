@@ -1,6 +1,7 @@
 
 import { useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
+import { useNavigation } from "@/hooks/useNavigation";
 import { 
   Sidebar as SidebarComponent, 
   SidebarContent, 
@@ -25,30 +26,31 @@ import {
   Layout, 
   Layers 
 } from "lucide-react";
+import { ROUTES } from "@/routes";
 
 export const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(true);
   const location = useLocation();
-  const navigate = useNavigate();
+  const { navigateTo } = useNavigation();
   
   const menuItems = [
     { 
       title: "RFP Builder", 
       icon: <FileText className="h-5 w-5" />, 
-      path: "/?tab=rfp",
-      active: location.pathname === "/" && (!location.search || location.search.includes("tab=rfp"))
+      path: ROUTES.HOME + "?tab=rfp",
+      active: location.pathname === ROUTES.HOME && (!location.search || location.search.includes("tab=rfp"))
     },
     { 
       title: "Presentations", 
       icon: <Presentation className="h-5 w-5" />,
-      path: "/?tab=presentation",
-      active: location.pathname === "/" && location.search.includes("tab=presentation")
+      path: ROUTES.HOME + "?tab=presentation",
+      active: location.pathname === ROUTES.HOME && location.search.includes("tab=presentation")
     },
     { 
       title: "Estimates", 
       icon: <Calculator className="h-5 w-5" />,
-      path: "/estimates",
-      active: location.pathname === "/estimates"
+      path: ROUTES.ESTIMATES,
+      active: location.pathname === ROUTES.ESTIMATES
     },
     { 
       title: "Templates", 
@@ -65,7 +67,15 @@ export const Sidebar = () => {
   ];
 
   const handleNavigation = (path: string) => {
-    navigate(path);
+    if (path.startsWith('#')) return;
+    
+    // Use the navigateTo function which prevents flickering
+    if (path.includes('?')) {
+      const [route, search] = path.split('?');
+      navigateTo(route, undefined, { replace: false, state: { fromSidebar: true } });
+    } else {
+      navigateTo(path, undefined, { replace: false, state: { fromSidebar: true } });
+    }
   };
 
   return (

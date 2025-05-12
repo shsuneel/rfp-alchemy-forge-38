@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useLocation } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { Sidebar } from "@/components/layout/Sidebar";
 import PresentationEditor from "@/components/presentation/PresentationEditor";
@@ -9,27 +9,36 @@ import RfpList from "@/components/RfpList";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileText, Presentation, Calculator, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { useNavigation } from "@/hooks/useNavigation";
+import { ROUTES } from "@/routes";
 
 const Index = () => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const { navigateTo, goToEstimates } = useNavigation();
+  
   const tabFromUrl = searchParams.get('tab');
-  const [activeTab, setActiveTab] = useState<string>(tabFromUrl || "rfpList");
+  const locationState = location.state as { tab?: string; fromSidebar?: boolean } | null;
+  const initialTab = tabFromUrl || (locationState?.tab || "rfpList");
+  
+  const [activeTab, setActiveTab] = useState<string>(initialTab);
 
   // Update URL when tab changes
   useEffect(() => {
-  const tab = searchParams.get('tab');
-    if(tab !== activeTab) {
-    setSearchParams({ tab: activeTab });
+    // Only update the URL if the tab has actually changed
+    const currentTab = searchParams.get('tab');
+    if (currentTab !== activeTab) {
+      setSearchParams({ tab: activeTab }, { replace: true }); // This helps reduce unnecessary history entries that contribute to flickering
     }
   }, [activeTab, searchParams, setSearchParams]);
 
-  // Update tab when URL changes
-  useEffect(() => {
-    if (tabFromUrl) {
-      setActiveTab(tabFromUrl);
-    }
-  }, [tabFromUrl]);
+  const handleTabChange = (newTabValue: string) => {
+    setActiveTab(newTabValue);
+  };
+
+  const handleEstimatesClick = () => {
+    goToEstimates();
+  };
 
   const onTabChanged = (value: string) => {
     return setActiveTab(value);
@@ -45,18 +54,20 @@ const Index = () => {
             <header className="mb-8">
               <div className="flex justify-between items-center mb-2">
                 <h1 className="text-3xl font-bold">RFP Presentation Forge</h1>
-                <Link to="/estimates">
-                  <Button variant="outline" className="flex items-center gap-2">
-                    <Calculator className="h-4 w-4" />
-                    Estimates
-                  </Button>
-                </Link>
+                <Button 
+                  variant="outline" 
+                  className="flex items-center gap-2"
+                  onClick={handleEstimatesClick}
+                >
+                  <Calculator className="h-4 w-4" />
+                  Estimates
+                </Button>
               </div>
               <p className="text-muted-foreground mb-6">
                 Create professional RFPs and presentations for your client proposals
               </p>
               
-              <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <Tabs value={activeTab} onValueChange={handleTabChange}>
                 <TabsList className="mb-4">
                   <TabsTrigger value="rfpList" className="flex items-center gap-2">
                     <List className="h-4 w-4" />
