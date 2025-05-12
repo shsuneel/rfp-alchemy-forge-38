@@ -1,4 +1,4 @@
-import { useState } from 'react';
+
 import { useLocation } from 'react-router-dom';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { Sidebar } from '@/components/layout/Sidebar';
@@ -7,7 +7,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { useAppSelector } from "@/hooks/useAppSelector";
-import { UserStory, Screen, Api } from '@/store/estimatesSlice';
+import { UserStory, Screen, Api, PlatformConfig } from '@/store/estimatesSlice';
 import EstimationTable from "@/components/estimates/EstimationTable";
 import UserStoryForm from "@/components/estimates/UserStoryForm";
 import ScreenForm from "@/components/estimates/ScreenForm";
@@ -15,16 +15,26 @@ import ApiForm from "@/components/estimates/ApiForm";
 import PlatformConfigForm from "@/components/estimates/PlatformConfigForm";
 import { ArrowLeft } from 'lucide-react';
 import { useNavigation } from '@/hooks/useNavigation';
-import { ROUTES } from '@/routes';
+import { setEstimatesActiveTab } from '@/store/navigationSlice';
+import { updatePlatformConfig } from '@/store/estimatesSlice';
 
-interface EstimatesProps {
-  // Define any props here
+// Define props for the EstimationTable component
+interface EstimationTableProps {
+  userStories: UserStory[];
+  screens: Screen[];
+  apis: Api[];
+  platformConfig: PlatformConfig;
+  totalEffort: number;
+  totalCost: number;
 }
 
 const Estimates = () => {
-  const [activeTab, setActiveTab] = useState('userStories');
   const location = useLocation();
   const { goToHome } = useNavigation();
+  const dispatch = useAppDispatch();
+  
+  // Get the current active tab from Redux
+  const { estimatesActiveTab } = useAppSelector(state => state.navigation);
   
   // Get the estimates data from the Redux store
   const {
@@ -35,8 +45,6 @@ const Estimates = () => {
     totalEffort,
     totalCost,
   } = useAppSelector(state => state.estimates);
-  
-  const dispatch = useAppDispatch();
   
   // Handle form submissions for different components
   const handleAddUserStory = (story: UserStory) => {
@@ -60,15 +68,17 @@ const Estimates = () => {
     });
   };
 
-  const handleUpdatePlatformConfig = (config: any) => {
-    dispatch({
-      type: 'estimates/updatePlatformConfig',
-      payload: config,
-    });
+  const handleUpdatePlatformConfig = (config: PlatformConfig) => {
+    dispatch(updatePlatformConfig(config));
   };
 
   const handleGoBack = () => {
     goToHome();
+  };
+
+  // Update Redux when the active tab changes
+  const handleTabChange = (tab: string) => {
+    dispatch(setEstimatesActiveTab(tab));
   };
 
   return (
@@ -101,7 +111,7 @@ const Estimates = () => {
                 </CardHeader>
                 
                 <CardContent>
-                  <Tabs defaultValue={activeTab} onValueChange={setActiveTab}>
+                  <Tabs value={estimatesActiveTab} onValueChange={handleTabChange}>
                     <TabsList className="mb-4 grid grid-cols-4 lg:w-[600px]">
                       <TabsTrigger value="userStories">User Stories</TabsTrigger>
                       <TabsTrigger value="screens">Screens</TabsTrigger>

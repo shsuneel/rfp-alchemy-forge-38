@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useSearchParams, useLocation } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { Sidebar } from "@/components/layout/Sidebar";
@@ -11,38 +11,46 @@ import { FileText, Presentation, Calculator, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigation } from "@/hooks/useNavigation";
 import { ROUTES } from "@/routes";
+import { useAppDispatch } from "@/hooks/useAppDispatch";
+import { useAppSelector } from "@/hooks/useAppSelector";
+import { setCurrentTab } from "@/store/navigationSlice";
 
 const Index = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
+  const dispatch = useAppDispatch();
   const { navigateTo, goToEstimates } = useNavigation();
+  
+  const { currentTab } = useAppSelector(state => state.navigation);
   
   const tabFromUrl = searchParams.get('tab');
   const locationState = location.state as { tab?: string; fromSidebar?: boolean } | null;
-  const initialTab = tabFromUrl || (locationState?.tab || "rfpList");
   
-  const [activeTab, setActiveTab] = useState<string>(initialTab);
+  // Update Redux state when URL changes
+  useEffect(() => {
+    if (tabFromUrl) {
+      dispatch(setCurrentTab(tabFromUrl));
+    } else if (locationState?.tab) {
+      dispatch(setCurrentTab(locationState.tab));
+    }
+  }, [tabFromUrl, locationState, dispatch]);
 
-  // Update URL when tab changes
+  // Update URL when Redux state changes
   useEffect(() => {
     // Only update the URL if the tab has actually changed
-    const currentTab = searchParams.get('tab');
-    if (currentTab !== activeTab) {
-      setSearchParams({ tab: activeTab }, { replace: true }); // This helps reduce unnecessary history entries that contribute to flickering
+    const currentTabInUrl = searchParams.get('tab');
+    if (currentTabInUrl !== currentTab) {
+      setSearchParams({ tab: currentTab }, { replace: true });
     }
-  }, [activeTab, searchParams, setSearchParams]);
+  }, [currentTab, searchParams, setSearchParams]);
 
   const handleTabChange = (newTabValue: string) => {
-    setActiveTab(newTabValue);
+    dispatch(setCurrentTab(newTabValue));
   };
 
   const handleEstimatesClick = () => {
     goToEstimates();
   };
-
-  const onTabChanged = (value: string) => {
-    return setActiveTab(value);
-  }
 
   return (
     <SidebarProvider>
@@ -67,7 +75,7 @@ const Index = () => {
                 Create professional RFPs and presentations for your client proposals
               </p>
               
-              <Tabs value={activeTab} onValueChange={handleTabChange}>
+              <Tabs value={currentTab} onValueChange={handleTabChange}>
                 <TabsList className="mb-4">
                   <TabsTrigger value="rfpList" className="flex items-center gap-2">
                     <List className="h-4 w-4" />

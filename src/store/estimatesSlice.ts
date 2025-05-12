@@ -38,14 +38,22 @@ export interface Browser {
   effort: number; // Multiplier for effort
 }
 
+export interface PlatformConfig {
+  contingency: number; // Percentage to add for uncertainties
+  riskFactor: number; // Additional percentage for project risks
+}
+
 interface EstimatesState {
   userStories: UserStory[];
   screens: Screen[];
   apis: Api[];
   formFactors: FormFactor[];
   browsers: Browser[];
+  platformConfig: PlatformConfig;
   contingency: number; // Percentage to add for uncertainties
   riskFactor: number; // Additional percentage for project risks
+  totalEffort: number;
+  totalCost: number;
 }
 
 const initialState: EstimatesState = {
@@ -63,8 +71,14 @@ const initialState: EstimatesState = {
     { id: 'safari', name: 'Safari', isSelected: false, effort: 1.2 },
     { id: 'edge', name: 'Edge', isSelected: false, effort: 1.1 },
   ],
+  platformConfig: {
+    contingency: 15,
+    riskFactor: 10
+  },
   contingency: 15,
   riskFactor: 10,
+  totalEffort: 0,
+  totalCost: 0,
 };
 
 export const estimatesSlice = createSlice({
@@ -117,11 +131,18 @@ export const estimatesSlice = createSlice({
       state.browsers = action.payload;
     },
     
-    setContingency: (state, action: PayloadAction<number>) => {
-      state.contingency = action.payload;
+    updatePlatformConfig: (state, action: PayloadAction<PlatformConfig>) => {
+      state.platformConfig = action.payload;
+      state.contingency = action.payload.contingency;
+      state.riskFactor = action.payload.riskFactor;
     },
-    setRiskFactor: (state, action: PayloadAction<number>) => {
-      state.riskFactor = action.payload;
+    
+    updateTotalEffort: (state, action: PayloadAction<number>) => {
+      state.totalEffort = action.payload;
+    },
+    
+    updateTotalCost: (state, action: PayloadAction<number>) => {
+      state.totalCost = action.payload;
     },
   },
 });
@@ -138,8 +159,9 @@ export const {
   deleteApi,
   updateFormFactors,
   updateBrowsers,
-  setContingency,
-  setRiskFactor,
+  updatePlatformConfig,
+  updateTotalEffort,
+  updateTotalCost,
 } = estimatesSlice.actions;
 
 export default estimatesSlice.reducer;

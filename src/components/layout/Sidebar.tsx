@@ -27,36 +27,44 @@ import {
   Layers 
 } from "lucide-react";
 import { ROUTES } from "@/routes";
+import { useAppSelector } from "@/hooks/useAppSelector";
+import { useAppDispatch } from "@/hooks/useAppDispatch";
+import { setCurrentTab } from "@/store/navigationSlice";
 
 export const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(true);
   const location = useLocation();
   const { navigateTo } = useNavigation();
+  const { currentTab } = useAppSelector(state => state.navigation);
+  const dispatch = useAppDispatch();
   
   const menuItems = [
     { 
       title: "RFP Builder", 
       icon: <FileText className="h-5 w-5" />, 
-      path: ROUTES.HOME + "?tab=rfp",
-      active: location.pathname === ROUTES.HOME && (!location.search || location.search.includes("tab=rfp"))
+      path: ROUTES.HOME,
+      tabValue: "rfp",
+      active: location.pathname === ROUTES.HOME && currentTab === "rfp"
     },
     { 
       title: "Presentations", 
       icon: <Presentation className="h-5 w-5" />,
-      path: ROUTES.HOME + "?tab=presentation",
-      active: location.pathname === ROUTES.HOME && location.search.includes("tab=presentation")
+      path: ROUTES.HOME,
+      tabValue: "presentation",
+      active: location.pathname === ROUTES.HOME && currentTab === "presentation"
+    },
+    { 
+      title: "RFP List", 
+      icon: <Layout className="h-5 w-5" />,
+      path: ROUTES.HOME,
+      tabValue: "rfpList",
+      active: location.pathname === ROUTES.HOME && currentTab === "rfpList"
     },
     { 
       title: "Estimates", 
       icon: <Calculator className="h-5 w-5" />,
       path: ROUTES.ESTIMATES,
       active: location.pathname === ROUTES.ESTIMATES
-    },
-    { 
-      title: "Templates", 
-      icon: <Layout className="h-5 w-5" />,
-      path: "#",
-      active: false
     },
     { 
       title: "Settings", 
@@ -66,16 +74,16 @@ export const Sidebar = () => {
     },
   ];
 
-  const handleNavigation = (path: string) => {
+  const handleNavigation = (path: string, tabValue?: string) => {
     if (path.startsWith('#')) return;
     
-    // Use the navigateTo function which prevents flickering
-    if (path.includes('?')) {
-      const [route, search] = path.split('?');
-      navigateTo(route, undefined, { replace: false, state: { fromSidebar: true } });
-    } else {
-      navigateTo(path, undefined, { replace: false, state: { fromSidebar: true } });
+    // If we're navigating to Home and there's a tab specified, set the current tab
+    if (path === ROUTES.HOME && tabValue) {
+      dispatch(setCurrentTab(tabValue));
     }
+    
+    // Use the navigateTo function which prevents flickering
+    navigateTo(path, undefined, { replace: false, state: { fromSidebar: true, tab: tabValue } });
   };
 
   return (
@@ -109,7 +117,7 @@ export const Sidebar = () => {
                   <SidebarMenuButton 
                     asChild 
                     className={item.active ? "bg-sidebar-accent" : ""}
-                    onClick={() => handleNavigation(item.path)}
+                    onClick={() => handleNavigation(item.path, item.tabValue)}
                   >
                     <button className="flex items-center space-x-2">
                       {item.icon}
