@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { Presentation, Image, Layout, Square, SquareDashed, Plus } from "lucide-react";
+import { Presentation, Image, Layout, Square, SquareDashed, Plus, PaintBucket, Palette } from "lucide-react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -24,6 +24,7 @@ import SlidePreview from "./SlidePreview";
 import TemplateSelector from "./TemplateSelector";
 import SlideEditor from "./SlideEditor";
 import DiagramIntegration from "./DiagramIntegration";
+import MasterSlideEditor from "./MasterSlideEditor";
 
 import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { useAppSelector } from "@/hooks/useAppSelector";
@@ -34,6 +35,12 @@ import {
   deleteSlide,
   setSelectedSlideId,
   setTemplate,
+  updateMasterElements,
+  updateMasterSettings,
+  addMasterElement,
+  updateMasterElement,
+  deleteMasterElement,
+  toggleApplyMaster,
   Slide,
   SlideElement,
   Template
@@ -45,10 +52,13 @@ const PresentationEditor: React.FC = () => {
     title,
     slides,
     selectedSlideId,
-    selectedTemplate
+    selectedTemplate,
+    masterElements,
+    masterSlideSettings
   } = useAppSelector(state => state.presentation);
   
   const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>("editor");
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     dispatch(setTitle(e.target.value));
@@ -63,6 +73,8 @@ const PresentationEditor: React.FC = () => {
       primaryColor: "#002060",
       secondaryColor: "#0078D4",
       accentColor: "#00B0F0",
+      fontPrimary: "Arial",
+      fontSecondary: "Calibri",
     },
     {
       id: "modern",
@@ -71,6 +83,8 @@ const PresentationEditor: React.FC = () => {
       primaryColor: "#7030A0",
       secondaryColor: "#9b87f5",
       accentColor: "#C5A5CF",
+      fontPrimary: "Roboto",
+      fontSecondary: "Open Sans",
     },
     {
       id: "minimalist",
@@ -79,6 +93,8 @@ const PresentationEditor: React.FC = () => {
       primaryColor: "#FFFFFF",
       secondaryColor: "#F2F2F2",
       accentColor: "#D9D9D9",
+      fontPrimary: "Helvetica",
+      fontSecondary: "Arial",
     },
     {
       id: "agenda",
@@ -87,6 +103,8 @@ const PresentationEditor: React.FC = () => {
       primaryColor: "#1E293B",
       secondaryColor: "#00B0F0",
       accentColor: "#FFFFFF",
+      fontPrimary: "Segoe UI",
+      fontSecondary: "Verdana",
     },
     {
       id: "understanding",
@@ -95,6 +113,8 @@ const PresentationEditor: React.FC = () => {
       primaryColor: "#1E293B",
       secondaryColor: "#00B0F0",
       accentColor: "#002060",
+      fontPrimary: "Georgia",
+      fontSecondary: "Times New Roman",
     },
     {
       id: "blank",
@@ -103,6 +123,8 @@ const PresentationEditor: React.FC = () => {
       primaryColor: "#1E293B",
       secondaryColor: "#00B0F0",
       accentColor: "#002060",
+      fontPrimary: "Arial",
+      fontSecondary: "Helvetica",
     }
   ];
 
@@ -118,6 +140,7 @@ const PresentationEditor: React.FC = () => {
       content: "",
       type,
       template: selectedTemplate.id,
+      applyMaster: true,
       elements: [],
     };
     
@@ -205,6 +228,7 @@ const PresentationEditor: React.FC = () => {
       content: "",
       type: "template",
       template: templateId,
+      applyMaster: true,
       elements: [{
         id: `elem-${Date.now()}-layout`,
         type: "text",
@@ -341,7 +365,12 @@ const PresentationEditor: React.FC = () => {
         </div>
       </div>
 
-      <Tabs defaultValue="editor" className="flex-1 flex flex-col">
+      <Tabs 
+        defaultValue="editor" 
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="flex-1 flex flex-col"
+      >
         <TabsList className="mb-4">
           <TabsTrigger value="templates" className="flex items-center gap-2">
             <SquareDashed className="h-4 w-4" />
@@ -350,6 +379,10 @@ const PresentationEditor: React.FC = () => {
           <TabsTrigger value="editor" className="flex items-center gap-2">
             <Layout className="h-4 w-4" />
             Editor
+          </TabsTrigger>
+          <TabsTrigger value="master" className="flex items-center gap-2">
+            <Palette className="h-4 w-4" />
+            Master Slide
           </TabsTrigger>
           <TabsTrigger value="diagrams" className="flex items-center gap-2">
             <Square className="h-4 w-4" />
@@ -373,7 +406,7 @@ const PresentationEditor: React.FC = () => {
                 <DropdownMenuItem onClick={() => addNewSlide("section")}>
                   Section Slide
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => addNewSlide("template")}>
+                <DropdownMenuItem onClick={() => setIsTemplateDialogOpen(true)}>
                   Template Slide
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => addNewSlide("image")}>
@@ -382,7 +415,7 @@ const PresentationEditor: React.FC = () => {
               </DropdownMenuContent>
             </DropdownMenu>
             <div className="space-y-2 max-h-[600px] overflow-y-auto">
-              {slides.map((slide) => (
+              {slides.map((slide, index) => (
                 <Card 
                   key={slide.id}
                   className={`cursor-pointer overflow-hidden ${selectedSlideId === slide.id ? 'ring-2 ring-primary' : ''}`}
@@ -394,15 +427,15 @@ const PresentationEditor: React.FC = () => {
                       <div className="text-[10px] text-muted-foreground capitalize">{slide.type}</div>
                     </div>
                     <div 
-                      className="mt-2 aspect-video bg-muted flex items-center justify-center text-xs text-muted-foreground"
-                      style={{
-                        backgroundColor: selectedTemplate.primaryColor,
-                        backgroundImage: slide.customBackground ? `url(${slide.customBackground})` : undefined,
-                        backgroundSize: 'cover',
-                        backgroundPosition: 'center'
-                      }}
+                      className="mt-2 aspect-video bg-muted flex items-center justify-center text-xs text-muted-foreground relative"
                     >
-                      {!slide.customBackground && `Slide ${slides.indexOf(slide) + 1}`}
+                      <SlidePreview
+                        slide={slide}
+                        template={selectedTemplate}
+                        scale={0.15}
+                        masterElements={slide.applyMaster ? masterElements : []}
+                        slideIndex={index}
+                      />
                     </div>
                   </CardContent>
                 </Card>
@@ -417,6 +450,7 @@ const PresentationEditor: React.FC = () => {
                 template={selectedTemplate} 
                 onUpdate={handleUpdateSlide}
                 onDelete={handleDeleteSlide}
+                masterElements={masterElements}
               />
             )}
           </div>
@@ -427,6 +461,19 @@ const PresentationEditor: React.FC = () => {
             templates={allTemplates} 
             selectedTemplate={selectedTemplate} 
             onSelectTemplate={handleChangeTemplate}
+          />
+        </TabsContent>
+        
+        <TabsContent value="master" className="flex-1">
+          <MasterSlideEditor
+            masterElements={masterElements}
+            masterSettings={masterSlideSettings}
+            template={selectedTemplate}
+            onUpdateElements={(elements) => dispatch(updateMasterElements(elements))}
+            onUpdateSettings={(settings) => dispatch(updateMasterSettings(settings))}
+            onAddElement={(element) => dispatch(addMasterElement(element))}
+            onUpdateElement={(element) => dispatch(updateMasterElement(element))}
+            onDeleteElement={(id) => dispatch(deleteMasterElement(id))}
           />
         </TabsContent>
         

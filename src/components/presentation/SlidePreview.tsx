@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Slide, Template } from "@/store/presentationSlice";
+import { Slide, Template, SlideElement } from "@/store/presentationSlice";
 
 interface SlidePreviewProps {
   slide: Slide;
@@ -9,6 +9,8 @@ interface SlidePreviewProps {
   height?: number;
   scale?: number;
   editable?: boolean;
+  masterElements?: SlideElement[];
+  slideIndex?: number;
 }
 
 const SlidePreview: React.FC<SlidePreviewProps> = ({
@@ -18,6 +20,8 @@ const SlidePreview: React.FC<SlidePreviewProps> = ({
   height = 540,
   scale = 1,
   editable = false,
+  masterElements = [],
+  slideIndex,
 }) => {
   const aspectRatio = width / height;
   const slideStyle = {
@@ -31,15 +35,30 @@ const SlidePreview: React.FC<SlidePreviewProps> = ({
     overflow: "hidden",
   };
 
-  const renderElement = (element: any) => {
+  const renderElement = (element: SlideElement) => {
     const elementStyle = {
       position: "absolute" as const,
       left: `${element.x * scale}px`,
       top: `${element.y * scale}px`,
       width: `${element.width * scale}px`,
       height: `${element.height * scale}px`,
-      ...element.style,
+      ...(element.style || {}),
     };
+
+    // Special handling for page numbers
+    if (element.role === "pageNumber" && slideIndex !== undefined) {
+      const content = element.content.replace("{page}", `${slideIndex + 1}`);
+      
+      return (
+        <div 
+          key={element.id}
+          style={elementStyle}
+          className="overflow-hidden"
+        >
+          {content}
+        </div>
+      );
+    }
 
     switch (element.type) {
       case "text":
@@ -53,6 +72,7 @@ const SlidePreview: React.FC<SlidePreviewProps> = ({
           </div>
         );
       case "image":
+      case "logo":
         return (
           <img
             key={element.id}
@@ -63,6 +83,8 @@ const SlidePreview: React.FC<SlidePreviewProps> = ({
           />
         );
       case "shape":
+      case "footer":
+      case "header":
         return (
           <div
             key={element.id}
@@ -173,7 +195,8 @@ const SlidePreview: React.FC<SlidePreviewProps> = ({
         } else {
           return (
             <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
-              {slide.elements.map(element => renderElement(element))}
+              {[...slide.elements].map(element => renderElement(element))}
+              {slide.applyMaster !== false && masterElements.map(element => renderElement(element))}
             </div>
           );
         }
@@ -188,7 +211,8 @@ const SlidePreview: React.FC<SlidePreviewProps> = ({
                      alt="Logo" 
                      className="h-12 object-contain" />
               </div>
-              {slide.elements.map(element => renderElement(element))}
+              {[...slide.elements].map(element => renderElement(element))}
+              {slide.applyMaster !== false && masterElements.map(element => renderElement(element))}
             </div>
           );
         } else {
@@ -198,13 +222,27 @@ const SlidePreview: React.FC<SlidePreviewProps> = ({
               <div className="absolute top-0 left-0 right-0 h-16 bg-white bg-opacity-20" />
               <div className="absolute bottom-0 left-0 right-0 h-12 bg-white bg-opacity-10" />
               
-              {slide.elements.map(element => renderElement(element))}
+              {[...slide.elements].map(element => renderElement(element))}
+              {slide.applyMaster !== false && masterElements.map(element => renderElement(element))}
             </div>
           );
         }
         
+      case "master":
+        // For master slide preview, just render all master elements
+        return (
+          <div className="absolute inset-0">
+            {slide.elements.map(element => renderElement(element))}
+          </div>
+        );
+        
       default:
-        return slide.elements.map(element => renderElement(element));
+        return (
+          <>
+            {slide.elements.map(element => renderElement(element))}
+            {slide.applyMaster !== false && masterElements.map(element => renderElement(element))}
+          </>
+        );
     }
   };
 
@@ -215,6 +253,12 @@ const SlidePreview: React.FC<SlidePreviewProps> = ({
       {slide.type === "master" && (
         <div className="absolute bottom-4 right-4 text-xs text-white opacity-60">
           Master Slide
+        </div>
+      )}
+      
+      {slideIndex !== undefined && (
+        <div className="absolute bottom-2 right-2 text-xs text-white opacity-60">
+          Slide {slideIndex + 1}
         </div>
       )}
     </div>

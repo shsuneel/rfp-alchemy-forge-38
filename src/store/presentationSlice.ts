@@ -1,14 +1,17 @@
+
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export interface SlideElement {
   id: string;
-  type: "text" | "image" | "shape" | "diagram";
+  type: "text" | "image" | "shape" | "diagram" | "footer" | "header" | "logo";
   content: string;
   x: number;
   y: number;
   width: number;
   height: number;
   style?: Record<string, string>;
+  isGlobal?: boolean; // Indicates if element appears on all slides
+  role?: "title" | "subtitle" | "body" | "footer" | "date" | "copyright" | "pageNumber" | "custom";
 }
 
 export interface Slide {
@@ -20,6 +23,7 @@ export interface Slide {
   background?: string;
   customBackground?: string;
   elements: SlideElement[];
+  applyMaster?: boolean; // Whether to apply master slide elements
 }
 
 export interface Template {
@@ -29,6 +33,20 @@ export interface Template {
   primaryColor: string;
   secondaryColor: string;
   accentColor: string;
+  fontPrimary?: string;
+  fontSecondary?: string;
+}
+
+export interface MasterSlideSettings {
+  titlePosition: { x: number, y: number };
+  showFooter: boolean;
+  footerHeight: number;
+  showDate: boolean;
+  showPageNumber: boolean;
+  showCopyright: boolean;
+  copyrightText: string;
+  customFooterText: string;
+  logoUrl?: string;
 }
 
 interface PresentationState {
@@ -36,6 +54,8 @@ interface PresentationState {
   slides: Slide[];
   selectedSlideId: string;
   selectedTemplate: Template;
+  masterSlideSettings: MasterSlideSettings;
+  masterElements: SlideElement[];
 }
 
 const defaultTemplates: Template[] = [
@@ -46,6 +66,8 @@ const defaultTemplates: Template[] = [
     primaryColor: "#002060",
     secondaryColor: "#0078D4",
     accentColor: "#00B0F0",
+    fontPrimary: "Arial",
+    fontSecondary: "Calibri",
   },
   {
     id: "modern",
@@ -54,6 +76,8 @@ const defaultTemplates: Template[] = [
     primaryColor: "#7030A0",
     secondaryColor: "#9b87f5",
     accentColor: "#C5A5CF",
+    fontPrimary: "Roboto",
+    fontSecondary: "Open Sans",
   },
   {
     id: "minimalist",
@@ -62,6 +86,8 @@ const defaultTemplates: Template[] = [
     primaryColor: "#FFFFFF",
     secondaryColor: "#F2F2F2",
     accentColor: "#D9D9D9",
+    fontPrimary: "Helvetica",
+    fontSecondary: "Arial",
   },
   {
     id: "agenda",
@@ -70,6 +96,8 @@ const defaultTemplates: Template[] = [
     primaryColor: "#1E293B",
     secondaryColor: "#00B0F0",
     accentColor: "#FFFFFF",
+    fontPrimary: "Segoe UI",
+    fontSecondary: "Verdana",
   },
   {
     id: "understanding",
@@ -78,6 +106,8 @@ const defaultTemplates: Template[] = [
     primaryColor: "#1E293B",
     secondaryColor: "#00B0F0",
     accentColor: "#002060",
+    fontPrimary: "Georgia",
+    fontSecondary: "Times New Roman",
   },
   {
     id: "blank",
@@ -86,8 +116,60 @@ const defaultTemplates: Template[] = [
     primaryColor: "#1E293B",
     secondaryColor: "#00B0F0",
     accentColor: "#002060",
+    fontPrimary: "Arial",
+    fontSecondary: "Helvetica",
   }
 ];
+
+// Default master slide elements and settings
+const defaultMasterElements: SlideElement[] = [
+  {
+    id: "master-footer",
+    type: "footer",
+    content: "",
+    x: 0,
+    y: 500,
+    width: 960,
+    height: 40,
+    isGlobal: true,
+    style: { backgroundColor: "rgba(0,0,0,0.1)", padding: "8px" },
+  },
+  {
+    id: "master-date",
+    type: "text",
+    content: new Date().toLocaleDateString(),
+    x: 50,
+    y: 510,
+    width: 200,
+    height: 20,
+    isGlobal: true,
+    role: "date",
+    style: { fontSize: "12px", color: "#555555" },
+  },
+  {
+    id: "master-copyright",
+    type: "text",
+    content: "© 2025 Company Name",
+    x: 700,
+    y: 510,
+    width: 200,
+    height: 20,
+    isGlobal: true,
+    role: "copyright",
+    style: { fontSize: "12px", color: "#555555", textAlign: "right" },
+  },
+];
+
+const defaultMasterSettings: MasterSlideSettings = {
+  titlePosition: { x: 50, y: 50 },
+  showFooter: true,
+  footerHeight: 40,
+  showDate: true,
+  showPageNumber: true,
+  showCopyright: true,
+  copyrightText: "© 2025 Company Name",
+  customFooterText: "",
+};
 
 const defaultSlides: Slide[] = [
   {
@@ -96,6 +178,7 @@ const defaultSlides: Slide[] = [
     content: "Project Presentation",
     type: "title",
     template: "corporate",
+    applyMaster: true,
     elements: [
       {
         id: "elem-1",
@@ -136,6 +219,8 @@ const initialState: PresentationState = {
   slides: defaultSlides,
   selectedSlideId: defaultSlides[0].id,
   selectedTemplate: defaultTemplates[0],
+  masterElements: defaultMasterElements,
+  masterSlideSettings: defaultMasterSettings,
 };
 
 export const presentationSlice = createSlice({
@@ -178,6 +263,34 @@ export const presentationSlice = createSlice({
       const index = state.slides.findIndex(slide => slide.id === action.payload.slideId);
       if (index !== -1) {
         state.slides[index].customBackground = action.payload.background;
+      }
+    },
+    // New actions for master slide
+    updateMasterElements: (state, action: PayloadAction<SlideElement[]>) => {
+      state.masterElements = action.payload;
+    },
+    updateMasterSettings: (state, action: PayloadAction<Partial<MasterSlideSettings>>) => {
+      state.masterSlideSettings = {
+        ...state.masterSlideSettings,
+        ...action.payload
+      };
+    },
+    addMasterElement: (state, action: PayloadAction<SlideElement>) => {
+      state.masterElements.push(action.payload);
+    },
+    updateMasterElement: (state, action: PayloadAction<SlideElement>) => {
+      const index = state.masterElements.findIndex(element => element.id === action.payload.id);
+      if (index !== -1) {
+        state.masterElements[index] = action.payload;
+      }
+    },
+    deleteMasterElement: (state, action: PayloadAction<string>) => {
+      state.masterElements = state.masterElements.filter(element => element.id !== action.payload);
+    },
+    toggleApplyMaster: (state, action: PayloadAction<{slideId: string, apply: boolean}>) => {
+      const index = state.slides.findIndex(slide => slide.id === action.payload.slideId);
+      if (index !== -1) {
+        state.slides[index].applyMaster = action.payload.apply;
       }
     },
     createFromRfp: (state, action: PayloadAction<{
@@ -281,6 +394,12 @@ export const {
   setSelectedSlideId,
   setTemplate,
   updateSlideBackground,
+  updateMasterElements,
+  updateMasterSettings,
+  addMasterElement,
+  updateMasterElement,
+  deleteMasterElement,
+  toggleApplyMaster,
   createFromRfp
 } = presentationSlice.actions;
 

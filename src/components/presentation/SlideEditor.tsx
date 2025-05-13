@@ -7,15 +7,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Image, Square, FileText, Trash2, PlusSquare } from "lucide-react";
+import { Image, Square, FileText, Trash2, PlusSquare, Text } from "lucide-react";
 import { Slide, SlideElement, Template } from "@/store/presentationSlice";
 import SlidePreview from "./SlidePreview";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Slider } from "@/components/ui/slider";
 
 interface SlideEditorProps {
   slide: Slide;
   template: Template;
+  masterElements?: SlideElement[];
   onUpdate: (slide: Slide) => void;
   onDelete: (id: string) => void;
 }
@@ -23,6 +25,7 @@ interface SlideEditorProps {
 const SlideEditor: React.FC<SlideEditorProps> = ({
   slide,
   template,
+  masterElements = [],
   onUpdate,
   onDelete
 }) => {
@@ -30,6 +33,7 @@ const SlideEditor: React.FC<SlideEditorProps> = ({
     slide.elements.length > 0 ? slide.elements[0] : null
   );
   const [isMasterSlide, setIsMasterSlide] = useState(slide.type === "master");
+  const [selectedTab, setSelectedTab] = useState("elements");
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onUpdate({
@@ -83,6 +87,13 @@ const SlideEditor: React.FC<SlideEditorProps> = ({
     
     setSelectedElement(updatedElements[0] || null);
     toast.success("Element deleted");
+  };
+
+  const handleApplyMasterChange = (checked: boolean) => {
+    onUpdate({
+      ...slide,
+      applyMaster: checked
+    });
   };
 
   const handleMasterSlideChange = (checked: boolean) => {
@@ -147,6 +158,30 @@ const SlideEditor: React.FC<SlideEditorProps> = ({
     toast.success("Background image removed");
   };
 
+  const handleColorChange = (color: string, property: string) => {
+    if (selectedElement) {
+      updateElement({
+        ...selectedElement,
+        style: {
+          ...selectedElement.style,
+          [property]: color
+        }
+      });
+    }
+  };
+
+  const handleFontSizeChange = (value: number[]) => {
+    if (selectedElement && selectedElement.type === "text") {
+      updateElement({
+        ...selectedElement,
+        style: {
+          ...selectedElement.style,
+          fontSize: `${value[0]}px`
+        }
+      });
+    }
+  };
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex justify-between mb-4">
@@ -160,6 +195,15 @@ const SlideEditor: React.FC<SlideEditorProps> = ({
         </div>
         
         <div className="flex items-center gap-4">
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="apply-master"
+              checked={slide.applyMaster ?? true}
+              onCheckedChange={handleApplyMasterChange}
+            />
+            <Label htmlFor="apply-master">Apply Master Slide</Label>
+          </div>
+          
           <div className="flex items-center space-x-2">
             <Checkbox
               id="master-slide"
@@ -185,11 +229,16 @@ const SlideEditor: React.FC<SlideEditorProps> = ({
             slide={slide}
             template={template}
             scale={0.75}
+            masterElements={slide.applyMaster ? masterElements : []}
           />
         </div>
         
         <div className="w-[300px] border-l pl-4">
-          <Tabs defaultValue="elements">
+          <Tabs 
+            defaultValue="elements" 
+            value={selectedTab} 
+            onValueChange={setSelectedTab}
+          >
             <TabsList className="w-full mb-4">
               <TabsTrigger value="elements" className="flex-1">Elements</TabsTrigger>
               <TabsTrigger value="style" className="flex-1">Style</TabsTrigger>
@@ -231,47 +280,69 @@ const SlideEditor: React.FC<SlideEditorProps> = ({
               
               <div className="space-y-1 mb-4">
                 <Label>Slide Elements</Label>
-                {slide.elements.length > 0 ? (
-                  <div className="max-h-[200px] overflow-y-auto border rounded-md">
-                    {slide.elements.map((element, index) => (
-                      <div
-                        key={element.id}
-                        className={`p-2 flex justify-between items-center cursor-pointer text-sm border-b last:border-b-0 ${
-                          selectedElement?.id === element.id ? "bg-accent" : ""
-                        }`}
-                        onClick={() => setSelectedElement(element)}
-                      >
-                        <div className="flex items-center">
-                          {element.type === "text" && <FileText className="h-3 w-3 mr-2" />}
-                          {element.type === "image" && <Image className="h-3 w-3 mr-2" />}
-                          {element.type === "shape" && <Square className="h-3 w-3 mr-2" />}
-                          
-                          <span className="truncate w-40">
-                            {element.type === "text" 
-                              ? (element.content.length > 20 
-                                ? element.content.substring(0, 20) + "..." 
-                                : element.content) 
-                              : `${element.type} ${index + 1}`}
-                          </span>
-                        </div>
+                <div className="max-h-[200px] overflow-y-auto border rounded-md">
+                  {slide.elements.map((element, index) => (
+                    <div
+                      key={element.id}
+                      className={`p-2 flex justify-between items-center cursor-pointer text-sm border-b last:border-b-0 ${
+                        selectedElement?.id === element.id ? "bg-accent" : ""
+                      }`}
+                      onClick={() => setSelectedElement(element)}
+                    >
+                      <div className="flex items-center">
+                        {element.type === "text" && <FileText className="h-3 w-3 mr-2" />}
+                        {element.type === "image" && <Image className="h-3 w-3 mr-2" />}
+                        {element.type === "shape" && <Square className="h-3 w-3 mr-2" />}
                         
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            deleteElement(element.id);
-                          }}
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
+                        <span className="truncate w-40">
+                          {element.type === "text" 
+                            ? (element.content.length > 20 
+                              ? element.content.substring(0, 20) + "..." 
+                              : element.content) 
+                            : `${element.type} ${index + 1}`}
+                        </span>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="p-4 text-center text-sm text-muted-foreground">
-                    No elements added yet
-                  </div>
+                      
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteElement(element.id);
+                        }}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+                {slide.applyMaster && masterElements.length > 0 && (
+                  <>
+                    <Label className="mt-4">Master Elements (Read-only)</Label>
+                    <div className="max-h-[150px] overflow-y-auto border rounded-md border-dashed opacity-70">
+                      {masterElements.map((element, index) => (
+                        <div
+                          key={element.id}
+                          className="p-2 flex justify-between items-center cursor-default text-sm border-b last:border-b-0"
+                        >
+                          <div className="flex items-center">
+                            {element.type === "text" && <FileText className="h-3 w-3 mr-2" />}
+                            {element.type === "image" && <Image className="h-3 w-3 mr-2" />}
+                            {(element.type === "shape" || element.type === "footer") && <Square className="h-3 w-3 mr-2" />}
+                            
+                            <span className="truncate w-40">
+                              {element.role ? `${element.role}` : 
+                                (element.type === "text" 
+                                  ? (element.content.length > 20 
+                                    ? element.content.substring(0, 20) + "..." 
+                                    : element.content) 
+                                  : `${element.type} (master)`)}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
                 )}
               </div>
             </TabsContent>
@@ -297,6 +368,34 @@ const SlideEditor: React.FC<SlideEditorProps> = ({
                         })}
                         rows={3}
                       />
+                      
+                      <div className="space-y-2 pt-2">
+                        <Label className="text-sm">Font Size: {selectedElement.style?.fontSize || "16px"}</Label>
+                        <Slider 
+                          defaultValue={[parseInt(selectedElement.style?.fontSize || "16")]} 
+                          max={72} 
+                          step={1} 
+                          min={8}
+                          onValueChange={handleFontSizeChange}
+                        />
+                      </div>
+                      
+                      <div className="space-y-2 pt-2">
+                        <Label className="text-sm">Text Color</Label>
+                        <div className="grid grid-cols-6 gap-2">
+                          {["#000000", "#ffffff", "#ff0000", "#00ff00", "#0000ff", template.primaryColor, 
+                            template.secondaryColor, template.accentColor, "#333333", "#666666", "#999999", "#cccccc"].map(color => (
+                            <div 
+                              key={color}
+                              className={`w-full aspect-square rounded-md cursor-pointer border ${
+                                selectedElement.style?.color === color ? "ring-2 ring-primary" : ""
+                              }`}
+                              style={{ backgroundColor: color }}
+                              onClick={() => handleColorChange(color, "color")}
+                            />
+                          ))}
+                        </div>
+                      </div>
                     </div>
                   )}
                   
@@ -355,6 +454,25 @@ const SlideEditor: React.FC<SlideEditorProps> = ({
                     </div>
                   )}
                   
+                  {selectedElement.type === "shape" && (
+                    <div className="space-y-2 pt-2">
+                      <Label className="text-sm">Shape Color</Label>
+                      <div className="grid grid-cols-6 gap-2">
+                        {["#000000", "#ffffff", "#ff0000", "#00ff00", "#0000ff", template.primaryColor, 
+                          template.secondaryColor, template.accentColor, "#333333", "#666666", "#999999", "#cccccc"].map(color => (
+                          <div 
+                            key={color}
+                            className={`w-full aspect-square rounded-md cursor-pointer border ${
+                              selectedElement.style?.backgroundColor === color ? "ring-2 ring-primary" : ""
+                            }`}
+                            style={{ backgroundColor: color }}
+                            onClick={() => handleColorChange(color, "backgroundColor")}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  
                   <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
                       <Label className="text-xs">X Position</Label>
@@ -404,6 +522,12 @@ const SlideEditor: React.FC<SlideEditorProps> = ({
                       />
                     </div>
                   </div>
+                </div>
+              )}
+              
+              {!selectedElement && (
+                <div className="flex items-center justify-center h-40 text-muted-foreground">
+                  Select an element to edit its style
                 </div>
               )}
             </TabsContent>
@@ -461,11 +585,30 @@ const SlideEditor: React.FC<SlideEditorProps> = ({
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Template Color</Label>
-                  <div 
-                    className="h-10 rounded-md"
-                    style={{ backgroundColor: template.primaryColor }}
-                  />
+                  <Label>Template Colors</Label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <Label className="text-xs">Primary</Label>
+                      <div 
+                        className="h-10 rounded-md"
+                        style={{ backgroundColor: template.primaryColor }}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Secondary</Label>
+                      <div 
+                        className="h-10 rounded-md"
+                        style={{ backgroundColor: template.secondaryColor }}
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Accent</Label>
+                      <div 
+                        className="h-10 rounded-md"
+                        style={{ backgroundColor: template.accentColor }}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             </TabsContent>
