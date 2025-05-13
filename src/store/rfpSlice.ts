@@ -155,7 +155,6 @@ const initialState: RfpState = {
   savedRfps: getSavedRfps()
 };
 
-
 export const fetchInitialData = createAsyncThunk(
   'data/fetchInitialData',
   async () => {
@@ -164,7 +163,6 @@ export const fetchInitialData = createAsyncThunk(
     return { baseData: baseData.data, rfps: rfps.data.rfps };
   }
 );
-
 
 export const rfpSlice = createSlice({
   name: 'rfp',
@@ -232,11 +230,12 @@ export const rfpSlice = createSlice({
         remarks: state.remarks,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
+        client: state.clientInfo.split('\n')[0] || '', // Extract first line of client info as client name
       };
 
       // Check if this RFP already exists (by projectName)
       const existingIndex = state.savedRfps.findIndex(rfp =>
-        rfp.projectName === state.projectName && rfp.projectName !== '');
+        rfp.projectName === state.projectName && state.projectName !== '');
 
       if (existingIndex !== -1 && state.projectName !== '') {
         // Update existing RFP
@@ -330,6 +329,41 @@ export const rfpSlice = createSlice({
       state.team = [{ id: "team-default", name: "", email: "", role: "Project Manager" }];
       // Keep the default resources
       state.resources = initialState.resources;
+    },
+    setExtractedInfo: (state, action: PayloadAction<{
+      projectDescription?: string;
+      requirements?: RequirementItem[];
+      techStack?: string[];
+      assumptions?: AssumptionItem[];
+      dependencies?: DependencyItem[];
+    }>) => {
+      // Update state with extracted information
+      if (action.payload.projectDescription) {
+        state.projectDescription = action.payload.projectDescription;
+      }
+      
+      if (action.payload.requirements && action.payload.requirements.length > 0) {
+        state.requirements = action.payload.requirements;
+      }
+      
+      if (action.payload.techStack && action.payload.techStack.length > 0) {
+        // Flatten tech stack for now, could be improved to sort by category
+        state.techStack = action.payload.techStack;
+        // Add to 'other' category by default, actual categorization would need NLP
+        state.techStackByLayer.other = [
+          ...state.techStackByLayer.other,
+          ...action.payload.techStack.filter(tech => 
+            !state.techStackByLayer.other.includes(tech))
+        ];
+      }
+      
+      if (action.payload.assumptions && action.payload.assumptions.length > 0) {
+        state.assumptions = action.payload.assumptions;
+      }
+      
+      if (action.payload.dependencies && action.payload.dependencies.length > 0) {
+        state.dependencies = action.payload.dependencies;
+      }
     }
   },
   extraReducers: (builder) => {
@@ -366,6 +400,7 @@ export const {
   loadRfp,
   deleteRfp,
   clearCurrentRfp,
+  setExtractedInfo,
 } = rfpSlice.actions;
 
 export default rfpSlice.reducer;
