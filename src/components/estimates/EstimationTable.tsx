@@ -1,4 +1,3 @@
-
 import {
   Table,
   TableBody,
@@ -173,15 +172,15 @@ const EstimationTable: React.FC<EstimationTableProps> = ({
                         <Edit className="h-4 w-4" />
                       </Button>
                     )}
-                    {onDeleteScreen && (
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => onDeleteScreen(screen.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => deleteScreen(screen.id)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      <span className="sr-only">Delete screen</span>
+                    </Button>
                   </div>
                 </TableCell>
               </TableRow>
@@ -223,15 +222,15 @@ const EstimationTable: React.FC<EstimationTableProps> = ({
                         <Edit className="h-4 w-4" />
                       </Button>
                     )}
-                    {onDeleteApi && (
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => onDeleteApi(api.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => deleteApi(api.id)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      <span className="sr-only">Delete API</span>
+                    </Button>
                   </div>
                 </TableCell>
               </TableRow>

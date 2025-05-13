@@ -1,12 +1,14 @@
 
+import { useState } from "react";
 import { 
   FormFactor, 
-  Browser, 
+  Browser,
+  ApplicationFactor, 
   updateFormFactors, 
   updateBrowsers,
-  // These actions are not exported from estimatesSlice
-  // setContingency,
-  // setRiskFactor
+  updateApplicationFactors,
+  toggleApplicationFactor,
+  updatePlatformConfig
 } from "@/store/estimatesSlice";
 import { useAppSelector } from "@/hooks/useAppSelector";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
@@ -15,13 +17,42 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown, ChevronRight } from "lucide-react";
 
-const PlatformConfigForm: React.FC = () => {
+interface PlatformConfigFormProps {
+  onUpdate: (config: any) => void;
+}
+
+const PlatformConfigForm: React.FC<PlatformConfigFormProps> = ({ onUpdate }) => {
   const dispatch = useAppDispatch();
+  const { toast } = useToast();
   const formFactors = useAppSelector(state => state.estimates.formFactors);
   const browsers = useAppSelector(state => state.estimates.browsers);
-  const contingency = useAppSelector(state => state.estimates.contingency);
-  const riskFactor = useAppSelector(state => state.estimates.riskFactor);
+  const applicationFactors = useAppSelector(state => state.estimates.applicationFactors);
+  const [contingency, setContingency] = useState(useAppSelector(state => state.estimates.contingency));
+  const [riskFactor, setRiskFactor] = useState(useAppSelector(state => state.estimates.riskFactor));
+  
+  // Group application factors by their group property
+  const factorsByGroup = applicationFactors.reduce((groups, factor) => {
+    if (!groups[factor.group]) {
+      groups[factor.group] = [];
+    }
+    groups[factor.group].push(factor);
+    return groups;
+  }, {} as Record<string, ApplicationFactor[]>);
+  
+  // Track which groups are expanded
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>(() => {
+    return Object.keys(factorsByGroup).reduce((acc, group) => {
+      acc[group] = true; // Start with all expanded
+      return acc;
+    }, {} as Record<string, boolean>);
+  });
   
   const handleFormFactorToggle = (id: string, checked: boolean) => {
     const updated = formFactors.map(ff => 
@@ -38,13 +69,40 @@ const PlatformConfigForm: React.FC = () => {
   };
   
   const handleContingencyChange = (value: number[]) => {
-    // Commented out until setContingency action is implemented
-    // dispatch(setContingency(value[0]));
+    setContingency(value[0]);
   };
   
   const handleRiskFactorChange = (value: number[]) => {
-    // Commented out until setRiskFactor action is implemented
-    // dispatch(setRiskFactor(value[0]));
+    setRiskFactor(value[0]);
+  };
+  
+  const handleApplicationFactorToggle = (factorId: string, checked: boolean) => {
+    dispatch(toggleApplicationFactor(factorId));
+  };
+  
+  const handleToggleGroup = (group: string) => {
+    setExpandedGroups(prev => ({
+      ...prev,
+      [group]: !prev[group]
+    }));
+  };
+
+  const handleSaveConfig = () => {
+    // Save the updated configuration
+    dispatch(updatePlatformConfig({
+      contingency,
+      riskFactor
+    }));
+    
+    onUpdate({
+      contingency,
+      riskFactor
+    });
+    
+    toast({
+      title: "Platform configuration saved",
+      description: "Your platform settings have been updated.",
+    });
   };
 
   return (
@@ -108,6 +166,59 @@ const PlatformConfigForm: React.FC = () => {
       
       <Card>
         <CardHeader>
+          <CardTitle>Application Factors</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ScrollArea className="h-[300px]">
+            <div className="space-y-4">
+              {Object.keys(factorsByGroup).map(group => (
+                <Collapsible 
+                  key={group}
+                  open={expandedGroups[group]}
+                  onOpenChange={() => handleToggleGroup(group)}
+                >
+                  <div className="flex items-center mb-2">
+                    <CollapsibleTrigger asChild>
+                      <Button variant="ghost" size="sm" className="p-0">
+                        {expandedGroups[group] ? (
+                          <ChevronDown className="h-4 w-4 mr-2" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4 mr-2" />
+                        )}
+                      </Button>
+                    </CollapsibleTrigger>
+                    <h3 className="text-md font-semibold">{group}</h3>
+                  </div>
+                  
+                  <CollapsibleContent>
+                    <div className="ml-6 space-y-2">
+                      {factorsByGroup[group].map(factor => (
+                        <div key={factor.factorId} className="flex items-center space-x-2">
+                          <Checkbox 
+                            id={`factor-${factor.factorId}`}
+                            checked={factor.isSelected}
+                            onCheckedChange={(checked) => handleApplicationFactorToggle(
+                              factor.factorId, 
+                              checked as boolean
+                            )}
+                          />
+                          <Label htmlFor={`factor-${factor.factorId}`} className="flex-1">
+                            {factor.name}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </CollapsibleContent>
+                  <Separator className="my-4" />
+                </Collapsible>
+              ))}
+            </div>
+          </ScrollArea>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader>
           <CardTitle>Risk Parameters</CardTitle>
         </CardHeader>
         <CardContent>
@@ -123,7 +234,7 @@ const PlatformConfigForm: React.FC = () => {
                   min={0}
                   max={50}
                   step={5}
-                  defaultValue={[contingency]}
+                  value={[contingency]}
                   onValueChange={handleContingencyChange}
                 />
                 <p className="text-sm text-muted-foreground">
@@ -143,7 +254,7 @@ const PlatformConfigForm: React.FC = () => {
                   min={0}
                   max={50}
                   step={5}
-                  defaultValue={[riskFactor]}
+                  value={[riskFactor]}
                   onValueChange={handleRiskFactorChange}
                 />
                 <p className="text-sm text-muted-foreground">
@@ -151,6 +262,12 @@ const PlatformConfigForm: React.FC = () => {
                 </p>
               </div>
             </div>
+          </div>
+          
+          <div className="mt-6 flex justify-end">
+            <Button onClick={handleSaveConfig}>
+              Save Configuration
+            </Button>
           </div>
         </CardContent>
       </Card>
