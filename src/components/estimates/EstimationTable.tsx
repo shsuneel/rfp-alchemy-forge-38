@@ -11,26 +11,23 @@ import {
 import { Trash2, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { UserStory, Screen, Api, FormFactor, Browser } from "@/store/estimatesSlice";
+import { UserStory, Screen, Api, FormFactor, Browser, ComplexityLevels } from "@/store/estimatesSlice";
 import { useAppSelector } from "@/hooks/useAppSelector";
+import { useAppDispatch } from "@/hooks/useAppDispatch";
+import { deleteUserStory, deleteScreen, deleteApi } from "@/store/estimatesSlice";
 
 interface EstimationTableProps {
-  onDeleteStory?: (id: string) => void;
-  onDeleteScreen?: (id: string) => void;
-  onDeleteApi?: (id: string) => void;
   onEditStory?: (story: UserStory) => void;
   onEditScreen?: (screen: Screen) => void;
   onEditApi?: (api: Api) => void;
 }
 
 const EstimationTable: React.FC<EstimationTableProps> = ({ 
-  onDeleteStory, 
-  onDeleteScreen,
-  onDeleteApi,
   onEditStory,
   onEditScreen,
   onEditApi 
 }) => {
+  const dispatch = useAppDispatch();
   const userStories = useAppSelector((state) => state.estimates.userStories);
   const screens = useAppSelector((state) => state.estimates.screens);
   const apis = useAppSelector((state) => state.estimates.apis);
@@ -38,6 +35,18 @@ const EstimationTable: React.FC<EstimationTableProps> = ({
   const browsers = useAppSelector((state) => state.estimates.browsers).filter(b => b.isSelected);
   const contingency = useAppSelector((state) => state.estimates.contingency);
   const riskFactor = useAppSelector((state) => state.estimates.riskFactor);
+
+  const handleDeleteStory = (id: string) => {
+    dispatch(deleteUserStory(id));
+  };
+
+  const handleDeleteScreen = (id: string) => {
+    dispatch(deleteScreen(id));
+  };
+
+  const handleDeleteApi = (id: string) => {
+    dispatch(deleteApi(id));
+  };
 
   // Calculate base effort
   const userStoriesEffort = userStories.reduce((sum, story) => sum + story.effortDays, 0);
@@ -87,9 +96,12 @@ const EstimationTable: React.FC<EstimationTableProps> = ({
           <TableCaption>User Stories Estimation</TableCaption>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[300px]">Title</TableHead>
-              <TableHead>Complexity</TableHead>
-              <TableHead className="w-[150px]">Effort (days)</TableHead>
+              <TableHead className="w-[250px]">Title</TableHead>
+              <TableHead>UI</TableHead>
+              <TableHead>Middleware</TableHead>
+              <TableHead>Business Logic</TableHead>
+              <TableHead>Integration</TableHead>
+              <TableHead className="w-[100px]">Effort (days)</TableHead>
               <TableHead className="w-[100px]"></TableHead>
             </TableRow>
           </TableHeader>
@@ -97,8 +109,11 @@ const EstimationTable: React.FC<EstimationTableProps> = ({
             {userStories.map((story) => (
               <TableRow key={story.id}>
                 <TableCell className="font-medium">{story.title}</TableCell>
-                <TableCell>{getComplexityBadge(story.complexity)}</TableCell>
-                <TableCell>{story.effortDays}</TableCell>
+                <TableCell>{getComplexityBadge(story.complexity.ui)}</TableCell>
+                <TableCell>{getComplexityBadge(story.complexity.middleware)}</TableCell>
+                <TableCell>{getComplexityBadge(story.complexity.businessLogic)}</TableCell>
+                <TableCell>{getComplexityBadge(story.complexity.integration)}</TableCell>
+                <TableCell>{formatDays(story.effortDays)}</TableCell>
                 <TableCell>
                   <div className="flex gap-1">
                     {onEditStory && (
@@ -110,21 +125,19 @@ const EstimationTable: React.FC<EstimationTableProps> = ({
                         <Edit className="h-4 w-4" />
                       </Button>
                     )}
-                    {onDeleteStory && (
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => onDeleteStory(story.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => handleDeleteStory(story.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </TableCell>
               </TableRow>
             ))}
             <TableRow className="bg-muted/50">
-              <TableCell colSpan={2} className="font-medium">User Stories Subtotal</TableCell>
+              <TableCell colSpan={5} className="font-medium">User Stories Subtotal</TableCell>
               <TableCell className="font-medium">{formatDays(userStoriesEffort)}</TableCell>
               <TableCell></TableCell>
             </TableRow>

@@ -1,10 +1,19 @@
+
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+
+export interface ComplexityLevels {
+  ui: "Low" | "Medium" | "High";
+  middleware: "Low" | "Medium" | "High";
+  businessLogic: "Low" | "Medium" | "High";
+  integration: "Low" | "Medium" | "High";
+}
 
 export interface UserStory {
   id: string;
   title: string;
   description: string;
-  complexity: "Low" | "Medium" | "High";
+  assumptions?: string;
+  complexity: ComplexityLevels;
   effortDays: number;
 }
 

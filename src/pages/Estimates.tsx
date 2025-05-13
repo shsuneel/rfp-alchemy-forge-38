@@ -7,7 +7,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { useAppSelector } from "@/hooks/useAppSelector";
-import { UserStory, Screen, Api, PlatformConfig } from '@/store/estimatesSlice';
+import { UserStory, Screen, Api, addUserStory, addScreen, addApi, updatePlatformConfig } from '@/store/estimatesSlice';
 import EstimationTable from "@/components/estimates/EstimationTable";
 import UserStoryForm from "@/components/estimates/UserStoryForm";
 import ScreenForm from "@/components/estimates/ScreenForm";
@@ -16,17 +16,6 @@ import PlatformConfigForm from "@/components/estimates/PlatformConfigForm";
 import { ArrowLeft } from 'lucide-react';
 import { useNavigation } from '@/hooks/useNavigation';
 import { setEstimatesActiveTab } from '@/store/navigationSlice';
-import { updatePlatformConfig } from '@/store/estimatesSlice';
-
-// Define props for the EstimationTable component
-interface EstimationTableProps {
-  userStories: UserStory[];
-  screens: Screen[];
-  apis: Api[];
-  platformConfig: PlatformConfig;
-  totalEffort: number;
-  totalCost: number;
-}
 
 const Estimates = () => {
   const location = useLocation();
@@ -48,27 +37,18 @@ const Estimates = () => {
   
   // Handle form submissions for different components
   const handleAddUserStory = (story: UserStory) => {
-    dispatch({
-      type: 'estimates/addUserStory',
-      payload: story,
-    });
+    dispatch(addUserStory(story));
   };
 
   const handleAddScreen = (screen: Screen) => {
-    dispatch({
-      type: 'estimates/addScreen',
-      payload: screen,
-    });
+    dispatch(addScreen(screen));
   };
 
   const handleAddApi = (api: Api) => {
-    dispatch({
-      type: 'estimates/addApi',
-      payload: api,
-    });
+    dispatch(addApi(api));
   };
 
-  const handleUpdatePlatformConfig = (config: PlatformConfig) => {
+  const handleUpdatePlatformConfig = (config: any) => {
     dispatch(updatePlatformConfig(config));
   };
 
@@ -139,7 +119,6 @@ const Estimates = () => {
                     
                     <TabsContent value="platform">
                       <PlatformConfigForm 
-                        config={platformConfig}
                         onUpdate={handleUpdatePlatformConfig}
                       />
                     </TabsContent>
@@ -148,14 +127,7 @@ const Estimates = () => {
               </Card>
               
               {/* Display estimation results */}
-              <EstimationTable 
-                userStories={userStories}
-                screens={screens}
-                apis={apis}
-                platformConfig={platformConfig}
-                totalEffort={totalEffort}
-                totalCost={totalCost}
-              />
+              <EstimationTable />
             </div>
           </div>
         </div>
