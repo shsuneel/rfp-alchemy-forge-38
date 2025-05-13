@@ -1,10 +1,19 @@
-import React from "react";
+
+import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Presentation, Image, Layout, Square, SquareDashed, Plus } from "lucide-react";
 import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -39,6 +48,8 @@ const PresentationEditor: React.FC = () => {
     selectedTemplate
   } = useAppSelector(state => state.presentation);
   
+  const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState(false);
+
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     dispatch(setTitle(e.target.value));
   };
@@ -96,6 +107,11 @@ const PresentationEditor: React.FC = () => {
   ];
 
   const addNewSlide = (type: Slide["type"] = "content") => {
+    if (type === "template") {
+      setIsTemplateDialogOpen(true);
+      return;
+    }
+    
     const newSlide: Slide = {
       id: `slide-${Date.now()}`,
       title: `${type.charAt(0).toUpperCase() + type.slice(1)} Slide`,
@@ -174,8 +190,22 @@ const PresentationEditor: React.FC = () => {
           style: { fontSize: "64px", fontWeight: "bold", color: "#ffffff", textAlign: "center" }
         });
       }
-    } else if (type === "template") {
-      newSlide.elements.push({
+    }
+    
+    dispatch(addSlide(newSlide));
+    toast.success(`New ${type} slide added`);
+  };
+
+  const addTemplateSlide = (templateId: string) => {
+    const templateConfig = allTemplates.find(t => t.id === templateId) || selectedTemplate;
+    
+    const newSlide: Slide = {
+      id: `slide-${Date.now()}`,
+      title: `Template Slide`,
+      content: "",
+      type: "template",
+      template: templateId,
+      elements: [{
         id: `elem-${Date.now()}-layout`,
         type: "text",
         content: "Template Slide",
@@ -184,11 +214,91 @@ const PresentationEditor: React.FC = () => {
         width: 500,
         height: 50,
         style: { fontSize: "32px", fontWeight: "bold", color: "#333333" }
-      });
+      }],
+    };
+    
+    // Add template-specific elements
+    if (templateId === "agenda") {
+      newSlide.elements.push(
+        {
+          id: `agenda-template-title`,
+          type: "text",
+          content: "Agenda",
+          x: 100,
+          y: 150,
+          width: 300,
+          height: 60,
+          style: { fontSize: "40px", fontWeight: "bold", color: "#ffffff" }
+        },
+        {
+          id: `agenda-item-1`,
+          type: "text",
+          content: "1. Introduction",
+          x: 100,
+          y: 250,
+          width: 400,
+          height: 40,
+          style: { fontSize: "24px", color: "#ffffff" }
+        },
+        {
+          id: `agenda-item-2`,
+          type: "text",
+          content: "2. Project Overview",
+          x: 100,
+          y: 300,
+          width: 400,
+          height: 40,
+          style: { fontSize: "24px", color: "#ffffff" }
+        },
+        {
+          id: `agenda-item-3`,
+          type: "text",
+          content: "3. Timeline & Resources",
+          x: 100,
+          y: 350,
+          width: 400,
+          height: 40,
+          style: { fontSize: "24px", color: "#ffffff" }
+        },
+        {
+          id: `agenda-item-4`,
+          type: "text",
+          content: "4. Next Steps",
+          x: 100,
+          y: 400,
+          width: 400,
+          height: 40,
+          style: { fontSize: "24px", color: "#ffffff" }
+        }
+      );
+    } else if (templateId === "understanding") {
+      newSlide.elements = [
+        {
+          id: `understanding-title`,
+          type: "text", 
+          content: "Our Understanding",
+          x: 100,
+          y: 150,
+          width: 500,
+          height: 60,
+          style: { fontSize: "40px", fontWeight: "bold", color: "#ffffff" }
+        },
+        {
+          id: `understanding-content`,
+          type: "text",
+          content: "• Key point about project requirements\n• Important client needs\n• Specific technical considerations",
+          x: 100,
+          y: 250,
+          width: 600,
+          height: 200,
+          style: { fontSize: "24px", color: "#ffffff", lineHeight: "1.5" }
+        }
+      ];
     }
     
     dispatch(addSlide(newSlide));
-    toast.success(`New ${type} slide added`);
+    setIsTemplateDialogOpen(false);
+    toast.success(`New template slide added`);
   };
 
   const handleDeleteSlide = (id: string) => {
@@ -339,6 +449,54 @@ const PresentationEditor: React.FC = () => {
           />
         </TabsContent>
       </Tabs>
+      
+      {/* Template Selection Dialog */}
+      <Dialog open={isTemplateDialogOpen} onOpenChange={setIsTemplateDialogOpen}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Select a Template</DialogTitle>
+            <DialogDescription>
+              Choose a template for your new slide
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {allTemplates.map((template) => (
+              <Card
+                key={template.id}
+                className="cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => addTemplateSlide(template.id)}
+              >
+                <CardContent className="p-4">
+                  <div className="mb-2 font-medium">{template.name}</div>
+                  <div 
+                    className="aspect-video rounded-md overflow-hidden"
+                    style={{ backgroundColor: template.primaryColor }}
+                  >
+                    {template.thumbnail ? (
+                      <img 
+                        src={template.thumbnail} 
+                        alt={template.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex items-center justify-center h-full bg-muted">
+                        No preview
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsTemplateDialogOpen(false)}>
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
