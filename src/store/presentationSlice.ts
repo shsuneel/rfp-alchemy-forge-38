@@ -98,27 +98,8 @@ const defaultTemplates: Template[] = [
     accentColor: "#FFFFFF",
     fontPrimary: "Segoe UI",
     fontSecondary: "Verdana",
-  },
-  {
-    id: "understanding",
-    name: "Understanding Template",
-    thumbnail: "/lovable-uploads/f9b25e6f-fbcf-4ead-b44f-cd069f221d2d.png",
-    primaryColor: "#1E293B",
-    secondaryColor: "#00B0F0",
-    accentColor: "#002060",
-    fontPrimary: "Georgia",
-    fontSecondary: "Times New Roman",
-  },
-  {
-    id: "blank",
-    name: "Blank Template",
-    thumbnail: "/lovable-uploads/919105d7-797a-4abc-8b18-b7a547e61870.png",
-    primaryColor: "#1E293B",
-    secondaryColor: "#00B0F0",
-    accentColor: "#002060",
-    fontPrimary: "Arial",
-    fontSecondary: "Helvetica",
   }
+ 
 ];
 
 // Default master slide elements and settings
