@@ -38,6 +38,7 @@ import Team from "./Team";
 import Resources from "./Resources";
 import Preview from "./Preview";
 import AiSuggestions from "./AiSuggestions";
+import AiSuggestionIcon from "@/components/ui/AiSuggestionIcon";
 
 const STEPS = [
   "Project Info",
@@ -258,6 +259,97 @@ const RfpForm = () => {
     toast.success("Presentation created from RFP data!");
   };
 
+  // Add new handlers for AI suggestions
+  const handleProjectDescriptionSuggestion = (suggestion: string) => {
+    setProjectDescription(suggestion);
+  };
+
+  const handleRequirementsSuggestion = (suggestion: string) => {
+    // Create a requirement from the suggestion
+    const newRequirements = [...requirements];
+    suggestion.split('\n').filter(line => line.trim()).forEach((line, index) => {
+      const trimmedLine = line.replace(/^\d+\.\s*/, '').trim(); // Remove numbering
+      if (trimmedLine) {
+        newRequirements.push({
+          id: `req-${Date.now()}-${index}`,
+          description: trimmedLine,
+          priority: "Medium"
+        });
+      }
+    });
+    setRequirementsState(newRequirements);
+  };
+
+  const handleTechStackSuggestion = (suggestion: string) => {
+    const techItems = suggestion.split(',').map(item => item.trim()).filter(Boolean);
+    const newTechStack = { ...techStack };
+    
+    // Add to 'other' category by default
+    newTechStack.other = [...newTechStack.other, ...techItems.filter(item => !newTechStack.other.includes(item))];
+    setTechStackState(newTechStack);
+  };
+
+  const handleAssumptionsSuggestion = (suggestion: string) => {
+    const newAssumptions = [...assumptions];
+    suggestion.split('\n').filter(line => line.trim()).forEach((line, index) => {
+      const trimmedLine = line.replace(/^\d+\.\s*/, '').trim(); // Remove numbering
+      if (trimmedLine) {
+        newAssumptions.push({
+          id: `assump-${Date.now()}-${index}`,
+          description: trimmedLine
+        });
+      }
+    });
+    setAssumptionsState(newAssumptions);
+  };
+
+  const handleDependenciesSuggestion = (suggestion: string) => {
+    const newDependencies = [...dependencies];
+    suggestion.split('\n').filter(line => line.trim()).forEach((line, index) => {
+      const trimmedLine = line.replace(/^\d+\.\s*/, '').trim(); // Remove numbering
+      if (trimmedLine) {
+        newDependencies.push({
+          id: `dep-${Date.now()}-${index}`,
+          description: trimmedLine
+        });
+      }
+    });
+    setDependenciesState(newDependencies);
+  };
+
+  const handleTimelineSuggestion = (suggestion: string) => {
+    const newTimeline = [...timeline];
+    suggestion.split('\n').filter(line => line.trim()).forEach((line, index) => {
+      // Extract phase name and duration (if available)
+      const match = line.match(/^(?:Phase\s*\d*\s*\(?(.*?)\)?:?\s*)?(.*)$/i);
+      if (match && match[1]) {
+        const phaseName = match[1].trim();
+        const durationMatch = match[2].match(/(\d+)-?(\d+)?\s*weeks?/i);
+        let durationWeeks = 2; // Default
+        
+        if (durationMatch) {
+          // If range, take the average
+          if (durationMatch[2]) {
+            durationWeeks = Math.round((parseInt(durationMatch[1]) + parseInt(durationMatch[2])) / 2);
+          } else {
+            durationWeeks = parseInt(durationMatch[1]);
+          }
+        }
+        
+        newTimeline.push({
+          id: `phase-${Date.now()}-${index}`,
+          name: phaseName,
+          description: match[2].replace(/\d+-?\d*\s*weeks?/i, '').trim(),
+          durationWeeks: durationWeeks
+        });
+      }
+    });
+    
+    if (newTimeline.length > 1) { // If we added any new phases
+      setTimelineState(newTimeline);
+    }
+  };
+
   // Form steps rendering
   const renderFormStep = () => {
     switch (currentStep) {
@@ -272,7 +364,13 @@ const RfpForm = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="project-name">Project Name <span className="text-red-500">*</span></Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="project-name">Project Name <span className="text-red-500">*</span></Label>
+                  <AiSuggestionIcon 
+                    field="projectDescription"
+                    onSuggestionApplied={handleProjectDescriptionSuggestion}
+                  />
+                </div>
                 <Input
                   id="project-name"
                   placeholder="e.g., Customer Portal Modernization"
@@ -282,7 +380,14 @@ const RfpForm = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="project-description">Project Description</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="project-description">Project Description</Label>
+                  <AiSuggestionIcon 
+                    field="projectDescription"
+                    onSuggestionApplied={handleProjectDescriptionSuggestion}
+                    currentValue={projectDescription}
+                  />
+                </div>
                 <Textarea
                   id="project-description"
                   placeholder="Briefly describe the project and its objectives"
@@ -344,27 +449,68 @@ const RfpForm = () => {
         return <FileUpload onFilesChange={setFiles} />;
 
       case 2:
-        return <TechStack
-          onTechStackChange={setTechStackState}
-          techStackByLayer={techStack}
-        />;
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-medium">Technology Stack</h3>
+              <AiSuggestionIcon
+                field="techStack"
+                onSuggestionApplied={handleTechStackSuggestion}
+              />
+            </div>
+            <TechStack
+              onTechStackChange={setTechStackState}
+              techStackByLayer={techStack}
+            />
+          </div>
+        );
 
       case 3:
         return (
-          <Requirements
-            onRequirementsChange={setRequirementsState}
-            onAssumptionsChange={setAssumptionsState}
-            onDependenciesChange={setDependenciesState}
-            onSectionsChange={setSectionsState}
-            initialRequirements={requirements}
-            initialAssumptions={assumptions}
-            initialDependencies={dependencies}
-            initialSections={sections}
-          />
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-medium">Requirements, Assumptions & Dependencies</h3>
+              <div className="flex gap-2">
+                <AiSuggestionIcon
+                  field="requirements"
+                  onSuggestionApplied={handleRequirementsSuggestion}
+                />
+                <AiSuggestionIcon
+                  field="assumptions"
+                  onSuggestionApplied={handleAssumptionsSuggestion}
+                />
+                <AiSuggestionIcon
+                  field="dependencies"
+                  onSuggestionApplied={handleDependenciesSuggestion}
+                />
+              </div>
+            </div>
+            <Requirements
+              onRequirementsChange={setRequirementsState}
+              onAssumptionsChange={setAssumptionsState}
+              onDependenciesChange={setDependenciesState}
+              onSectionsChange={setSectionsState}
+              initialRequirements={requirements}
+              initialAssumptions={assumptions}
+              initialDependencies={dependencies}
+              initialSections={sections}
+            />
+          </div>
         );
 
       case 4:
-        return <Timeline onTimelineChange={setTimelineState} initialTimeline={timeline} />;
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-medium">Project Timeline</h3>
+              <AiSuggestionIcon
+                field="timeline"
+                onSuggestionApplied={handleTimelineSuggestion}
+              />
+            </div>
+            <Timeline onTimelineChange={setTimelineState} initialTimeline={timeline} />
+          </div>
+        );
 
       case 5:
         return <Resources onResourcesChange={setResourcesState} initialResources={resources} />;

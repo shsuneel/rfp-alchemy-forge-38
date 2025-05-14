@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -162,7 +161,7 @@ const AiSuggestions: React.FC<AiSuggestionsProps> = ({ projectDescription }) => 
         {!suggestions && (
           <div className="text-center p-6">
             <p className="text-muted-foreground mb-4">
-              Generate AI suggestions based on your project description to get started quickly.
+              Generate comprehensive AI suggestions based on your project description to get started quickly.
             </p>
             <Button 
               onClick={generateSuggestions} 
@@ -177,7 +176,7 @@ const AiSuggestions: React.FC<AiSuggestionsProps> = ({ projectDescription }) => 
               ) : (
                 <>
                   <Sparkles className="mr-2 h-4 w-4" />
-                  Generate Suggestions
+                  Generate Comprehensive Suggestions
                 </>
               )}
             </Button>
@@ -195,6 +194,7 @@ const AiSuggestions: React.FC<AiSuggestionsProps> = ({ projectDescription }) => 
             <div className="text-sm text-muted-foreground">
               <p>Note: These suggestions have been applied to your RFP automatically.</p>
               <p>You can find them in the Requirements, Tech Stack, and other relevant sections.</p>
+              <p className="mt-2 text-amber-600">Need specific suggestions? Try the AI icons <Sparkles className="h-3 w-3 inline" /> next to individual fields!</p>
             </div>
           </div>
         )}
