@@ -3,7 +3,6 @@ import { RouteObject } from "react-router-dom";
 
 // Pages
 import Index from "@/pages/Index";
-import Estimates from "@/pages/Estimates";
 import NotFound from "@/pages/NotFound";
 
 // Route configuration object
@@ -11,10 +10,6 @@ export const routes: RouteObject[] = [
   {
     path: "/",
     element: <Index />,
-  },
-  {
-    path: "/estimates",
-    element: <Estimates />,
   },
   // Add any new routes above this line
   {
@@ -25,8 +20,7 @@ export const routes: RouteObject[] = [
 
 // Named routes for programmatic navigation
 export const ROUTES = {
-  HOME: "/",
-  ESTIMATES: "/estimates",
+  HOME: "/"
 };
 
 // Helper to generate paths with parameters

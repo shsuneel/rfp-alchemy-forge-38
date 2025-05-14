@@ -31,18 +31,15 @@ export const useNavigation = () => {
   }, [navigate, currentTab]);
 
   // Route-specific navigation functions
-  const goToHome = useCallback((options?: NavigateOptions) => {
+  const goToHome = useCallback((tab?: string, options?: NavigateOptions) => {
+    if (tab) {
+      dispatch(setCurrentTab(tab));
+    }
     navigateTo(ROUTES.HOME, undefined, options);
-  }, [navigateTo]);
-
-  const goToEstimates = useCallback((options?: NavigateOptions) => {
-    navigateTo(ROUTES.ESTIMATES, undefined, options);
-  }, [navigateTo]);
+  }, [navigateTo, dispatch]);
 
   return {
     navigateTo,
-    goToHome,
-    goToEstimates,
-    // Add more specific navigation functions for new routes here
+    goToHome
   };
 };

@@ -7,19 +7,17 @@ import PresentationEditor from "@/components/presentation/PresentationEditor";
 import RfpForm from "@/components/RfpForm";
 import RfpList from "@/components/RfpList";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Presentation, Calculator, List } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useNavigation } from "@/hooks/useNavigation";
-import { ROUTES } from "@/routes";
+import { FileText, Presentation, Calculator, List, Files } from "lucide-react";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { useAppSelector } from "@/hooks/useAppSelector";
 import { setCurrentTab } from "@/store/navigationSlice";
+import EstimatesContent from "@/components/estimates/EstimatesContent";
+import DocumentsTab from "@/components/documents/DocumentsTab";
 
 const Index = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
   const dispatch = useAppDispatch();
-  const { navigateTo, goToEstimates } = useNavigation();
   
   const { currentTab } = useAppSelector(state => state.navigation);
   
@@ -48,10 +46,6 @@ const Index = () => {
     dispatch(setCurrentTab(newTabValue));
   };
 
-  const handleEstimatesClick = () => {
-    goToEstimates();
-  };
-
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
@@ -62,14 +56,6 @@ const Index = () => {
             <header className="mb-8">
               <div className="flex justify-between items-center mb-2">
                 <h1 className="text-3xl font-bold">RFP Presentation Forge</h1>
-                <Button 
-                  variant="outline" 
-                  className="flex items-center gap-2"
-                  onClick={handleEstimatesClick}
-                >
-                  <Calculator className="h-4 w-4" />
-                  Estimates
-                </Button>
               </div>
               <p className="text-muted-foreground mb-6">
                 Create professional RFPs and presentations for your client proposals
@@ -87,7 +73,15 @@ const Index = () => {
                   </TabsTrigger>
                   <TabsTrigger value="presentation" className="flex items-center gap-2">
                     <Presentation className="h-4 w-4" />
-                    Presentation Editor
+                    Presentation
+                  </TabsTrigger>
+                  <TabsTrigger value="estimates" className="flex items-center gap-2">
+                    <Calculator className="h-4 w-4" />
+                    Estimates
+                  </TabsTrigger>
+                  <TabsTrigger value="documents" className="flex items-center gap-2">
+                    <Files className="h-4 w-4" />
+                    Documents
                   </TabsTrigger>
                 </TabsList>
                 
@@ -101,6 +95,14 @@ const Index = () => {
                 
                 <TabsContent value="presentation" className="mt-0">
                   <PresentationEditor />
+                </TabsContent>
+
+                <TabsContent value="estimates" className="mt-0">
+                  <EstimatesContent />
+                </TabsContent>
+
+                <TabsContent value="documents" className="mt-0">
+                  <DocumentsTab />
                 </TabsContent>
               </Tabs>
             </header>

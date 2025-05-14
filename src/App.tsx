@@ -12,7 +12,6 @@ import { RouterProvider } from "./routes/RouterProvider";
 
 const queryClient = new QueryClient();
 
-
 const App = () => {
   store.dispatch(fetchInitialData())
   return (

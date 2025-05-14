@@ -19,7 +19,6 @@ import {
   FileText, 
   FilePlus, 
   Settings, 
-  Calculator, 
   ChevronRight, 
   ChevronLeft, 
   Presentation, 
@@ -59,12 +58,6 @@ export const Sidebar = () => {
       path: ROUTES.HOME,
       tabValue: "rfpList",
       active: location.pathname === ROUTES.HOME && currentTab === "rfpList"
-    },
-    { 
-      title: "Estimates", 
-      icon: <Calculator className="h-5 w-5" />,
-      path: ROUTES.ESTIMATES,
-      active: location.pathname === ROUTES.ESTIMATES
     },
     { 
       title: "Settings", 
