@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,6 +37,7 @@ import Timeline from "./Timeline";
 import Team from "./Team";
 import Resources from "./Resources";
 import Preview from "./Preview";
+import AiSuggestions from "./AiSuggestions";
 
 const STEPS = [
   "Project Info",
@@ -291,6 +291,9 @@ const RfpForm = () => {
                   onChange={(e) => setProjectDescription(e.target.value)}
                 />
               </div>
+              
+              {/* Add AI Suggestions component */}
+              <AiSuggestions projectDescription={projectDescription} />
 
               <div className="space-y-2">
                 <Label htmlFor="sector">Sector</Label>
