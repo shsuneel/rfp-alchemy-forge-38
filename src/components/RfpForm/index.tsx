@@ -366,10 +366,6 @@ const RfpForm = () => {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="project-name">Project Name <span className="text-red-500">*</span></Label>
-                  <AiSuggestionIcon 
-                    field="projectDescription"
-                    onSuggestionApplied={handleProjectDescriptionSuggestion}
-                  />
                 </div>
                 <Input
                   id="project-name"
@@ -398,7 +394,7 @@ const RfpForm = () => {
               </div>
               
               {/* Add AI Suggestions component */}
-              <AiSuggestions projectDescription={projectDescription} />
+              {/* <AiSuggestions projectDescription={projectDescription} /> */}
 
               <div className="space-y-2">
                 <Label htmlFor="sector">Sector</Label>
@@ -455,6 +451,7 @@ const RfpForm = () => {
               <h3 className="text-lg font-medium">Technology Stack</h3>
               <AiSuggestionIcon
                 field="techStack"
+                currentValue={projectDescription}
                 onSuggestionApplied={handleTechStackSuggestion}
               />
             </div>
