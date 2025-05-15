@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,6 +16,7 @@ import {
   Heading,
   PlusCircle
 } from "lucide-react";
+import AiSuggestionIcon from "@/components/ui/AiSuggestionIcon";
 
 import { RequirementItem, AssumptionItem, DependencyItem } from "@/store/rfpSlice";
 
@@ -391,7 +391,26 @@ const Requirements = ({
       {/* Requirements */}
       <Card>
         <CardHeader>
-          <CardTitle>Project Requirements</CardTitle>
+          <div className="flex justify-between items-center">
+            <CardTitle>Project Requirements</CardTitle>
+            <AiSuggestionIcon 
+              field="requirements"
+              onSuggestionApplied={(suggestion) => {
+                const newRequirements = [...requirements];
+                suggestion.split('\n').filter(line => line.trim()).forEach((line, index) => {
+                  const trimmedLine = line.replace(/^\d+\.\s*/, '').trim();
+                  if (trimmedLine) {
+                    newRequirements.push({
+                      id: `req-${Date.now()}-${index}`,
+                      description: trimmedLine,
+                      priority: "Medium"
+                    });
+                  }
+                });
+                setRequirements(newRequirements);
+              }}
+            />
+          </div>
           <CardDescription>Define the key requirements for your project</CardDescription>
         </CardHeader>
         <CardContent>
@@ -446,7 +465,25 @@ const Requirements = ({
       {/* Assumptions */}
       <Card>
         <CardHeader>
-          <CardTitle>Assumptions</CardTitle>
+          <div className="flex justify-between items-center">
+            <CardTitle>Assumptions</CardTitle>
+            <AiSuggestionIcon 
+              field="assumptions"
+              onSuggestionApplied={(suggestion) => {
+                const newAssumptions = [...assumptions];
+                suggestion.split('\n').filter(line => line.trim()).forEach((line, index) => {
+                  const trimmedLine = line.replace(/^\d+\.\s*/, '').trim();
+                  if (trimmedLine) {
+                    newAssumptions.push({
+                      id: `assump-${Date.now()}-${index}`,
+                      description: trimmedLine
+                    });
+                  }
+                });
+                setAssumptions(newAssumptions);
+              }}
+            />
+          </div>
           <CardDescription>List key assumptions for the project</CardDescription>
         </CardHeader>
         <CardContent>
@@ -483,7 +520,25 @@ const Requirements = ({
       {/* Dependencies */}
       <Card>
         <CardHeader>
-          <CardTitle>Dependencies</CardTitle>
+          <div className="flex justify-between items-center">
+            <CardTitle>Dependencies</CardTitle>
+            <AiSuggestionIcon 
+              field="dependencies"
+              onSuggestionApplied={(suggestion) => {
+                const newDependencies = [...dependencies];
+                suggestion.split('\n').filter(line => line.trim()).forEach((line, index) => {
+                  const trimmedLine = line.replace(/^\d+\.\s*/, '').trim();
+                  if (trimmedLine) {
+                    newDependencies.push({
+                      id: `dep-${Date.now()}-${index}`,
+                      description: trimmedLine
+                    });
+                  }
+                });
+                setDependencies(newDependencies);
+              }}
+            />
+          </div>
           <CardDescription>List external dependencies for the project</CardDescription>
         </CardHeader>
         <CardContent>
@@ -516,6 +571,7 @@ const Requirements = ({
           </Button>
         </CardContent>
       </Card>
+      
       {/* Custom Sections */}
       {/* <Card>
         <CardHeader className="flex flex-row items-center justify-between">

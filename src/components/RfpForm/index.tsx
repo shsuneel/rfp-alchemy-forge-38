@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -393,11 +394,15 @@ const RfpForm = () => {
                 />
               </div>
               
-              {/* Add AI Suggestions component */}
-              {/* <AiSuggestions projectDescription={projectDescription} /> */}
-
               <div className="space-y-2">
-                <Label htmlFor="sector">Sector</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="sector">Sector</Label>
+                  <AiSuggestionIcon 
+                    field="dependencies"
+                    onSuggestionApplied={(suggestion) => setSector(suggestion.split(',')[0].trim())}
+                    currentValue={projectDescription}
+                  />
+                </div>
                 <Select value={sector} onValueChange={setSector}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select sector" />
@@ -412,8 +417,10 @@ const RfpForm = () => {
                 </Select>
               </div>
 
-              <div className="space-y-4">
-                <Label htmlFor="thorId">Thor ID</Label>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="thorId">Thor ID</Label>
+                </div>
                 <Input
                   id="thorId"
                   placeholder="Enter Thor ID"
@@ -424,11 +431,22 @@ const RfpForm = () => {
                 />
               </div>
               
-              {/* Team component moved to Project Info */}
-              <Team onTeamChange={setTeamState} initialTeam={team} />
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="text-lg font-medium">Team</h3>
+                </div>
+                <Team onTeamChange={setTeamState} initialTeam={team} />
+              </div>
 
               <div className="space-y-2">
-                <Label htmlFor="client-info">Client Information</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="client-info">Client Information</Label>
+                  <AiSuggestionIcon 
+                    field="dependencies"
+                    onSuggestionApplied={(suggestion) => setClientInfo(suggestion)}
+                    currentValue={projectDescription}
+                  />
+                </div>
                 <Textarea
                   id="client-info"
                   placeholder="Information about the client and stakeholders"
@@ -471,14 +489,17 @@ const RfpForm = () => {
                 <AiSuggestionIcon
                   field="requirements"
                   onSuggestionApplied={handleRequirementsSuggestion}
+                  currentValue={projectDescription}
                 />
                 <AiSuggestionIcon
                   field="assumptions"
                   onSuggestionApplied={handleAssumptionsSuggestion}
+                  currentValue={projectDescription}
                 />
                 <AiSuggestionIcon
                   field="dependencies"
                   onSuggestionApplied={handleDependenciesSuggestion}
+                  currentValue={projectDescription}
                 />
               </div>
             </div>
@@ -503,6 +524,7 @@ const RfpForm = () => {
               <AiSuggestionIcon
                 field="timeline"
                 onSuggestionApplied={handleTimelineSuggestion}
+                currentValue={projectDescription}
               />
             </div>
             <Timeline onTimelineChange={setTimelineState} initialTimeline={timeline} />
@@ -510,7 +532,38 @@ const RfpForm = () => {
         );
 
       case 5:
-        return <Resources onResourcesChange={setResourcesState} initialResources={resources} />;
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-medium">Resources</h3>
+              <AiSuggestionIcon
+                field="dependencies"
+                onSuggestionApplied={(suggestion) => {
+                  // Attempt to parse resources from the suggestion
+                  // This is simplified - in a real app, you'd want more sophisticated parsing
+                  const newResources = [...resources];
+                  const lines = suggestion.split('\n').filter(line => line.trim());
+                  lines.forEach((line, index) => {
+                    if (line.includes('developer') || line.includes('engineer') || 
+                        line.includes('designer') || line.includes('manager')) {
+                      newResources.push({
+                        id: `resource-${Date.now()}-${index}`,
+                        title: line.trim(),
+                        level: 'Mid',
+                        hourlyRate: 100
+                      });
+                    }
+                  });
+                  if (newResources.length > resources.length) {
+                    setResourcesState(newResources);
+                  }
+                }}
+                currentValue={projectDescription}
+              />
+            </div>
+            <Resources onResourcesChange={setResourcesState} initialResources={resources} />
+          </div>
+        );
 
       case 6:
         return (
@@ -590,3 +643,4 @@ const RfpForm = () => {
 };
 
 export default RfpForm;
+
