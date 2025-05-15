@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Database, Layout, Server, Cloud, Code, X } from "lucide-react";
+import { FileText, Database, Layout, Server, Cloud, Code, X, Sparkles } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/components/ui/use-toast";
 
 // Define technology categories by layer
 const TECHNOLOGIES_BY_LAYER = {
@@ -62,6 +64,8 @@ const TechStack = ({
     infrastructure: techStackByLayer.infrastructure || [],
     other: techStackByLayer.other || [],
   });
+  const [aiSuggestion, setAiSuggestion] = useState("");
+  const [showAiSuggestionBox, setShowAiSuggestionBox] = useState(false);
 
   // Update local state when props change
   useEffect(() => {
@@ -74,7 +78,7 @@ const TechStack = ({
         other: techStackByLayer.other || [],
       });
     }
-  }, []);
+  }, [techStackByLayer]);
 
   // Update parent component when local state changes
   useEffect(() => {
@@ -157,6 +161,71 @@ const TechStack = ({
     return Object.values(techStack).reduce((sum, arr) => sum + arr.length, 0);
   };
 
+  const toggleAiSuggestionBox = () => {
+    setShowAiSuggestionBox(!showAiSuggestionBox);
+  };
+
+  const categorizeAiSuggestions = () => {
+    if (!aiSuggestion.trim()) return;
+
+    // Parse the AI suggestion text (assuming comma or newline separated list)
+    const techList = aiSuggestion
+      .split(/[,\n]+/)
+      .map(tech => tech.trim())
+      .filter(tech => tech.length > 0);
+
+    // Simple categorization based on known technologies
+    const categorized: TechStackByLayer = {
+      frontend: [],
+      backend: [],
+      database: [],
+      infrastructure: [],
+      other: []
+    };
+
+    techList.forEach(tech => {
+      let categorized = false;
+      for (const [layer, technologies] of Object.entries(TECHNOLOGIES_BY_LAYER)) {
+        if (technologies.some(t => t.toLowerCase() === tech.toLowerCase())) {
+          const layerKey = layer as keyof TechStackByLayer;
+          if (!techStack[layerKey].includes(tech)) {
+            categorized = true;
+            if (!categorized[layerKey].includes(tech)) {
+              categorized[layerKey].push(tech);
+            }
+          }
+        }
+      }
+      
+      // If not found in any category, add to "other"
+      if (!categorized && !techStack.other.includes(tech)) {
+        categorized.other.push(tech);
+      }
+    });
+
+    // Merge with existing tech stack
+    const updatedTechStack = { ...techStack };
+    (Object.keys(categorized) as Array<keyof TechStackByLayer>).forEach(layer => {
+      if (categorized[layer].length > 0) {
+        updatedTechStack[layer] = [
+          ...updatedTechStack[layer],
+          ...categorized[layer].filter(tech => !updatedTechStack[layer].includes(tech))
+        ];
+      }
+    });
+
+    setTechStack(updatedTechStack);
+    toast({
+      title: "AI Suggestions Applied",
+      description: `${techList.length} technologies have been categorized and added to your stack.`,
+    });
+    setAiSuggestion("");
+  };
+
+  const selectAllSuggestions = () => {
+    categorizeAiSuggestions();
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -171,6 +240,57 @@ const TechStack = ({
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {showAiSuggestionBox && (
+          <div className="mb-6 border rounded-md p-4 bg-amber-50/50 dark:bg-amber-950/20">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center">
+                <Sparkles className="h-4 w-4 text-amber-500 mr-2" />
+                <h3 className="text-sm font-medium">AI Technology Suggestions</h3>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-6 w-6 p-0"
+                onClick={toggleAiSuggestionBox}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground mb-2">
+              Paste AI-generated tech stack suggestions here. The system will automatically categorize them for you.
+            </p>
+            <Textarea 
+              value={aiSuggestion} 
+              onChange={(e) => setAiSuggestion(e.target.value)}
+              placeholder="React, Node.js, Express, MongoDB, AWS, Docker..."
+              className="mb-2 min-h-[100px]"
+            />
+            <div className="flex justify-end">
+              <Button
+                size="sm"
+                onClick={selectAllSuggestions}
+                className="flex items-center gap-1"
+                disabled={!aiSuggestion.trim()}
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                Apply Suggestions
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {!showAiSuggestionBox && (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="mb-4 text-xs flex items-center gap-1"
+            onClick={toggleAiSuggestionBox}
+          >
+            <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+            Add from AI Suggestions
+          </Button>
+        )}
+
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="w-full mb-4">
             <TabsTrigger value="frontend" className="flex items-center gap-2">
