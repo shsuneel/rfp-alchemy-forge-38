@@ -6,6 +6,14 @@ import GuidedStepsNavigator from '@/components/home/GuidedStepsNavigator';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '@/routes';
+import { useAppDispatch } from '@/hooks/useAppDispatch';
+import {
+  clearCurrentRfp,
+  setProjectInfo,
+  setRequirements,
+  RequirementItem,
+} from '@/store/rfpSlice';
 
 type Stage = 'initialPrompt' | 'outlineDisplay' | 'detailedInfoPrompt' | 'guidance';
 
@@ -60,6 +68,7 @@ const HomePage = () => {
   const [currentGuidanceStepIndex, setCurrentGuidanceStepIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
 
   const handleInitialPromptSubmit = async (prompt: string) => {
     setIsLoading(true);
@@ -97,8 +106,40 @@ const HomePage = () => {
   };
   
   const handleCompleteGuidance = () => {
-    console.log("RFP data collected:", { rfpDescription, contentOutline, detailedInfo, guidanceSteps });
-    navigate('/forge'); 
+    dispatch(clearCurrentRfp());
+
+    let combinedProjectDescription = rfpDescription;
+    if (contentOutline) {
+      combinedProjectDescription += `\n\n--- Outline Suggested by AI Assistant ---\n${contentOutline}`;
+    }
+    if (detailedInfo) {
+      combinedProjectDescription += `\n\n--- Additional Details Provided by User ---\n${detailedInfo}`;
+    }
+
+    // Generate a project name (can be edited later in the form)
+    const projectName = rfpDescription 
+      ? `RFP: ${rfpDescription.substring(0, 40)}${rfpDescription.length > 40 ? '...' : ''}`
+      : 'New RFP Project';
+
+    dispatch(setProjectInfo({
+      name: projectName,
+      description: combinedProjectDescription,
+      sector: '', // To be filled in RfpForm
+      clientInfo: '', // To be filled in RfpForm
+    }));
+
+    const newRequirements: RequirementItem[] = guidanceSteps.map((step, index) => ({
+      id: `guidance-req-${Date.now()}-${index}`,
+      description: `Regarding "${step.title}": ${step.content}`, // step.content is the AI prompt
+      priority: "Medium",
+    }));
+
+    if (newRequirements.length > 0) {
+      dispatch(setRequirements(newRequirements));
+    }
+    
+    console.log("RFP data collected, dispatched to Redux, and navigating to RFP Builder:", { projectName, combinedProjectDescription, newRequirements });
+    navigate(ROUTES.FORGE, { state: { tab: 'rfp', fromHomePage: true } }); 
   };
 
   const handleBackToOutline = () => {
@@ -119,10 +160,8 @@ const HomePage = () => {
       className="min-h-screen flex flex-col items-center justify-center bg-cover bg-center p-4 sm:p-6 md:p-8 relative"
       style={{ backgroundImage: "url('https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1920&q=80')" }}
     >
-      {/* Semi-transparent overlay with blur for the background image */}
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-md"></div>
 
-      {/* Content needs to be relative to stack on top of any global overlay */}
       <div className="relative z-10 flex flex-col items-center justify-center w-full">
         {currentStage !== 'initialPrompt' && (
            <Button 
@@ -135,14 +174,13 @@ const HomePage = () => {
         )}
          <Button 
               variant="outline" 
-              onClick={() => navigate('/forge')} 
+              onClick={() => navigate(ROUTES.FORGE, { state: { tab: 'rfpList' }})} // Go to RFP List by default
               className="absolute top-0 right-0 text-sm text-white bg-black/30 hover:bg-black/50 border-white/50 hover:border-white/70 m-4"
             >
              Go to RFP Forge <ArrowRight className="ml-2 h-4 w-4" />
            </Button>
 
 
-        {/* Header text section with background for better visibility */}
         <div className="text-center mb-12 mt-16 sm:mt-0 p-6 rounded-lg bg-black/50 shadow-xl max-w-3xl">
           <h1 className="text-4xl sm:text-5xl font-bold text-white drop-shadow-lg mb-3">
             AI-Powered RFP Assistant

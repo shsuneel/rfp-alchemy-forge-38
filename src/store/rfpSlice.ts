@@ -41,6 +41,10 @@ export interface TechStackByLayer {
   database: string[];
   infrastructure: string[];
   other: string[];
+  analyticsAndReporting: string[];
+  devops: string[];
+  security: string[];
+  testing: string[];
 }
 
 export interface TeamMember {
@@ -89,7 +93,7 @@ interface RfpState {
   sector: string;
   clientInfo: string;
   techStack: string[];
-  techStackByLayer: TechStackByLayer;
+  techStackByLayer: TechStackByLayer; // Uses the updated interface
   requirements: RequirementItem[];
   assumptions: AssumptionItem[];
   dependencies: DependencyItem[];
@@ -118,12 +122,16 @@ const initialState: RfpState = {
   sector: '',
   clientInfo: '',
   techStack: [],
-  techStackByLayer: {
+  techStackByLayer: { // Ensure this resets to the full structure
     frontend: [],
     backend: [],
     database: [],
     infrastructure: [],
-    other: []
+    other: [],
+    analyticsAndReporting: [],
+    devops: [],
+    security: [],
+    testing: []
   },
   requirements: [
     { id: "req-default", description: "", priority: "Medium" }
@@ -179,7 +187,11 @@ export const rfpSlice = createSlice({
     },
     setTechStack: (state, action: PayloadAction<{ flattenedStack: string[], byLayer: TechStackByLayer }>) => {
       state.techStack = action.payload.flattenedStack;
-      state.techStackByLayer = action.payload.byLayer;
+      // Ensure all keys are present when setting byLayer
+      state.techStackByLayer = {
+        ...initialState.techStackByLayer, // provides defaults for new keys
+        ...action.payload.byLayer,
+      };
     },
     setRequirements: (state, action: PayloadAction<RequirementItem[]>) => {
       state.requirements = action.payload;
@@ -218,7 +230,10 @@ export const rfpSlice = createSlice({
         sector: state.sector,
         clientInfo: state.clientInfo,
         techStack: state.techStack,
-        techStackByLayer: state.techStackByLayer,
+        techStackByLayer: { // Ensure all keys are present
+            ...initialState.techStackByLayer,
+            ...state.techStackByLayer,
+        },
         requirements: state.requirements,
         assumptions: state.assumptions,
         dependencies: state.dependencies,
@@ -230,7 +245,7 @@ export const rfpSlice = createSlice({
         remarks: state.remarks,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        client: state.clientInfo.split('\n')[0] || '', // Extract first line of client info as client name
+        client: state.clientInfo.split('\n')[0] || '', 
       };
 
       // Check if this RFP already exists (by projectName)
@@ -266,38 +281,37 @@ export const rfpSlice = createSlice({
         state.clientInfo = rfpToLoad.clientInfo;
         state.techStack = rfpToLoad.techStack;
 
-        // Handle compatibility with older saved RFPs that don't have techStackByLayer
-        if (rfpToLoad.techStackByLayer) {
-          state.techStackByLayer = rfpToLoad.techStackByLayer;
-        } else {
-          // Create a default structure with all techs in "other" category
-          state.techStackByLayer = {
+        // Handle compatibility with older saved RFPs
+        const defaultTechStackByLayer = {
             frontend: [],
             backend: [],
             database: [],
             infrastructure: [],
-            other: rfpToLoad.techStack || []
-          };
-        }
+            other: rfpToLoad.techStack || [],
+            analyticsAndReporting: [],
+            devops: [],
+            security: [],
+            testing: []
+        };
+        
+        state.techStackByLayer = rfpToLoad.techStackByLayer 
+          ? { ...defaultTechStackByLayer, ...rfpToLoad.techStackByLayer }
+          : defaultTechStackByLayer;
+
 
         state.requirements = rfpToLoad.requirements;
         state.assumptions = rfpToLoad.assumptions;
         state.dependencies = rfpToLoad.dependencies;
-        // Handle compatibility with older saved RFPs that don't have sections
         state.sections = rfpToLoad.sections || [];
         state.timeline = rfpToLoad.timeline;
-        // Handle compatibility with older saved RFPs that don't have team and resources
         state.team = rfpToLoad.team || initialState.team;
         state.resources = rfpToLoad.resources || initialState.resources;
-        // Handle compatibility with older saved RFPs that don't have status and remarks
-        state.status = rfpToLoad.status || "InProgress";
+        state.status = rfpToLoad.status || "Draft"; // Changed default to Draft
         state.remarks = rfpToLoad.remarks || "";
       }
     },
     deleteRfp: (state, action: PayloadAction<string>) => {
       state.savedRfps = state.savedRfps.filter(rfp => rfp.id !== action.payload);
-
-      // Update localStorage
       if (typeof window !== 'undefined') {
         localStorage.setItem('savedRfps', JSON.stringify(state.savedRfps));
       }
@@ -309,12 +323,16 @@ export const rfpSlice = createSlice({
       state.sector = '';
       state.clientInfo = '';
       state.techStack = [];
-      state.techStackByLayer = {
+      state.techStackByLayer = { // Ensure this resets to the full structure
         frontend: [],
         backend: [],
         database: [],
         infrastructure: [],
-        other: []
+        other: [],
+        analyticsAndReporting: [],
+        devops: [],
+        security: [],
+        testing: []
       };
       state.requirements = [{ id: "req-default", description: "", priority: "Medium" }];
       state.assumptions = [{ id: "assump-default", description: "" }];
@@ -327,8 +345,9 @@ export const rfpSlice = createSlice({
         durationWeeks: 2
       }];
       state.team = [{ id: "team-default", name: "", email: "", role: "Project Manager" }];
-      // Keep the default resources
-      state.resources = initialState.resources;
+      state.resources = initialState.resources; // Keep default resources
+      state.status = "Draft"; // Default status
+      state.remarks = "";
     },
     setExtractedInfo: (state, action: PayloadAction<{
       projectDescription?: string;
