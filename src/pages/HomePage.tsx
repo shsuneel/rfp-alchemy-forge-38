@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import RfpPromptInput from '@/components/home/RfpPromptInput';
 import ContentOutlineDisplay from '@/components/home/ContentOutlineDisplay';
@@ -119,65 +118,80 @@ const HomePage = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background to-muted/30 p-4 sm:p-6 md:p-8 relative">
-      {currentStage !== 'initialPrompt' && (
+    <div 
+      className="min-h-screen flex flex-col items-center justify-center bg-cover bg-center p-4 sm:p-6 md:p-8 relative"
+      style={{ backgroundImage: "url('https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1920&q=80')" }}
+    >
+      {/* Optional: Add a semi-transparent overlay if needed for better text contrast globally */}
+      {/* <div className="absolute inset-0 bg-black/30 backdrop-blur-sm"></div> */}
+
+      {/* Content needs to be relative to stack on top of any global overlay */}
+      <div className="relative z-10 flex flex-col items-center justify-center w-full">
+        {currentStage !== 'initialPrompt' && (
+           <Button 
+              variant="ghost" 
+              onClick={handleRestart} 
+              className="absolute top-0 left-0 text-sm text-white bg-black/20 hover:bg-black/40 m-4" // Adjusted for visibility
+            >
+             <ArrowLeft className="mr-2 h-4 w-4" /> Start Over
+           </Button>
+        )}
          <Button 
-            variant="ghost" 
-            onClick={handleRestart} 
-            className="absolute top-4 left-4 text-sm"
-          >
-           <ArrowLeft className="mr-2 h-4 w-4" /> Start Over
-         </Button>
-      )}
-       <Button 
-            variant="outline" 
-            onClick={() => navigate('/forge')} 
-            className="absolute top-4 right-4 text-sm"
-          >
-           Go to RFP Forge <ArrowRight className="ml-2 h-4 w-4" />
-         </Button>
+              variant="outline" 
+              onClick={() => navigate('/forge')} 
+              className="absolute top-0 right-0 text-sm text-white bg-black/20 hover:bg-black/40 border-white/50 hover:border-white/70 m-4" // Adjusted for visibility
+            >
+             Go to RFP Forge <ArrowRight className="ml-2 h-4 w-4" />
+           </Button>
 
 
-      <div className="text-center mb-12">
-        <h1 className="text-4xl sm:text-5xl font-bold text-primary mb-3">
-          AI-Powered RFP Assistant
-        </h1>
-        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-          Let's craft your Request for Proposal together. Start by describing your project, and our AI will help you build a comprehensive RFP.
-        </p>
+        <div className="text-center mb-12 mt-16 sm:mt-0"> {/* Added margin-top for spacing from top buttons */}
+          <h1 className="text-4xl sm:text-5xl font-bold text-primary-foreground drop-shadow-lg mb-3">
+            AI-Powered RFP Assistant
+          </h1>
+          <p className="text-lg text-gray-200 drop-shadow-md max-w-2xl mx-auto">
+            Let's craft your Request for Proposal together. Start by describing your project, and our AI will help you build a comprehensive RFP.
+          </p>
+        </div>
+
+        {currentStage === 'initialPrompt' && (
+          <div className="w-full max-w-lg p-6 rounded-xl bg-card/80 backdrop-blur-md shadow-xl border border-border/30">
+            <RfpPromptInput onSubmit={handleInitialPromptSubmit} isLoading={isLoading} />
+          </div>
+        )}
+
+        {currentStage === 'outlineDisplay' && (
+          <div className="w-full max-w-lg flex flex-col items-center space-y-6">
+            <ContentOutlineDisplay 
+              outline={contentOutline} 
+              className="bg-card/80 backdrop-blur-md shadow-xl border border-border/30" 
+            />
+            <Button onClick={handleProceedToDetailedInfo} className="w-full text-base py-3">
+              Looks Good, Add More Details <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+          </div>
+        )}
+
+        {currentStage === 'detailedInfoPrompt' && (
+          <div className="w-full max-w-lg flex flex-col items-center space-y-6 p-6 rounded-xl bg-card/80 backdrop-blur-md shadow-xl border border-border/30">
+            <Button variant="outline" onClick={handleBackToOutline} className="self-start text-sm mb-4">
+              <ArrowLeft className="mr-2 h-4 w-4" /> Back to Outline
+            </Button>
+            <DetailedInfoPrompt onSubmit={handleDetailedInfoSubmit} isLoading={isLoading} />
+          </div>
+        )}
+
+        {currentStage === 'guidance' && guidanceSteps.length > 0 && (
+          <GuidedStepsNavigator
+            steps={guidanceSteps}
+            currentStepIndex={currentGuidanceStepIndex}
+            onNext={handleNextGuidanceStep}
+            onPrevious={handlePreviousGuidanceStep}
+            onComplete={handleCompleteGuidance}
+            className="bg-card/80 backdrop-blur-md shadow-xl border border-border/30"
+          />
+        )}
       </div>
-
-      {currentStage === 'initialPrompt' && (
-        <RfpPromptInput onSubmit={handleInitialPromptSubmit} isLoading={isLoading} />
-      )}
-
-      {currentStage === 'outlineDisplay' && (
-        <div className="w-full max-w-lg flex flex-col items-center space-y-6">
-          <ContentOutlineDisplay outline={contentOutline} />
-          <Button onClick={handleProceedToDetailedInfo} className="w-full text-base py-3">
-            Looks Good, Add More Details <ArrowRight className="ml-2 h-5 w-5" />
-          </Button>
-        </div>
-      )}
-
-      {currentStage === 'detailedInfoPrompt' && (
-        <div className="w-full max-w-lg flex flex-col items-center space-y-6">
-          <Button variant="outline" onClick={handleBackToOutline} className="self-start text-sm">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Outline
-          </Button>
-          <DetailedInfoPrompt onSubmit={handleDetailedInfoSubmit} isLoading={isLoading} />
-        </div>
-      )}
-
-      {currentStage === 'guidance' && guidanceSteps.length > 0 && (
-        <GuidedStepsNavigator
-          steps={guidanceSteps}
-          currentStepIndex={currentGuidanceStepIndex}
-          onNext={handleNextGuidanceStep}
-          onPrevious={handlePreviousGuidanceStep}
-          onComplete={handleCompleteGuidance}
-        />
-      )}
     </div>
   );
 };
