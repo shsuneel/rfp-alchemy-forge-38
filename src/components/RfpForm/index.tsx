@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,7 +25,8 @@ import {
   setRemarks,
   saveRfp,
   SectionItem,
-  RfpStatus
+  RfpStatus,
+  TechStackByLayer
 } from "@/store/rfpSlice";
 import { createFromRfp } from "@/store/presentationSlice";
 
@@ -76,18 +76,18 @@ const RfpForm = () => {
   const [sector, setSector] = useState(rfpState.sector);
   const [clientInfo, setClientInfo] = useState(rfpState.clientInfo);
   const [files, setFiles] = useState<File[]>([]);
-  const [techStack, setTechStackState] = useState<{
-    frontend: string[];
-    backend: string[];
-    database: string[];
-    infrastructure: string[];
-    other: string[];
-  }>(rfpState.techStackByLayer || {
+  
+  // Updated techStack state and type to include new categories
+  const [techStack, setTechStackState] = useState<TechStackByLayer>(rfpState.techStackByLayer || {
     frontend: [],
     backend: [],
     database: [],
     infrastructure: [],
-    other: []
+    other: [],
+    analyticsAndReporting: [],
+    devops: [],
+    security: [],
+    testing: []
   });
 
   const [requirements, setRequirementsState] = useState(rfpState.requirements);
@@ -106,12 +106,17 @@ const RfpForm = () => {
     setProjectDescription(rfpState.projectDescription);
     setSector(rfpState.sector);
     setClientInfo(rfpState.clientInfo);
+    // Updated techStackState update to include new categories
     setTechStackState(rfpState.techStackByLayer || {
       frontend: [],
       backend: [],
       database: [],
       infrastructure: [],
-      other: []
+      other: [],
+      analyticsAndReporting: [],
+      devops: [],
+      security: [],
+      testing: []
     });
     setRequirementsState(rfpState.requirements);
     setAssumptionsState(rfpState.assumptions);
@@ -156,7 +161,11 @@ const RfpForm = () => {
         ...techStack.backend,
         ...techStack.database,
         ...techStack.infrastructure,
-        ...techStack.other
+        ...techStack.other,
+        ...techStack.analyticsAndReporting,
+        ...techStack.devops,
+        ...techStack.security,
+        ...techStack.testing
       ];
       dispatch(setTechStack({
         flattenedStack: flattenedTechStack,
@@ -202,7 +211,11 @@ const RfpForm = () => {
       ...techStack.backend,
       ...techStack.database,
       ...techStack.infrastructure,
-      ...techStack.other
+      ...techStack.other,
+      ...techStack.analyticsAndReporting,
+      ...techStack.devops,
+      ...techStack.security,
+      ...techStack.testing
     ];
 
     dispatch(setTechStack({
@@ -573,7 +586,17 @@ const RfpForm = () => {
             sector={sector}
             clientInfo={clientInfo}
             files={files}
-            techStack={[...techStack.frontend, ...techStack.backend, ...techStack.database, ...techStack.infrastructure, ...techStack.other]}
+            techStack={[
+              ...techStack.frontend, 
+              ...techStack.backend, 
+              ...techStack.database, 
+              ...techStack.infrastructure, 
+              ...techStack.other,
+              ...techStack.analyticsAndReporting,
+              ...techStack.devops,
+              ...techStack.security,
+              ...techStack.testing
+            ]}
             requirements={requirements}
             assumptions={assumptions}
             dependencies={dependencies}
@@ -643,4 +666,3 @@ const RfpForm = () => {
 };
 
 export default RfpForm;
-

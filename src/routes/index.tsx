@@ -2,13 +2,18 @@
 import { RouteObject } from "react-router-dom";
 
 // Pages
-import Index from "@/pages/Index";
+import Index from "@/pages/Index"; // This will be for the /forge route
+import HomePage from "@/pages/HomePage"; // New homepage
 import NotFound from "@/pages/NotFound";
 
 // Route configuration object
 export const routes: RouteObject[] = [
   {
     path: "/",
+    element: <HomePage />, // New homepage is the default
+  },
+  {
+    path: "/forge", // Existing app moved here
     element: <Index />,
   },
   // Add any new routes above this line
@@ -20,7 +25,8 @@ export const routes: RouteObject[] = [
 
 // Named routes for programmatic navigation
 export const ROUTES = {
-  HOME: "/"
+  HOME: "/",
+  FORGE: "/forge", // Added new route name
 };
 
 // Helper to generate paths with parameters
