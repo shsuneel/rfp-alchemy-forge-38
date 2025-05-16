@@ -3,9 +3,9 @@ import React, { useState } from 'react';
 import RfpPromptInput from '@/components/home/RfpPromptInput';
 import ContentOutlineDisplay from '@/components/home/ContentOutlineDisplay';
 import DetailedInfoPrompt from '@/components/home/DetailedInfoPrompt';
-import GuidedStepsNavigator from '@/components/home/GuidedStepsNavigator'; // Corrected import name
+import GuidedStepsNavigator from '@/components/home/GuidedStepsNavigator';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 type Stage = 'initialPrompt' | 'outlineDisplay' | 'detailedInfoPrompt' | 'guidance';

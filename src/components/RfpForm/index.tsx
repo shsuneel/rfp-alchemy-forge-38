@@ -26,7 +26,6 @@ import {
   saveRfp,
   SectionItem,
   RfpStatus,
-  TechStackByLayer
 } from "@/store/rfpSlice";
 import { createFromRfp } from "@/store/presentationSlice";
 
@@ -40,6 +39,19 @@ import Resources from "./Resources";
 import Preview from "./Preview";
 import AiSuggestions from "./AiSuggestions";
 import AiSuggestionIcon from "@/components/ui/AiSuggestionIcon";
+
+// Define the extended TechStackByLayer type here to include new categories
+interface TechStackByLayer {
+  frontend: string[];
+  backend: string[];
+  database: string[];
+  infrastructure: string[];
+  other: string[];
+  analyticsAndReporting: string[];
+  devops: string[];
+  security: string[];
+  testing: string[];
+}
 
 const STEPS = [
   "Project Info",
@@ -77,8 +89,8 @@ const RfpForm = () => {
   const [clientInfo, setClientInfo] = useState(rfpState.clientInfo);
   const [files, setFiles] = useState<File[]>([]);
   
-  // Updated techStack state and type to include new categories
-  const [techStack, setTechStackState] = useState<TechStackByLayer>(rfpState.techStackByLayer || {
+  // Updated techStack state to use our extended TechStackByLayer interface
+  const [techStack, setTechStackState] = useState<TechStackByLayer>(rfpState.techStackByLayer as TechStackByLayer || {
     frontend: [],
     backend: [],
     database: [],
@@ -107,7 +119,7 @@ const RfpForm = () => {
     setSector(rfpState.sector);
     setClientInfo(rfpState.clientInfo);
     // Updated techStackState update to include new categories
-    setTechStackState(rfpState.techStackByLayer || {
+    setTechStackState((rfpState.techStackByLayer as TechStackByLayer) || {
       frontend: [],
       backend: [],
       database: [],
