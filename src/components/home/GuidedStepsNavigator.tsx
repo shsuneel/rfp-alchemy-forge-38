@@ -3,6 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Check } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface GuidedStepsNavigatorProps {
   steps: { title: string; content: string }[]; // Example structure
@@ -10,6 +11,7 @@ interface GuidedStepsNavigatorProps {
   onNext: () => void;
   onPrevious: () => void;
   onComplete?: () => void;
+  className?: string;
 }
 
 const GuidedStepsNavigator: React.FC<GuidedStepsNavigatorProps> = ({
@@ -18,12 +20,13 @@ const GuidedStepsNavigator: React.FC<GuidedStepsNavigatorProps> = ({
   onNext,
   onPrevious,
   onComplete,
+  className,
 }) => {
   const currentStepData = steps[currentStepIndex];
   const isLastStep = currentStepIndex === steps.length - 1;
 
   return (
-    <Card className="w-full max-w-lg animate-fade-in">
+    <Card className={cn("w-full max-w-lg animate-fade-in", className)}>
       <CardHeader>
         <CardTitle>Step {currentStepIndex + 1}: {currentStepData?.title || "Guidance"}</CardTitle>
         <CardDescription>Follow the steps to complete your RFP information.</CardDescription>

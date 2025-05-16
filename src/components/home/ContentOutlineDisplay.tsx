@@ -1,14 +1,16 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 interface ContentOutlineDisplayProps {
   outline: string; // For now, a simple string. Could be a structured object later.
+  className?: string;
 }
 
-const ContentOutlineDisplay: React.FC<ContentOutlineDisplayProps> = ({ outline }) => {
+const ContentOutlineDisplay: React.FC<ContentOutlineDisplayProps> = ({ outline, className }) => {
   return (
-    <Card className="w-full max-w-lg animate-fade-in">
+    <Card className={cn("w-full max-w-lg animate-fade-in", className)}>
       <CardHeader>
         <CardTitle>Generated Content Outline</CardTitle>
       </CardHeader>

@@ -97,11 +97,8 @@ const HomePage = () => {
   };
   
   const handleCompleteGuidance = () => {
-    // Navigate to the main app/forge or show a summary
     console.log("RFP data collected:", { rfpDescription, contentOutline, detailedInfo, guidanceSteps });
-    // For now, navigate to the /forge page
     navigate('/forge'); 
-    // Potentially dispatch an action to save this data to Redux rfpSlice
   };
 
   const handleBackToOutline = () => {
@@ -122,8 +119,8 @@ const HomePage = () => {
       className="min-h-screen flex flex-col items-center justify-center bg-cover bg-center p-4 sm:p-6 md:p-8 relative"
       style={{ backgroundImage: "url('https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1920&q=80')" }}
     >
-      {/* Optional: Add a semi-transparent overlay if needed for better text contrast globally */}
-      {/* <div className="absolute inset-0 bg-black/30 backdrop-blur-sm"></div> */}
+      {/* Semi-transparent overlay with blur for the background image */}
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
 
       {/* Content needs to be relative to stack on top of any global overlay */}
       <div className="relative z-10 flex flex-col items-center justify-center w-full">
@@ -131,7 +128,7 @@ const HomePage = () => {
            <Button 
               variant="ghost" 
               onClick={handleRestart} 
-              className="absolute top-0 left-0 text-sm text-white bg-black/20 hover:bg-black/40 m-4" // Adjusted for visibility
+              className="absolute top-0 left-0 text-sm text-white bg-black/30 hover:bg-black/50 m-4"
             >
              <ArrowLeft className="mr-2 h-4 w-4" /> Start Over
            </Button>
@@ -139,17 +136,18 @@ const HomePage = () => {
          <Button 
               variant="outline" 
               onClick={() => navigate('/forge')} 
-              className="absolute top-0 right-0 text-sm text-white bg-black/20 hover:bg-black/40 border-white/50 hover:border-white/70 m-4" // Adjusted for visibility
+              className="absolute top-0 right-0 text-sm text-white bg-black/30 hover:bg-black/50 border-white/50 hover:border-white/70 m-4"
             >
              Go to RFP Forge <ArrowRight className="ml-2 h-4 w-4" />
            </Button>
 
 
-        <div className="text-center mb-12 mt-16 sm:mt-0"> {/* Added margin-top for spacing from top buttons */}
-          <h1 className="text-4xl sm:text-5xl font-bold text-primary-foreground drop-shadow-lg mb-3">
+        {/* Header text section with background for better visibility */}
+        <div className="text-center mb-12 mt-16 sm:mt-0 p-6 rounded-lg bg-black/50 shadow-xl max-w-3xl">
+          <h1 className="text-4xl sm:text-5xl font-bold text-white drop-shadow-lg mb-3">
             AI-Powered RFP Assistant
           </h1>
-          <p className="text-lg text-gray-200 drop-shadow-md max-w-2xl mx-auto">
+          <p className="text-lg text-gray-100 drop-shadow-md max-w-2xl mx-auto">
             Let's craft your Request for Proposal together. Start by describing your project, and our AI will help you build a comprehensive RFP.
           </p>
         </div>
