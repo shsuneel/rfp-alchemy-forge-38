@@ -2,11 +2,10 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Check } from 'lucide-react'; // Removed Sparkles as it's not used directly here
+import { ChevronLeft, ChevronRight, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import AiSuggestionIcon from '@/components/ui/AiSuggestionIcon';
-// Removed toast import as AiSuggestionIcon handles its own toast for application
-// import { toast } from "@/components/ui/use-toast"; 
+import { Textarea } from '@/components/ui/textarea'; // Import Textarea
 
 interface GuidedStepsNavigatorProps {
   steps: { title: string; content: string }[];
@@ -14,7 +13,7 @@ interface GuidedStepsNavigatorProps {
   onNext: () => void;
   onPrevious: () => void;
   onComplete?: () => void;
-  onStepContentChange?: (stepIndex: number, newContent: string) => void; // New prop
+  onStepContentChange?: (stepIndex: number, newContent: string) => void;
   className?: string;
 }
 
@@ -23,10 +22,10 @@ type AiSuggestionField = 'projectDescription' | 'requirements' | 'assumptions' |
 const mapStepTitleToAiField = (title: string): AiSuggestionField | null => {
   const lowerTitle = title.toLowerCase();
   if (lowerTitle.includes('goals') || lowerTitle.includes('overview')) return 'projectDescription';
-  if (lowerTitle.includes('audience')) return 'projectDescription'; // General context
+  if (lowerTitle.includes('audience')) return 'projectDescription';
   if (lowerTitle.includes('features') || lowerTitle.includes('scope')) return 'requirements';
   if (lowerTitle.includes('technical') || lowerTitle.includes('specifications')) return 'techStack';
-  if (lowerTitle.includes('metrics') || lowerTitle.includes('success')) return 'projectDescription'; // General context
+  if (lowerTitle.includes('metrics') || lowerTitle.includes('success')) return 'projectDescription';
   return null; 
 };
 
@@ -36,7 +35,7 @@ const GuidedStepsNavigator: React.FC<GuidedStepsNavigatorProps> = ({
   onNext,
   onPrevious,
   onComplete,
-  onStepContentChange, // Destructure new prop
+  onStepContentChange,
   className,
 }) => {
   const currentStepData = steps[currentStepIndex];
@@ -45,38 +44,38 @@ const GuidedStepsNavigator: React.FC<GuidedStepsNavigatorProps> = ({
   const aiField = currentStepData ? mapStepTitleToAiField(currentStepData.title) : null;
 
   const handleSuggestionApplied = (suggestion: string) => {
-    // Call the new prop to update the parent's state
     if (onStepContentChange && currentStepData) {
       onStepContentChange(currentStepIndex, suggestion);
     }
-    // The AiSuggestionIcon component already shows a toast when a suggestion is applied.
-    // Removed redundant toast from here.
-    // toast({
-    //   title: "AI Suggestion Applied",
-    //   description: `Suggestion for "${currentStepData?.title}" has been applied.`,
-    //   duration: 5000,
-    // });
+    // Toast is handled by AiSuggestionIcon
   };
 
   return (
-    <Card className={cn("w-full max-w-lg animate-fade-in", className)}>
+    <Card className={cn("w-full max-w-xl animate-fade-in", className)}> {/* Increased max-width to xl */}
       <CardHeader>
         <div className="flex justify-between items-center">
           <CardTitle>Step {currentStepIndex + 1}: {currentStepData?.title || "Guidance"}</CardTitle>
           {aiField && currentStepData && (
             <AiSuggestionIcon
               field={aiField}
-              currentValue={currentStepData.content} // Pass current content as context
-              onSuggestionApplied={handleSuggestionApplied} // This will now trigger content update
+              currentValue={currentStepData.content}
+              onSuggestionApplied={handleSuggestionApplied}
             />
           )}
         </div>
         <CardDescription>Follow the steps to complete your RFP information.</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="p-4 border rounded-md bg-muted/50 min-h-[150px] text-sm whitespace-pre-wrap">
-          {currentStepData?.content || "Loading step..."}
-        </div>
+        <Textarea
+          value={currentStepData?.content || ''}
+          onChange={(e) => {
+            if (onStepContentChange && currentStepData) {
+              onStepContentChange(currentStepIndex, e.target.value);
+            }
+          }}
+          placeholder={currentStepData?.title ? `Enter details for "${currentStepData.title}"...` : "Enter step details..."}
+          className="min-h-[150px] text-sm w-full resize-y" // Added resize-y for better UX
+        />
         <div className="flex justify-between mt-6">
           <Button
             variant="outline"
@@ -101,3 +100,4 @@ const GuidedStepsNavigator: React.FC<GuidedStepsNavigatorProps> = ({
 };
 
 export default GuidedStepsNavigator;
+

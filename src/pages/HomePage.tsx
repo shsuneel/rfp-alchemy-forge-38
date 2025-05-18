@@ -46,20 +46,7 @@ const simulateAiGuidanceSteps = (details: string): Promise<{ title: string; cont
   });
 };
 
-// Helper for simulateAiGuidanceSteps to potentially store initial data
-// This is a conceptual addition if you need to distinguish original prompts from filled content
-// For now, it's just a placeholder to clarify the comment in handleCompleteGuidanceAndPrepareRfpData
-(simulateAiGuidanceSteps as any).initialData = null; 
-const originalSimulateAiGuidanceSteps = simulateAiGuidanceSteps;
-const newSimulateAiGuidanceSteps = (details: string): Promise<{ title: string; content: string }[]> => {
-  return originalSimulateAiGuidanceSteps(details).then(steps => {
-    (simulateAiGuidanceSteps as any).initialData = JSON.parse(JSON.stringify(steps)); // Store a copy
-    return steps;
-  });
-};
-// Replace the original simulateAiGuidanceSteps if you want to use this pattern
-// For simplicity, I am not replacing it here, but this is how you could track original content.
-// For now, requirements are generated based on the current content (which might be AI-suggested).
+// Removed the simulateAiGuidanceSteps.initialData related logic as it's now handled by a state variable.
 
 const HomePage = () => {
   const [currentStage, setCurrentStage] = useState<Stage>('initialPrompt');
@@ -67,6 +54,7 @@ const HomePage = () => {
   const [contentOutline, setContentOutline] = useState('');
   const [detailedInfo, setDetailedInfo] = useState('');
   const [guidanceSteps, setGuidanceSteps] = useState<{ title: string; content: string }[]>([]);
+  const [initialGuidanceSteps, setInitialGuidanceSteps] = useState<{ title: string; content: string }[]>([]); // New state for original steps
   const [currentGuidanceStepIndex, setCurrentGuidanceStepIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -90,7 +78,9 @@ const HomePage = () => {
     setIsLoading(true);
     setDetailedInfo(details);
     const steps = await simulateAiGuidanceSteps(details);
-    setGuidanceSteps(steps);
+    // Store a deep copy of the initial steps for later reference (e.g., for requirements)
+    setInitialGuidanceSteps(JSON.parse(JSON.stringify(steps))); 
+    setGuidanceSteps(steps); // These steps will be modified by user input/AI suggestions
     setCurrentGuidanceStepIndex(0);
     setCurrentStage('guidance');
     setIsLoading(false);
@@ -108,7 +98,6 @@ const HomePage = () => {
     }
   };
 
-  // New handler for updating guidance step content
   const handleGuidanceStepContentChange = (stepIndex: number, newContent: string) => {
     setGuidanceSteps(prevSteps => 
       prevSteps.map((step, index) => 
@@ -118,8 +107,7 @@ const HomePage = () => {
   };
   
   const handleCompleteGuidanceAndPrepareRfpData = () => {
-    // Data preparation logic, same as before
-    dispatch(clearCurrentRfp()); // Clear again to ensure fresh start for this specific RFP generation
+    dispatch(clearCurrentRfp()); 
 
     let combinedProjectDescription = rfpDescription;
     if (contentOutline) {
@@ -128,7 +116,6 @@ const HomePage = () => {
     if (detailedInfo) {
       combinedProjectDescription += `\n\n--- Additional Details Provided by User ---\n${detailedInfo}`;
     }
-    // Add content from guidance steps to the project description
     if (guidanceSteps.length > 0) {
       combinedProjectDescription += `\n\n--- Guided Steps Information ---`;
       guidanceSteps.forEach(step => {
@@ -147,19 +134,15 @@ const HomePage = () => {
       clientInfo: '', 
     }));
 
-    // Requirements can still be generated from step titles, or modified based on user input if desired.
-    // For now, let's keep the requirements based on the step *titles* and *original content/questions*.
-    // The updated step.content (user's answers or AI-filled answers) is now part of the main project description.
     const newRequirements: RequirementItem[] = guidanceSteps.map((step, index) => {
-        // Fetch original step content from simulated steps to form requirement if needed
-        // For simplicity, let's assume the titles themselves are good requirement starters.
-        // Or, if initial simulateAiGuidanceSteps provides original questions, use that.
-        // Current mapping for requirement description:
-        const originalStepData = simulateAiGuidanceSteps.initialData?.find(s => s.title === step.title) || step;
+        // Find the original step definition from initialGuidanceSteps
+        const originalStepDefinition = initialGuidanceSteps.find(s => s.title === step.title);
+        // Use the original content if available, otherwise fall back to current step's content (which might have been user-edited)
+        const requirementDescriptionContent = originalStepDefinition ? originalStepDefinition.content : step.content; 
 
         return {
          id: `guidance-req-${Date.now()}-${index}`,
-         description: `Consideration for "${step.title}": ${originalStepData.content}`, 
+         description: `Consideration for "${step.title}": ${requirementDescriptionContent}`, 
          priority: "Medium",
         };
     });
@@ -169,7 +152,7 @@ const HomePage = () => {
     }
     
     console.log("RFP data collected and dispatched to Redux from guidance steps. Updated description includes step content.");
-    setCurrentStage('templateSelection'); // Move to template selection
+    setCurrentStage('templateSelection'); 
   };
 
   const handleSelectTemplate = (templateId: string) => {
@@ -203,6 +186,7 @@ const HomePage = () => {
     setContentOutline('');
     setDetailedInfo('');
     setGuidanceSteps([]);
+    setInitialGuidanceSteps([]); // Clear initial steps as well
     setCurrentGuidanceStepIndex(0);
     setCurrentStage('initialPrompt');
   };
@@ -237,7 +221,7 @@ const HomePage = () => {
           <h1 className="text-4xl sm:text-5xl font-bold text-white drop-shadow-lg mb-3">
             AI-Powered RFP Assistant
           </h1>
-          <p className="text-lg text-gray-100 drop-shadow-md Tell us about your RFP. What are the main goals and requirements?max-w-2xl mx-auto">
+          <p className="text-lg text-gray-100 drop-shadow-md max-w-2xl mx-auto">
             Let's craft your RFP together. Start by describing your project, and RFP Builder powered by GenAI will help you build a comprehensive RFP.
           </p>
         </div>
@@ -275,8 +259,8 @@ const HomePage = () => {
             currentStepIndex={currentGuidanceStepIndex}
             onNext={handleNextGuidanceStep}
             onPrevious={handlePreviousGuidanceStep}
-            onComplete={handleCompleteGuidanceAndPrepareRfpData} // Changed handler
-            onStepContentChange={handleGuidanceStepContentChange} // Pass the new handler
+            onComplete={handleCompleteGuidanceAndPrepareRfpData} 
+            onStepContentChange={handleGuidanceStepContentChange} 
             className="bg-card/80 backdrop-blur-md shadow-xl border border-border/30"
           />
         )}
