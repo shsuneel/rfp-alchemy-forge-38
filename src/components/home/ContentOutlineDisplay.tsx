@@ -10,7 +10,7 @@ interface ContentOutlineDisplayProps {
 
 const ContentOutlineDisplay: React.FC<ContentOutlineDisplayProps> = ({ outline, className }) => {
   return (
-    <Card className={cn("w-full animate-fade-in", className)} style={{ width: '900px' }}>
+    <Card className={cn("w-full animate-fade-in", className)} >
       <CardHeader >
         <CardTitle>Generated Content Outline</CardTitle>
       </CardHeader>

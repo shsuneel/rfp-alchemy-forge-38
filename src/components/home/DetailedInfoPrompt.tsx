@@ -21,12 +21,12 @@ const DetailedInfoPrompt: React.FC<DetailedInfoPromptProps> = ({ onSubmit, isLoa
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 w-full max-w-lg animate-fade-in">
-      <div>
+    <form onSubmit={handleSubmit} className="space-y-4 w-full max-w-[60rem]] animate-fade-in">
+      <div className='bg-muted/50 p-4 rounded-md'>
         <Label htmlFor="detailed-info-prompt" className="text-lg font-medium">
           Provide More Details
         </Label>
-        <p className="text-sm text-muted-foreground mb-2">
+        <p className="text-sm mb-2">
           Please elaborate on the points in the outline or add any other specific information.
         </p>
         <Textarea
