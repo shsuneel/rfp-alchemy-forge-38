@@ -21,12 +21,12 @@ const DetailedInfoPrompt: React.FC<DetailedInfoPromptProps> = ({ onSubmit, isLoa
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 w-full max-w-[60rem]] animate-fade-in">
-      <div className='bg-muted/50 p-4 rounded-md'>
-        <Label htmlFor="detailed-info-prompt" className="text-lg font-medium">
+    <form onSubmit={handleSubmit} className="space-y-4 w-full max-w-[60rem] animate-fade-in">
+      <div className='bg-card p-6 rounded-md shadow-sm border'>
+        <Label htmlFor="detailed-info-prompt" className="text-lg font-medium text-foreground">
           Provide More Details
         </Label>
-        <p className="text-sm mb-2">
+        <p className="text-sm mb-4 text-muted-foreground">
           Please elaborate on the points in the outline or add any other specific information.
         </p>
         <Textarea
@@ -35,7 +35,7 @@ const DetailedInfoPrompt: React.FC<DetailedInfoPromptProps> = ({ onSubmit, isLoa
           onChange={(e) => setDetails(e.target.value)}
           placeholder="e.g., For user authentication, we require two-factor authentication. The payment gateway should support Stripe and PayPal..."
           rows={8}
-          className="text-base"
+          className="text-base bg-background resize-y"
           disabled={isLoading}
         />
       </div>

@@ -50,8 +50,8 @@ const GuidedStepsNavigator: React.FC<GuidedStepsNavigatorProps> = ({
   };
 
   return (
-    <Card className={cn("w-full max-w-[60rem] animate-fade-in", className)}> {/* Changed max-w-xl to max-w-[60rem] */}
-      <CardHeader>
+    <Card className={cn("w-full max-w-[60rem] animate-fade-in shadow-sm", className)}>
+      <CardHeader className="bg-muted/30">
         <div className="flex justify-between items-center">
           <CardTitle>Step {currentStepIndex + 1}: {currentStepData?.title || "Guidance"}</CardTitle>
           {aiField && currentStepData && (
@@ -64,7 +64,7 @@ const GuidedStepsNavigator: React.FC<GuidedStepsNavigatorProps> = ({
         </div>
         <CardDescription>Follow the steps to complete your RFP information.</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-4">
         <Textarea
           value={currentStepData?.content || ''}
           onChange={(e) => {
@@ -73,7 +73,7 @@ const GuidedStepsNavigator: React.FC<GuidedStepsNavigatorProps> = ({
             }
           }}
           placeholder={currentStepData?.title ? `Enter details for "${currentStepData.title}"...` : "Enter step details..."}
-          className="min-h-[150px] text-sm w-full resize-y"
+          className="min-h-[200px] text-sm w-full resize-y bg-background"
         />
         <div className="flex justify-between mt-6">
           <Button

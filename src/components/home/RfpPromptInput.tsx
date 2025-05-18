@@ -21,12 +21,12 @@ const RfpPromptInput: React.FC<RfpPromptInputProps> = ({ onSubmit, isLoading }) 
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 w-full max-w-[60rem]"> {/* Changed max-w-lg to max-w-[60rem] */}
-      <div>
+    <form onSubmit={handleSubmit} className="space-y-4 w-full max-w-[60rem]">
+      <div className="bg-card p-6 rounded-md shadow-sm border">
         <Label htmlFor="rfp-prompt" className="text-lg font-medium">
           Describe your RFP
         </Label>
-        <p className="text-sm text-muted-foreground mb-2">
+        <p className="text-sm text-muted-foreground mb-4">
           Tell us about your RFP. What are the main goals and requirements?
         </p>
         <Textarea
@@ -35,7 +35,7 @@ const RfpPromptInput: React.FC<RfpPromptInputProps> = ({ onSubmit, isLoading }) 
           onChange={(e) => setPrompt(e.target.value)}
           placeholder="We need a new e-commerce platform for selling handmade crafts, focusing on mobile-first design and easy vendor onboarding..."
           rows={6}
-          className="text-base"
+          className="text-base bg-background resize-y"
         />
       </div>
       <Button type="submit" className="w-full text-base py-3" disabled={isLoading || !prompt.trim()}>
