@@ -3,6 +3,7 @@ import RfpPromptInput from '@/components/home/RfpPromptInput';
 import ContentOutlineDisplay from '@/components/home/ContentOutlineDisplay';
 import DetailedInfoPrompt from '@/components/home/DetailedInfoPrompt';
 import GuidedStepsNavigator from '@/components/home/GuidedStepsNavigator';
+import TemplateSelectionView from '@/components/home/TemplateSelectionView'; // New import
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -13,9 +14,11 @@ import {
   setProjectInfo,
   setRequirements,
   RequirementItem,
+  // Potentially add action to set template later: setRfpTemplate
 } from '@/store/rfpSlice';
+import { toast } from '@/components/ui/use-toast'; // For template selection toast
 
-type Stage = 'initialPrompt' | 'outlineDisplay' | 'detailedInfoPrompt' | 'guidance';
+type Stage = 'initialPrompt' | 'outlineDisplay' | 'detailedInfoPrompt' | 'guidance' | 'templateSelection'; // Added 'templateSelection'
 
 // Simulated AI responses (placeholders)
 const simulateAiOutline = (prompt: string): Promise<string> => {
@@ -73,6 +76,8 @@ const HomePage = () => {
   const handleInitialPromptSubmit = async (prompt: string) => {
     setIsLoading(true);
     setRfpDescription(prompt);
+    // Ensure previous RFP data is cleared if starting a new flow
+    dispatch(clearCurrentRfp()); 
     const outline = await simulateAiOutline(prompt);
     setContentOutline(outline);
     setCurrentStage('outlineDisplay');
@@ -105,8 +110,9 @@ const HomePage = () => {
     }
   };
   
-  const handleCompleteGuidance = () => {
-    dispatch(clearCurrentRfp());
+  const handleCompleteGuidanceAndPrepareRfpData = () => {
+    // Data preparation logic, same as before
+    dispatch(clearCurrentRfp()); // Clear again to ensure fresh start for this specific RFP generation
 
     let combinedProjectDescription = rfpDescription;
     if (contentOutline) {
@@ -116,7 +122,6 @@ const HomePage = () => {
       combinedProjectDescription += `\n\n--- Additional Details Provided by User ---\n${detailedInfo}`;
     }
 
-    // Generate a project name (can be edited later in the form)
     const projectName = rfpDescription 
       ? `RFP: ${rfpDescription.substring(0, 40)}${rfpDescription.length > 40 ? '...' : ''}`
       : 'New RFP Project';
@@ -124,13 +129,16 @@ const HomePage = () => {
     dispatch(setProjectInfo({
       name: projectName,
       description: combinedProjectDescription,
-      sector: '', // To be filled in RfpForm
-      clientInfo: '', // To be filled in RfpForm
+      sector: '', 
+      clientInfo: '', 
     }));
 
     const newRequirements: RequirementItem[] = guidanceSteps.map((step, index) => ({
       id: `guidance-req-${Date.now()}-${index}`,
-      description: `Regarding "${step.title}": ${step.content}`, // step.content is the AI prompt
+      // Use step.content as the AI's prompt/question, not the user's answer to it.
+      // User answers are not collected directly in guidance steps currently.
+      // This structure assumes the guidance steps themselves become requirements.
+      description: `Consideration for "${step.title}": ${step.content}`, 
       priority: "Medium",
     }));
 
@@ -138,8 +146,29 @@ const HomePage = () => {
       dispatch(setRequirements(newRequirements));
     }
     
-    console.log("RFP data collected, dispatched to Redux, and navigating to RFP Builder:", { projectName, combinedProjectDescription, newRequirements });
-    navigate(ROUTES.FORGE, { state: { tab: 'rfp', fromHomePage: true } }); 
+    console.log("RFP data collected and dispatched to Redux from guidance steps.");
+    setCurrentStage('templateSelection'); // Move to template selection
+  };
+
+  const handleSelectTemplate = (templateId: string) => {
+    console.log("Template selected:", templateId);
+    // Here you would typically dispatch an action to apply the template
+    // e.g., dispatch(applyRfpTemplate(templateId));
+    // For now, we'll just toast and navigate
+    toast({
+      title: "Template Selected (Illustrative)",
+      description: `You selected template "${templateId}". Proceeding with your entered data. Full template functionality is a future enhancement.`,
+    });
+    navigate(ROUTES.FORGE, { state: { tab: 'rfp', fromHomePage: true } });
+  };
+
+  const handleStartBlankRfp = () => {
+    console.log("Starting with a blank RFP using collected data.");
+    toast({
+      title: "Starting Blank RFP",
+      description: "Proceeding to RFP Builder with the information you provided.",
+    });
+    navigate(ROUTES.FORGE, { state: { tab: 'rfp', fromHomePage: true } });
   };
 
   const handleBackToOutline = () => {
@@ -147,41 +176,42 @@ const HomePage = () => {
   };
   
   const handleRestart = () => {
+    dispatch(clearCurrentRfp()); // Clear Redux store on restart
     setRfpDescription('');
     setContentOutline('');
     setDetailedInfo('');
     setGuidanceSteps([]);
     setCurrentGuidanceStepIndex(0);
     setCurrentStage('initialPrompt');
-  }
+  };
 
   return (
     <div 
       className="min-h-screen flex flex-col items-center justify-center bg-cover bg-center p-4 sm:p-6 md:p-8 relative"
       style={{ backgroundImage: "url('https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1920&q=80')" }}
     >
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-md"></div>
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-lg"></div> {/* Increased blur and darkness */}
 
-      <div className="relative z-10 flex flex-col items-center justify-center w-full">
+      <div className="relative z-10 flex flex-col items-center justify-center w-full py-8"> {/* Added py-8 for padding */}
         {currentStage !== 'initialPrompt' && (
            <Button 
               variant="ghost" 
               onClick={handleRestart} 
-              className="absolute top-0 left-0 text-sm text-white bg-black/30 hover:bg-black/50 m-4"
+              className="absolute top-4 left-4 text-sm text-white bg-black/40 hover:bg-black/60 m-2 sm:m-4" // Adjusted margin and opacity
             >
              <ArrowLeft className="mr-2 h-4 w-4" /> Start Over
            </Button>
         )}
          <Button 
               variant="outline" 
-              onClick={() => navigate(ROUTES.FORGE, { state: { tab: 'rfpList' }})} // Go to RFP List by default
-              className="absolute top-0 right-0 text-sm text-white bg-black/30 hover:bg-black/50 border-white/50 hover:border-white/70 m-4"
+              onClick={() => navigate(ROUTES.FORGE, { state: { tab: 'rfpList' }})}
+              className="absolute top-4 right-4 text-sm text-white bg-black/40 hover:bg-black/60 border-white/50 hover:border-white/70 m-2 sm:m-4" // Adjusted margin and opacity
             >
              Go to RFP Forge <ArrowRight className="ml-2 h-4 w-4" />
            </Button>
 
 
-        <div className="text-center mb-12 mt-16 sm:mt-0 p-6 rounded-lg bg-black/50 shadow-xl max-w-3xl">
+        <div className="text-center mb-10 mt-16 sm:mt-8 p-6 rounded-lg bg-black/50 shadow-xl max-w-3xl"> {/* Adjusted margins */}
           <h1 className="text-4xl sm:text-5xl font-bold text-white drop-shadow-lg mb-3">
             AI-Powered RFP Assistant
           </h1>
@@ -223,8 +253,16 @@ const HomePage = () => {
             currentStepIndex={currentGuidanceStepIndex}
             onNext={handleNextGuidanceStep}
             onPrevious={handlePreviousGuidanceStep}
-            onComplete={handleCompleteGuidance}
+            onComplete={handleCompleteGuidanceAndPrepareRfpData} // Changed handler
             className="bg-card/80 backdrop-blur-md shadow-xl border border-border/30"
+          />
+        )}
+
+        {currentStage === 'templateSelection' && (
+          <TemplateSelectionView
+            onSelectTemplate={handleSelectTemplate}
+            onStartBlank={handleStartBlankRfp}
+            className="animate-fade-in"
           />
         )}
       </div>
