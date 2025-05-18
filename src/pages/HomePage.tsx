@@ -3,7 +3,7 @@ import RfpPromptInput from '@/components/home/RfpPromptInput';
 import ContentOutlineDisplay from '@/components/home/ContentOutlineDisplay';
 import DetailedInfoPrompt from '@/components/home/DetailedInfoPrompt';
 import GuidedStepsNavigator from '@/components/home/GuidedStepsNavigator';
-import TemplateSelectionView from '@/components/home/TemplateSelectionView'; // New import
+import TemplateSelectionView from '@/components/home/TemplateSelectionView';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -17,9 +17,9 @@ import {
   RequirementItem,
   // Potentially add action to set template later: setRfpTemplate
 } from '@/store/rfpSlice';
-import { toast } from '@/components/ui/use-toast'; // For template selection toast
+import { toast } from '@/components/ui/use-toast';
 
-type Stage = 'initialPrompt' | 'outlineDisplay' | 'detailedInfoPrompt' | 'guidance' | 'templateSelection'; // Added 'templateSelection'
+type Stage = 'initialPrompt' | 'outlineDisplay' | 'detailedInfoPrompt' | 'guidance' | 'templateSelection';
 
 // Simulated AI responses (placeholders)
 const simulateAiOutline = async (prompt: string): Promise<string> => {
@@ -46,6 +46,20 @@ const simulateAiGuidanceSteps = (details: string): Promise<{ title: string; cont
   });
 };
 
+// Helper for simulateAiGuidanceSteps to potentially store initial data
+// This is a conceptual addition if you need to distinguish original prompts from filled content
+// For now, it's just a placeholder to clarify the comment in handleCompleteGuidanceAndPrepareRfpData
+(simulateAiGuidanceSteps as any).initialData = null; 
+const originalSimulateAiGuidanceSteps = simulateAiGuidanceSteps;
+const newSimulateAiGuidanceSteps = (details: string): Promise<{ title: string; content: string }[]> => {
+  return originalSimulateAiGuidanceSteps(details).then(steps => {
+    (simulateAiGuidanceSteps as any).initialData = JSON.parse(JSON.stringify(steps)); // Store a copy
+    return steps;
+  });
+};
+// Replace the original simulateAiGuidanceSteps if you want to use this pattern
+// For simplicity, I am not replacing it here, but this is how you could track original content.
+// For now, requirements are generated based on the current content (which might be AI-suggested).
 
 const HomePage = () => {
   const [currentStage, setCurrentStage] = useState<Stage>('initialPrompt');
@@ -61,7 +75,6 @@ const HomePage = () => {
   const handleInitialPromptSubmit = async (prompt: string) => {
     setIsLoading(true);
     setRfpDescription(prompt);
-    // Ensure previous RFP data is cleared if starting a new flow
     dispatch(clearCurrentRfp()); 
     const outline = await simulateAiOutline(prompt);
     setContentOutline(outline);
@@ -94,6 +107,15 @@ const HomePage = () => {
       setCurrentGuidanceStepIndex(prev => prev - 1);
     }
   };
+
+  // New handler for updating guidance step content
+  const handleGuidanceStepContentChange = (stepIndex: number, newContent: string) => {
+    setGuidanceSteps(prevSteps => 
+      prevSteps.map((step, index) => 
+        index === stepIndex ? { ...step, content: newContent } : step
+      )
+    );
+  };
   
   const handleCompleteGuidanceAndPrepareRfpData = () => {
     // Data preparation logic, same as before
@@ -105,6 +127,13 @@ const HomePage = () => {
     }
     if (detailedInfo) {
       combinedProjectDescription += `\n\n--- Additional Details Provided by User ---\n${detailedInfo}`;
+    }
+    // Add content from guidance steps to the project description
+    if (guidanceSteps.length > 0) {
+      combinedProjectDescription += `\n\n--- Guided Steps Information ---`;
+      guidanceSteps.forEach(step => {
+        combinedProjectDescription += `\n\n## ${step.title}\n${step.content}`;
+      });
     }
 
     const projectName = rfpDescription 
@@ -118,20 +147,28 @@ const HomePage = () => {
       clientInfo: '', 
     }));
 
-    const newRequirements: RequirementItem[] = guidanceSteps.map((step, index) => ({
-      id: `guidance-req-${Date.now()}-${index}`,
-      // Use step.content as the AI's prompt/question, not the user's answer to it.
-      // User answers are not collected directly in guidance steps currently.
-      // This structure assumes the guidance steps themselves become requirements.
-      description: `Consideration for "${step.title}": ${step.content}`, 
-      priority: "Medium",
-    }));
+    // Requirements can still be generated from step titles, or modified based on user input if desired.
+    // For now, let's keep the requirements based on the step *titles* and *original content/questions*.
+    // The updated step.content (user's answers or AI-filled answers) is now part of the main project description.
+    const newRequirements: RequirementItem[] = guidanceSteps.map((step, index) => {
+        // Fetch original step content from simulated steps to form requirement if needed
+        // For simplicity, let's assume the titles themselves are good requirement starters.
+        // Or, if initial simulateAiGuidanceSteps provides original questions, use that.
+        // Current mapping for requirement description:
+        const originalStepData = simulateAiGuidanceSteps.initialData?.find(s => s.title === step.title) || step;
+
+        return {
+         id: `guidance-req-${Date.now()}-${index}`,
+         description: `Consideration for "${step.title}": ${originalStepData.content}`, 
+         priority: "Medium",
+        };
+    });
 
     if (newRequirements.length > 0) {
       dispatch(setRequirements(newRequirements));
     }
     
-    console.log("RFP data collected and dispatched to Redux from guidance steps.");
+    console.log("RFP data collected and dispatched to Redux from guidance steps. Updated description includes step content.");
     setCurrentStage('templateSelection'); // Move to template selection
   };
 
@@ -239,6 +276,7 @@ const HomePage = () => {
             onNext={handleNextGuidanceStep}
             onPrevious={handlePreviousGuidanceStep}
             onComplete={handleCompleteGuidanceAndPrepareRfpData} // Changed handler
+            onStepContentChange={handleGuidanceStepContentChange} // Pass the new handler
             className="bg-card/80 backdrop-blur-md shadow-xl border border-border/30"
           />
         )}
