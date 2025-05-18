@@ -10,15 +10,15 @@ interface ContentOutlineDisplayProps {
 
 const ContentOutlineDisplay: React.FC<ContentOutlineDisplayProps> = ({ outline, className }) => {
   return (
-    <Card className={cn("w-full max-w-lg animate-fade-in", className)}>
-      <CardHeader>
+    <Card className={cn("w-full animate-fade-in", className)} style={{ width: '900px' }}>
+      <CardHeader >
         <CardTitle>Generated Content Outline</CardTitle>
       </CardHeader>
       <CardContent>
         <p className="text-sm text-muted-foreground mb-2">
           Here's a suggested outline based on your description.
         </p>
-        <div className="p-4 border rounded-md bg-muted/50 whitespace-pre-wrap">
+        <div className="p-4 border rounded-md bg-muted/50 whitespace-pre-wrap" style={{ maxHeight: '400px', overflowY: 'auto' }}>
           {outline || "No outline generated yet."}
         </div>
       </CardContent>

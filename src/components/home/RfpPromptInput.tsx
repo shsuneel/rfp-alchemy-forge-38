@@ -27,16 +27,15 @@ const RfpPromptInput: React.FC<RfpPromptInputProps> = ({ onSubmit, isLoading }) 
           Describe your RFP
         </Label>
         <p className="text-sm text-muted-foreground mb-2">
-          Tell us about your Request for Proposal. What are the main goals and requirements?
+          Tell us about your RFP. What are the main goals and requirements?
         </p>
         <Textarea
           id="rfp-prompt"
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
-          placeholder="e.g., We need a new e-commerce platform for selling handmade crafts, focusing on mobile-first design and easy vendor onboarding..."
+          placeholder="We need a new e-commerce platform for selling handmade crafts, focusing on mobile-first design and easy vendor onboarding..."
           rows={6}
           className="text-base"
-          disabled={isLoading}
         />
       </div>
       <Button type="submit" className="w-full text-base py-3" disabled={isLoading || !prompt.trim()}>

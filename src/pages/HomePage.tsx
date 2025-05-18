@@ -8,6 +8,7 @@ import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/routes';
 import { useAppDispatch } from '@/hooks/useAppDispatch';
+import axios from 'axios';
 import {
   clearCurrentRfp,
   setProjectInfo,
@@ -18,29 +19,13 @@ import {
 type Stage = 'initialPrompt' | 'outlineDisplay' | 'detailedInfoPrompt' | 'guidance';
 
 // Simulated AI responses (placeholders)
-const simulateAiOutline = (prompt: string): Promise<string> => {
+const simulateAiOutline = async (prompt: string): Promise<string> => {
   console.log("Simulating AI outline generation for:", prompt);
-  return new Promise(resolve => {
-    setTimeout(() => {
-      resolve(
-`1. Introduction
-   - Project Overview
-   - Goals and Objectives
-2. Scope of Work
-   - Key Deliverables
-   - Features (e.g., ${prompt.includes("mobile") ? "Mobile App," : ""} User Registration, Product Catalog)
-3. Technical Requirements
-   - Preferred Technologies (if any)
-   - Performance and Scalability
-4. Timeline and Budget
-   - Expected Project Duration
-   - Budget Constraints (if any)
-5. Vendor Information
-   - Submission Guidelines
-   - Evaluation Criteria`
-      );
-    }, 1500);
-  });
+   const response = await axios.post('http://localhost:3020/ai/suggestion', {
+          field: "outline",
+          currentValue: prompt,
+        });
+  return response.data.suggestion || "Outline generation failed.";
 };
 
 const simulateAiGuidanceSteps = (details: string): Promise<{ title: string; content: string }[]> => {
@@ -185,8 +170,8 @@ const HomePage = () => {
           <h1 className="text-4xl sm:text-5xl font-bold text-white drop-shadow-lg mb-3">
             AI-Powered RFP Assistant
           </h1>
-          <p className="text-lg text-gray-100 drop-shadow-md max-w-2xl mx-auto">
-            Let's craft your Request for Proposal together. Start by describing your project, and our AI will help you build a comprehensive RFP.
+          <p className="text-lg text-gray-100 drop-shadow-md Tell us about your RFP. What are the main goals and requirements?max-w-2xl mx-auto">
+            Let's craft your RFP together. Start by describing your project, and RFP Builder powered by GenAI will help you build a comprehensive RFP.
           </p>
         </div>
 
