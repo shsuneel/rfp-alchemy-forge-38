@@ -21,7 +21,7 @@ const RfpPromptInput: React.FC<RfpPromptInputProps> = ({ onSubmit, isLoading }) 
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 w-full max-w-lg">
+    <form onSubmit={handleSubmit} className="space-y-4 w-full max-w-[60rem]"> {/* Changed max-w-lg to max-w-[60rem] */}
       <div>
         <Label htmlFor="rfp-prompt" className="text-lg font-medium">
           Describe your RFP

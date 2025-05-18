@@ -1,11 +1,10 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import AiSuggestionIcon from '@/components/ui/AiSuggestionIcon';
-import { Textarea } from '@/components/ui/textarea'; // Import Textarea
+import { Textarea } from '@/components/ui/textarea';
 
 interface GuidedStepsNavigatorProps {
   steps: { title: string; content: string }[];
@@ -51,7 +50,7 @@ const GuidedStepsNavigator: React.FC<GuidedStepsNavigatorProps> = ({
   };
 
   return (
-    <Card className={cn("w-full max-w-xl animate-fade-in", className)}> {/* Increased max-width to xl */}
+    <Card className={cn("w-full max-w-[60rem] animate-fade-in", className)}> {/* Changed max-w-xl to max-w-[60rem] */}
       <CardHeader>
         <div className="flex justify-between items-center">
           <CardTitle>Step {currentStepIndex + 1}: {currentStepData?.title || "Guidance"}</CardTitle>
@@ -74,7 +73,7 @@ const GuidedStepsNavigator: React.FC<GuidedStepsNavigatorProps> = ({
             }
           }}
           placeholder={currentStepData?.title ? `Enter details for "${currentStepData.title}"...` : "Enter step details..."}
-          className="min-h-[150px] text-sm w-full resize-y" // Added resize-y for better UX
+          className="min-h-[150px] text-sm w-full resize-y"
         />
         <div className="flex justify-between mt-6">
           <Button
@@ -100,4 +99,3 @@ const GuidedStepsNavigator: React.FC<GuidedStepsNavigatorProps> = ({
 };
 
 export default GuidedStepsNavigator;
-

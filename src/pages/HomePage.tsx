@@ -227,13 +227,13 @@ const HomePage = () => {
         </div>
 
         {currentStage === 'initialPrompt' && (
-          <div className="w-full max-w-lg p-6 rounded-xl bg-card/80 backdrop-blur-md shadow-xl border border-border/30">
+          <div className="w-full max-w-[60rem] p-6 rounded-xl bg-card/80 backdrop-blur-md shadow-xl border border-border/30"> {/* Changed max-w-lg to max-w-[60rem] */}
             <RfpPromptInput onSubmit={handleInitialPromptSubmit} isLoading={isLoading} />
           </div>
         )}
 
         {currentStage === 'outlineDisplay' && (
-          <div className="w-full max-w-lg flex flex-col items-center space-y-6">
+          <div className="w-full max-w-lg flex flex-col items-center space-y-6"> {/* This container remains max-w-lg as "Content Outline Display" was not specified for width change */}
             <ContentOutlineDisplay 
               outline={contentOutline} 
               className="bg-card/80 backdrop-blur-md shadow-xl border border-border/30" 
@@ -245,6 +245,7 @@ const HomePage = () => {
         )}
 
         {currentStage === 'detailedInfoPrompt' && (
+           // This container remains max-w-lg as "Detailed Info Prompt" was not specified for width change
           <div className="w-full max-w-lg flex flex-col items-center space-y-6 p-6 rounded-xl bg-card/80 backdrop-blur-md shadow-xl border border-border/30">
             <Button variant="outline" onClick={handleBackToOutline} className="self-start text-sm mb-4">
               <ArrowLeft className="mr-2 h-4 w-4" /> Back to Outline
