@@ -2,10 +2,11 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Check, Sparkles } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check } from 'lucide-react'; // Removed Sparkles as it's not used directly here
 import { cn } from '@/lib/utils';
 import AiSuggestionIcon from '@/components/ui/AiSuggestionIcon';
-import { toast } from "@/components/ui/use-toast";
+// Removed toast import as AiSuggestionIcon handles its own toast for application
+// import { toast } from "@/components/ui/use-toast"; 
 
 interface GuidedStepsNavigatorProps {
   steps: { title: string; content: string }[];
@@ -13,6 +14,7 @@ interface GuidedStepsNavigatorProps {
   onNext: () => void;
   onPrevious: () => void;
   onComplete?: () => void;
+  onStepContentChange?: (stepIndex: number, newContent: string) => void; // New prop
   className?: string;
 }
 
@@ -25,8 +27,7 @@ const mapStepTitleToAiField = (title: string): AiSuggestionField | null => {
   if (lowerTitle.includes('features') || lowerTitle.includes('scope')) return 'requirements';
   if (lowerTitle.includes('technical') || lowerTitle.includes('specifications')) return 'techStack';
   if (lowerTitle.includes('metrics') || lowerTitle.includes('success')) return 'projectDescription'; // General context
-  // Add more mappings as needed or return a default/null
-  return null; // Or 'projectDescription' as a fallback
+  return null; 
 };
 
 const GuidedStepsNavigator: React.FC<GuidedStepsNavigatorProps> = ({
@@ -35,6 +36,7 @@ const GuidedStepsNavigator: React.FC<GuidedStepsNavigatorProps> = ({
   onNext,
   onPrevious,
   onComplete,
+  onStepContentChange, // Destructure new prop
   className,
 }) => {
   const currentStepData = steps[currentStepIndex];
@@ -43,11 +45,17 @@ const GuidedStepsNavigator: React.FC<GuidedStepsNavigatorProps> = ({
   const aiField = currentStepData ? mapStepTitleToAiField(currentStepData.title) : null;
 
   const handleSuggestionApplied = (suggestion: string) => {
-    toast({
-      title: "AI Suggestion",
-      description: `Suggestion for "${currentStepData?.title}": ${suggestion.substring(0, 100)}${suggestion.length > 100 ? '...' : ''}. Consider incorporating these ideas.`,
-      duration: 5000,
-    });
+    // Call the new prop to update the parent's state
+    if (onStepContentChange && currentStepData) {
+      onStepContentChange(currentStepIndex, suggestion);
+    }
+    // The AiSuggestionIcon component already shows a toast when a suggestion is applied.
+    // Removed redundant toast from here.
+    // toast({
+    //   title: "AI Suggestion Applied",
+    //   description: `Suggestion for "${currentStepData?.title}" has been applied.`,
+    //   duration: 5000,
+    // });
   };
 
   return (
@@ -58,15 +66,15 @@ const GuidedStepsNavigator: React.FC<GuidedStepsNavigatorProps> = ({
           {aiField && currentStepData && (
             <AiSuggestionIcon
               field={aiField}
-              currentValue={currentStepData.content}
-              onSuggestionApplied={handleSuggestionApplied}
+              currentValue={currentStepData.content} // Pass current content as context
+              onSuggestionApplied={handleSuggestionApplied} // This will now trigger content update
             />
           )}
         </div>
         <CardDescription>Follow the steps to complete your RFP information.</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="p-4 border rounded-md bg-muted/50 min-h-[150px] text-sm">
+        <div className="p-4 border rounded-md bg-muted/50 min-h-[150px] text-sm whitespace-pre-wrap">
           {currentStepData?.content || "Loading step..."}
         </div>
         <div className="flex justify-between mt-6">
