@@ -348,12 +348,12 @@ const Requirements = ({
             className="mb-2"
           />
           <div className="flex items-center">
-            <Label htmlFor={`priority-${index}`} className="mr-2">Priority:</Label>
+            <Label htmlFor={`priority-${section.id}`} className="mr-2">Priority:</Label>
             <Select
               value={section.priority || "Medium"}
               onValueChange={(value) => updateSection(index, 'priority', value)}
             >
-              <SelectTrigger id={`priority-${index}`} className="w-32">
+              <SelectTrigger id={`priority-${section.id}`} className="w-32">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -397,17 +397,22 @@ const Requirements = ({
               field="requirements"
               onSuggestionApplied={(suggestion) => {
                 const newRequirements = [...requirements];
-                suggestion.split('\n').filter(line => line.trim()).forEach((line, index) => {
+                suggestion.split('\n').filter(line => line.trim()).forEach((line, idx) => {
                   const trimmedLine = line.replace(/^\d+\.\s*/, '').trim();
                   if (trimmedLine) {
-                    newRequirements.push({
-                      id: `req-${Date.now()}-${index}`,
-                      description: trimmedLine,
-                      priority: "Medium"
-                    });
+                    // If the first requirement is empty, replace it instead of adding a new one
+                    if (requirements.length === 1 && requirements[0].description === "" && idx === 0) {
+                      newRequirements[0] = { ...newRequirements[0], description: trimmedLine };
+                    } else {
+                      newRequirements.push({
+                        id: `req-${Date.now()}-${idx}`,
+                        description: trimmedLine,
+                        priority: "Medium"
+                      });
+                    }
                   }
                 });
-                setRequirements(newRequirements);
+                setRequirements(newRequirements.filter(r => r.id !== "req-default" || r.description !== "" || newRequirements.length === 1));
               }}
             />
           </div>
@@ -416,20 +421,27 @@ const Requirements = ({
         <CardContent>
           {requirements.map((req, index) => (
             <div key={req.id} className="flex gap-2 items-start mb-4">
-              <div className="flex-1">
-                <Input
-                  placeholder="Requirement description"
-                  value={req.description}
-                  onChange={(e) => updateRequirement(index, "description", e.target.value)}
-                  className="mb-2"
-                />
+              <div className="flex-1 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Input
+                    placeholder="Requirement description"
+                    value={req.description}
+                    onChange={(e) => updateRequirement(index, "description", e.target.value)}
+                    className="flex-1"
+                  />
+                  <AiSuggestionIcon
+                    field="requirements"
+                    currentValue={req.description}
+                    onSuggestionApplied={(suggestion) => updateRequirement(index, "description", suggestion)}
+                  />
+                </div>
                 <div className="flex items-center">
-                  <Label htmlFor={`priority-${index}`} className="mr-2">Priority:</Label>
+                  <Label htmlFor={`priority-${req.id}-item`} className="mr-2 text-sm">Priority:</Label>
                   <Select
                     value={req.priority}
                     onValueChange={(value) => updateRequirement(index, "priority", value as "High" | "Medium" | "Low")}
                   >
-                    <SelectTrigger id={`priority-${index}`} className="w-32">
+                    <SelectTrigger id={`priority-${req.id}-item`} className="w-32 h-9">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -445,6 +457,7 @@ const Requirements = ({
                 size="icon"
                 onClick={() => removeRequirement(index)}
                 disabled={requirements.length === 1}
+                className="mt-1" // Aligns better with the top of the input field
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
@@ -471,16 +484,20 @@ const Requirements = ({
               field="assumptions"
               onSuggestionApplied={(suggestion) => {
                 const newAssumptions = [...assumptions];
-                suggestion.split('\n').filter(line => line.trim()).forEach((line, index) => {
+                suggestion.split('\n').filter(line => line.trim()).forEach((line, idx) => {
                   const trimmedLine = line.replace(/^\d+\.\s*/, '').trim();
                   if (trimmedLine) {
-                    newAssumptions.push({
-                      id: `assump-${Date.now()}-${index}`,
-                      description: trimmedLine
-                    });
+                     if (assumptions.length === 1 && assumptions[0].description === "" && idx === 0) {
+                      newAssumptions[0] = { ...newAssumptions[0], description: trimmedLine };
+                    } else {
+                      newAssumptions.push({
+                        id: `assump-${Date.now()}-${idx}`,
+                        description: trimmedLine
+                      });
+                    }
                   }
                 });
-                setAssumptions(newAssumptions);
+                setAssumptions(newAssumptions.filter(a => a.id !== "assump-default" || a.description !== "" || newAssumptions.length === 1));
               }}
             />
           </div>
@@ -494,6 +511,11 @@ const Requirements = ({
                 value={assumption.description}
                 onChange={(e) => updateAssumption(index, e.target.value)}
                 className="flex-1"
+              />
+              <AiSuggestionIcon
+                field="assumptions"
+                currentValue={assumption.description}
+                onSuggestionApplied={(suggestion) => updateAssumption(index, suggestion)}
               />
               <Button
                 variant="ghost"
@@ -526,16 +548,20 @@ const Requirements = ({
               field="dependencies"
               onSuggestionApplied={(suggestion) => {
                 const newDependencies = [...dependencies];
-                suggestion.split('\n').filter(line => line.trim()).forEach((line, index) => {
+                suggestion.split('\n').filter(line => line.trim()).forEach((line, idx) => {
                   const trimmedLine = line.replace(/^\d+\.\s*/, '').trim();
                   if (trimmedLine) {
-                    newDependencies.push({
-                      id: `dep-${Date.now()}-${index}`,
-                      description: trimmedLine
-                    });
+                    if (dependencies.length === 1 && dependencies[0].description === "" && idx === 0) {
+                      newDependencies[0] = { ...newDependencies[0], description: trimmedLine };
+                    } else {
+                      newDependencies.push({
+                        id: `dep-${Date.now()}-${idx}`,
+                        description: trimmedLine
+                      });
+                    }
                   }
                 });
-                setDependencies(newDependencies);
+                setDependencies(newDependencies.filter(d => d.id !== "dep-default" || d.description !== "" || newDependencies.length === 1));
               }}
             />
           </div>
@@ -549,6 +575,11 @@ const Requirements = ({
                 value={dependency.description}
                 onChange={(e) => updateDependency(index, e.target.value)}
                 className="flex-1"
+              />
+              <AiSuggestionIcon
+                field="dependencies"
+                currentValue={dependency.description}
+                onSuggestionApplied={(suggestion) => updateDependency(index, suggestion)}
               />
               <Button
                 variant="ghost"
@@ -614,8 +645,6 @@ const Requirements = ({
           ))}
         </CardContent>
       </Card> */}
-
-      
     </div>
   );
 };
