@@ -117,7 +117,6 @@ const Requirements = ({
     }
   }, [sections, onSectionsChange]);
 
-
   const addRequirement = () => {
     setRequirements([
       ...requirements,
@@ -152,7 +151,14 @@ const Requirements = ({
     }
     if (requirements.length === 1 && requirements.filter((_, i) => i !== index).length === 0) {
         // If all requirements are removed, add a default blank one back
-        addRequirement();
+        setRequirements([{
+            id: `req-default-${Date.now()}`,
+            description: "",
+            priority: "Medium",
+            phase: "",
+            relatedAssumptions: "",
+            relatedDependencies: ""
+        }]);
     }
   };
   
@@ -168,7 +174,7 @@ const Requirements = ({
     }));
     if (newReqItems.length > 0) {
       // If the only requirement is the default empty one, replace it
-      if (requirements.length === 1 && requirements[0].description === "" && requirements[0].id.startsWith("req-default")) {
+      if (requirements.length === 1 && requirements[0].description === "" && (requirements[0].id.startsWith("req-default") || requirements[0].id.startsWith("req-1"))) {
         setRequirements(newReqItems);
       } else {
         setRequirements(prev => [...prev, ...newReqItems]);
@@ -179,7 +185,6 @@ const Requirements = ({
   const getCurrentRequirementsContext = () => {
     return requirements.map(req => req.description).filter(desc => desc.trim() !== "").join("\n");
   };
-
 
   // Assumptions handling
   const addAssumption = () => {
@@ -196,9 +201,31 @@ const Requirements = ({
   };
 
   const removeAssumption = (index: number) => {
-    if (assumptions.length > 1) {
+    if (assumptions.length > 1 || (assumptions.length === 1 && assumptions[0].description !== "")) {
       setAssumptions(assumptions.filter((_, i) => i !== index));
     }
+     if (assumptions.length === 1 && assumptions.filter((_, i) => i !== index).length === 0) {
+        setAssumptions([{ id: `assump-default-${Date.now()}`, description: "" }]);
+    }
+  };
+  
+  const handleAiAddAssumptions = (suggestion: string) => {
+    const newAssumpDescriptions = suggestion.split('\n').filter(desc => desc.trim() !== '');
+    const newAssumpItems: AssumptionItem[] = newAssumpDescriptions.map((desc, idx) => ({
+      id: `assump-ai-${Date.now()}-${idx}`,
+      description: desc,
+    }));
+    if (newAssumpItems.length > 0) {
+      if (assumptions.length === 1 && assumptions[0].description === "" && (assumptions[0].id.startsWith("assump-default") || assumptions[0].id.startsWith("assump-1"))) {
+        setAssumptions(newAssumpItems);
+      } else {
+        setAssumptions(prev => [...prev, ...newAssumpItems]);
+      }
+    }
+  };
+
+  const getCurrentAssumptionsContext = () => {
+    return assumptions.map(a => a.description).filter(desc => desc.trim() !== "").join("\n");
   };
 
   // Dependencies handling
@@ -216,9 +243,31 @@ const Requirements = ({
   };
 
   const removeDependency = (index: number) => {
-    if (dependencies.length > 1) {
+    if (dependencies.length > 1 || (dependencies.length === 1 && dependencies[0].description !== "" )) {
       setDependencies(dependencies.filter((_, i) => i !== index));
     }
+    if (dependencies.length === 1 && dependencies.filter((_, i) => i !== index).length === 0) {
+       setDependencies([{ id: `dep-default-${Date.now()}`, description: "" }]);
+    }
+  };
+
+  const handleAiAddDependencies = (suggestion: string) => {
+    const newDepDescriptions = suggestion.split('\n').filter(desc => desc.trim() !== '');
+    const newDepItems: DependencyItem[] = newDepDescriptions.map((desc, idx) => ({
+      id: `dep-ai-${Date.now()}-${idx}`,
+      description: desc,
+    }));
+    if (newDepItems.length > 0) {
+       if (dependencies.length === 1 && dependencies[0].description === "" && (dependencies[0].id.startsWith("dep-default") || dependencies[0].id.startsWith("dep-1"))) {
+        setDependencies(newDepItems);
+      } else {
+        setDependencies(prev => [...prev, ...newDepItems]);
+      }
+    }
+  };
+
+  const getCurrentDependenciesContext = () => {
+    return dependencies.map(d => d.description).filter(desc => desc.trim() !== "").join("\n");
   };
 
   // Sections handling
@@ -247,196 +296,188 @@ const Requirements = ({
   const removeSectionItem = (index: number) => {
     setSections(sections.filter((_, i) => i !== index));
   };
-  
 
-  // Render section based on type
   const renderSectionContent = (section: SectionItem, index: number) => {
-    return (
-      <div>
-        <div className="space-y-2">
-          <div className="flex justify-between items-center mb-3">
-            <div className="flex items-center gap-2 font-medium">
-              <span>Section Title</span>
+    switch (section.type) {
+      case 'title':
+        return (
+          <div className="space-y-2">
+            <div className="flex justify-between items-center mb-3">
+              <div className="flex items-center gap-2 font-medium">
+                <Heading className="h-5 w-5" /> <span>Title</span>
+              </div>
+              <Button variant="ghost" size="icon" onClick={() => removeSectionItem(index)}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => removeSection(index)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            <Input
+              value={section.content}
+              onChange={(e) => updateSection(index, 'content', e.target.value)}
+              placeholder="Enter title"
+              className="font-bold text-lg"
+            />
           </div>
-          <Input
-            value={section.content}
-            onChange={(e) => updateSection(index, 'content', e.target.value)}
-            placeholder="Enter title"
-            className="font-bold text-lg"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <div className="flex justify-between items-center mb-3">
-            <div className="flex items-center gap-2 font-medium">
-              <Label>Agenda</Label>
+        );
+      case 'agenda':
+        return (
+          <div className="space-y-2">
+            <div className="flex justify-between items-center mb-3">
+              <div className="flex items-center gap-2 font-medium">
+                <FileText className="h-5 w-5" /> <span>Agenda</span>
+              </div>
+              <Button variant="ghost" size="icon" onClick={() => removeSectionItem(index)}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => removeSection(index)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            <Textarea
+              value={section.content}
+              onChange={(e) => updateSection(index, 'content', e.target.value)}
+              placeholder="Enter agenda items"
+              rows={4}
+            />
           </div>
-          <Textarea
-            value={section.content}
-            onChange={(e) => updateSection(index, 'content', e.target.value)}
-            placeholder="Enter agenda items"
-            rows={4}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <div className="flex justify-between items-center mb-3">
-            <div className="flex items-center gap-2 font-medium">
-              <Label>Summary</Label>
+        );
+      case 'summary':
+        return (
+          <div className="space-y-2">
+            <div className="flex justify-between items-center mb-3">
+              <div className="flex items-center gap-2 font-medium">
+                <FileText className="h-5 w-5" /> <span>Summary</span>
+              </div>
+              <Button variant="ghost" size="icon" onClick={() => removeSectionItem(index)}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => removeSection(index)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            <Textarea
+              value={section.content}
+              onChange={(e) => updateSection(index, 'content', e.target.value)}
+              placeholder="Enter summary text"
+              rows={4}
+            />
           </div>
-          <Textarea
-            value={section.content}
-            onChange={(e) => updateSection(index, 'content', e.target.value)}
-            placeholder="Enter summary text"
-            rows={4}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <div className="flex justify-between items-center mb-3">
-            <div className="flex items-center gap-2 font-medium">
-              <Label>Diagram</Label>
+        );
+      case 'diagram':
+        return (
+          <div className="space-y-2">
+            <div className="flex justify-between items-center mb-3">
+              <div className="flex items-center gap-2 font-medium">
+                <FileImage className="h-5 w-5" /> <span>Diagram</span>
+              </div>
+              <Button variant="ghost" size="icon" onClick={() => removeSectionItem(index)}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => removeSection(index)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            <Input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  const reader = new FileReader();
+                  reader.onloadend = () => {
+                    updateSection(index, 'imageUrl', reader.result as string);
+                    updateSection(index, 'content', file.name); // Store filename as content
+                  };
+                  reader.readAsDataURL(file);
+                }
+              }}
+            />
+            {section.imageUrl && (
+              <div className="mt-2">
+                <img
+                  src={section.imageUrl}
+                  alt={section.content || "Diagram"}
+                  className="max-w-full h-auto border rounded"
+                />
+              </div>
+            )}
+            {section.imageUrl && (
+                <Input
+                    value={section.content} // This is the filename now
+                    onChange={(e) => updateSection(index, 'content', e.target.value)}
+                    placeholder="Optional: Diagram title or description"
+                    className="mt-2"
+                />
+            )}
           </div>
-          <Input
-            type="file"
-            accept="image/*"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) {
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                  updateSection(index, 'imageUrl', reader.result as string);
-                  updateSection(index, 'content', file.name);
-                };
-                reader.readAsDataURL(file);
-              }
-            }}
-          />
-          {section.imageUrl && (
-            <div className="mt-2">
-              <img
-                src={section.imageUrl}
-                alt="Diagram"
-                className="max-w-full h-auto border rounded"
-              />
+        );
+      case 'assumption':
+        return (
+          <div className="space-y-2">
+            <div className="flex justify-between items-center mb-3">
+              <div className="flex items-center gap-2 font-medium">
+                <FileMinus className="h-5 w-5" /> <span>Assumption</span>
+              </div>
+              <Button variant="ghost" size="icon" onClick={() => removeSectionItem(index)}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </div>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <div className="flex justify-between items-center mb-3">
-            <div className="flex items-center gap-2 font-medium">
-              <Label>Assumption</Label>
+            <Textarea
+              value={section.content}
+              onChange={(e) => updateSection(index, 'content', e.target.value)}
+              placeholder="Enter assumption"
+              rows={3}
+            />
+          </div>
+        );
+      case 'dependency':
+        return (
+          <div className="space-y-2">
+            <div className="flex justify-between items-center mb-3">
+              <div className="flex items-center gap-2 font-medium">
+                <FilePlus className="h-5 w-5" /> <span>Dependency</span>
+              </div>
+              <Button variant="ghost" size="icon" onClick={() => removeSectionItem(index)}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => removeSection(index)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            <Textarea
+              value={section.content}
+              onChange={(e) => updateSection(index, 'content', e.target.value)}
+              placeholder="Enter dependency"
+              rows={3}
+            />
           </div>
-          <Textarea
-            value={section.content}
-            onChange={(e) => updateSection(index, 'content', e.target.value)}
-            placeholder="Enter assumption"
-            rows={3}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <div className="flex justify-between items-center mb-3">
-            <div className="flex items-center gap-2 font-medium">
-              <Label>Dependency</Label>
+        );
+      case 'requirement': // This is for a generic custom requirement section
+        return (
+          <div className="space-y-2">
+            <div className="flex justify-between items-center mb-3">
+              <div className="flex items-center gap-2 font-medium">
+                <FileText className="h-5 w-5" /> <span>Requirement</span>
+              </div>
+              <Button variant="ghost" size="icon" onClick={() => removeSectionItem(index)}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => removeSection(index)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
-          <Textarea
-            value={section.content}
-            onChange={(e) => updateSection(index, 'content', e.target.value)}
-            placeholder="Enter dependency"
-            rows={3}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <div className="flex justify-between items-center mb-3">
-            <div className="flex items-center gap-2 font-medium">
-              <Label>Requirement</Label>
+            <Textarea
+              value={section.content}
+              onChange={(e) => updateSection(index, 'content', e.target.value)}
+              placeholder="Enter requirement details"
+              rows={3}
+              className="mb-2"
+            />
+             <div className="flex items-center">
+              <Label htmlFor={`priority-${section.id}`} className="mr-2">Priority:</Label>
+              <Select
+                value={section.priority || "Medium"}
+                onValueChange={(value) => updateSection(index, 'priority', value as "High" | "Medium" | "Low")}
+              >
+                <SelectTrigger id={`priority-${section.id}`} className="w-32">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="High">High</SelectItem>
+                  <SelectItem value="Medium">Medium</SelectItem>
+                  <SelectItem value="Low">Low</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => removeSection(index)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
           </div>
-          <Textarea
-            value={section.content}
-            onChange={(e) => updateSection(index, 'content', e.target.value)}
-            placeholder="Enter requirement"
-            rows={3}
-            className="mb-2"
-          />
-          <div className="flex items-center">
-            <Label htmlFor={`priority-${section.id}`} className="mr-2">Priority:</Label>
-            <Select
-              value={section.priority || "Medium"}
-              onValueChange={(value) => updateSection(index, 'priority', value)}
-            >
-              <SelectTrigger id={`priority-${section.id}`} className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="High">High</SelectItem>
-                <SelectItem value="Medium">Medium</SelectItem>
-                <SelectItem value="Low">Low</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </div>
-    );
-
+        );
+      default:
+        return <p>Unknown section type</p>;
+    }
   };
 
   const getSectionIcon = (type: SectionItem['type']) => {
@@ -447,7 +488,7 @@ const Requirements = ({
       case 'diagram': return <FileImage className="h-4 w-4" />;
       case 'assumption': return <FileMinus className="h-4 w-4" />;
       case 'dependency': return <FilePlus className="h-4 w-4" />;
-      case 'requirement': return <FileText className="h-4 w-4" />;
+      case 'requirement': return <FileText className="h-4 w-4" />; // Generic custom requirement
       default: return <FileText className="h-4 w-4" />;
     }
   };
@@ -473,13 +514,14 @@ const Requirements = ({
                 <Plus className="h-4 w-4 mr-1" /> Add New Requirement
               </Button>
               <AiSuggestionIcon
-                field="requirements"
+                field="requirements_bulk" // Differentiate for bulk add
                 currentValue={getCurrentRequirementsContext()}
                 onSuggestionApplied={handleAiAddRequirements}
+                tooltipText="Suggest a list of new requirements based on existing ones"
               />
             </div>
           </div>
-          <CardDescription>Define the key requirements for your project in the table below. All fields are editable.</CardDescription>
+          <CardDescription>Define the key requirements for your project. All fields are editable.</CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
@@ -487,10 +529,10 @@ const Requirements = ({
               <TableRow>
                 <TableHead className="w-[50px]">#</TableHead>
                 <TableHead>Description</TableHead>
-                {/* <TableHead className="w-[150px]">Priority</TableHead>
-                <TableHead className="w-[200px]">Phase</TableHead> */}
-                <TableHead className="w-[200px]">Assumptions</TableHead>
-                <TableHead className="w-[200px]">Dependencies</TableHead>
+                <TableHead className="w-[150px]">Priority</TableHead>
+                <TableHead className="w-[200px]">Phase</TableHead>
+                <TableHead className="w-[200px]">Related Assumptions</TableHead>
+                <TableHead className="w-[200px]">Related Dependencies</TableHead>
                 <TableHead className="w-[100px] text-center">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -508,13 +550,14 @@ const Requirements = ({
                         rows={2}
                       />
                        <AiSuggestionIcon
-                          field="requirements" // context is a single requirement here
+                          field="requirement_item" 
                           currentValue={req.description}
                           onSuggestionApplied={(suggestion) => updateRequirement(index, "description", suggestion)}
+                          tooltipText="Suggest improvements for this requirement"
                         />
                     </div>
                   </TableCell>
-                  {/* <TableCell>
+                  <TableCell>
                     <Select
                       value={req.priority}
                       onValueChange={(value) => updateRequirement(index, "priority", value as "High" | "Medium" | "Low")}
@@ -535,7 +578,7 @@ const Requirements = ({
                       value={req.phase || ""}
                       onChange={(e) => updateRequirement(index, "phase", e.target.value)}
                     />
-                  </TableCell> */}
+                  </TableCell>
                   <TableCell>
                      <Textarea
                         placeholder="Assumptions specific to this requirement"
@@ -559,7 +602,7 @@ const Requirements = ({
                       variant="ghost"
                       size="icon"
                       onClick={() => removeRequirement(index)}
-                       disabled={requirements.length === 1 && requirements[0].description === ""}
+                      disabled={requirements.length === 1 && requirements[0].description === "" && (requirements[0].id.startsWith("req-default") || requirements[0].id.startsWith("req-1"))}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -571,146 +614,192 @@ const Requirements = ({
         </CardContent>
       </Card>
 
-      {/* Assumptions Card (remains unchanged) */}
+      {/* Assumptions Card */}
       <Card>
         <CardHeader>
           <div className="flex justify-between items-center">
             <CardTitle>Project Assumptions</CardTitle>
-            {/* Original AI Suggestion for whole section */}
+             <div className="flex items-center gap-2">
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addAssumption}
+                >
+                    <Plus className="h-4 w-4 mr-1" /> Add Assumption
+                </Button>
+                <AiSuggestionIcon
+                    field="assumptions_bulk"
+                    currentValue={getCurrentAssumptionsContext()}
+                    onSuggestionApplied={handleAiAddAssumptions}
+                    tooltipText="Suggest a list of new assumptions"
+                />
+            </div>
           </div>
           <CardDescription>List key assumptions for the project. These are general assumptions, distinct from those tied to specific requirements.</CardDescription>
         </CardHeader>
         <CardContent>
-          {assumptions.map((assumption, index) => (
-            <div key={assumption.id} className="flex gap-2 items-start mb-4">
-              <Textarea
-                placeholder="Assumption description"
-                value={assumption.description}
-                onChange={(e) => updateAssumption(index, e.target.value)}
-                className="flex-1"
-                rows={2}
-              />
-              <div className="flex flex-col gap-1">
-                <AiSuggestionIcon
-                  field="assumptions"
-                  currentValue={assumption.description}
-                  onSuggestionApplied={(suggestion) => updateAssumption(index, suggestion)}
-                />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => removeAssumption(index)}
-                  disabled={assumptions.length === 1}
-                  className="mt-0"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          ))}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={addAssumption}
-            className="mt-2"
-          >
-            <Plus className="h-4 w-4 mr-1" /> Add Assumption
-          </Button>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Description</TableHead>
+                <TableHead className="w-[100px] text-center">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {assumptions.map((assumption, index) => (
+                <TableRow key={assumption.id}>
+                  <TableCell>
+                    <div className="flex items-start gap-2">
+                      <Textarea
+                        placeholder="Assumption description"
+                        value={assumption.description}
+                        onChange={(e) => updateAssumption(index, e.target.value)}
+                        className="min-h-[60px] flex-grow"
+                        rows={2}
+                      />
+                      <AiSuggestionIcon
+                        field="assumption_item"
+                        currentValue={assumption.description}
+                        onSuggestionApplied={(suggestion) => updateAssumption(index, suggestion)}
+                        tooltipText="Suggest improvements for this assumption"
+                      />
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-center align-top pt-5"> {/* Align button to top */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeAssumption(index)}
+                      disabled={assumptions.length === 1 && assumptions[0].description === "" && (assumptions[0].id.startsWith("assump-default") || assumptions[0].id.startsWith("assump-1"))}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 
-      {/* Dependencies Card (remains unchanged) */}
+      {/* Dependencies Card */}
       <Card>
         <CardHeader>
           <div className="flex justify-between items-center">
             <CardTitle>Project Dependencies</CardTitle>
-            {/* Original AI Suggestion for whole section */}
+            <div className="flex items-center gap-2">
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addDependency}
+                >
+                    <Plus className="h-4 w-4 mr-1" /> Add Dependency
+                </Button>
+                <AiSuggestionIcon
+                    field="dependencies_bulk"
+                    currentValue={getCurrentDependenciesContext()}
+                    onSuggestionApplied={handleAiAddDependencies}
+                    tooltipText="Suggest a list of new dependencies"
+                />
+            </div>
           </div>
           <CardDescription>List external dependencies for the project. These are general dependencies, distinct from those tied to specific requirements.</CardDescription>
         </CardHeader>
         <CardContent>
-          {dependencies.map((dependency, index) => (
-            <div key={dependency.id} className="flex gap-2 items-start mb-4">
-              <Textarea
-                placeholder="Dependency description"
-                value={dependency.description}
-                onChange={(e) => updateDependency(index, e.target.value)}
-                className="flex-1"
-                rows={2}
-              />
-               <div className="flex flex-col gap-1">
-                <AiSuggestionIcon
-                  field="dependencies"
-                  currentValue={dependency.description}
-                  onSuggestionApplied={(suggestion) => updateDependency(index, suggestion)}
-                />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => removeDependency(index)}
-                  disabled={dependencies.length === 1}
-                  className="mt-0"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          ))}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={addDependency}
-            className="mt-2"
-          >
-            <Plus className="h-4 w-4 mr-1" /> Add Dependency
-          </Button>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Description</TableHead>
+                <TableHead className="w-[100px] text-center">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {dependencies.map((dependency, index) => (
+                <TableRow key={dependency.id}>
+                  <TableCell>
+                    <div className="flex items-start gap-2">
+                      <Textarea
+                        placeholder="Dependency description"
+                        value={dependency.description}
+                        onChange={(e) => updateDependency(index, e.target.value)}
+                        className="min-h-[60px] flex-grow"
+                        rows={2}
+                      />
+                      <AiSuggestionIcon
+                        field="dependency_item"
+                        currentValue={dependency.description}
+                        onSuggestionApplied={(suggestion) => updateDependency(index, suggestion)}
+                        tooltipText="Suggest improvements for this dependency"
+                      />
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-center align-top pt-5"> {/* Align button to top */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeDependency(index)}
+                      disabled={dependencies.length === 1 && dependencies[0].description === "" && (dependencies[0].id.startsWith("dep-default") || dependencies[0].id.startsWith("dep-1"))}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
       
       {/* Custom Sections */}
-      {/* <Card>
+      <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle>Custom Sections</CardTitle>
-            <CardDescription>Your added content sections</CardDescription>
+            <CardTitle>Custom Proposal Sections</CardTitle>
+            <CardDescription>Add or organize additional content for your proposal document.</CardDescription>
           </div>
-          <Button
-            variant="outline"
-            onClick={() => addSection("title")}
-            className="flex items-center gap-1"
-          >
-            <PlusCircle className="h-4 w-4" /> Add Section
-          </Button>
+          <div className="relative">
+            <Button
+              variant="outline"
+              onClick={() => setShowSectionMenu(!showSectionMenu)}
+              className="flex items-center gap-1"
+            >
+              <PlusCircle className="h-4 w-4" /> Add Section Component
+            </Button>
+            {showSectionMenu && (
+              <div className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-popover border z-10">
+                <div className="py-1">
+                  {(['title', 'agenda', 'summary', 'diagram', 'assumption', 'dependency', 'requirement'] as SectionItem['type'][]).map((type) => (
+                    <button
+                      key={type}
+                      onClick={() => addSection(type)}
+                      className="flex items-center w-full px-4 py-2 text-sm text-popover-foreground hover:bg-accent"
+                    >
+                      {getSectionIcon(type)}
+                      <span className="ml-2">{getSectionTitle(type)}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
-          {sections.length === 0 && !showSectionMenu && (
-            <div className="text-center py-8 text-gray-500">
+          {sections.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
               <p>No custom sections added yet.</p>
-              <p className="text-sm">Click "Add Section" to create your first section.</p>
+              <p className="text-sm">Click "Add Section Component" to create your first section.</p>
             </div>
-          )}
-
-          {sections.map((section, index) => (
-            <div key={section.id} className="mb-6 border rounded-lg p-4">
-              <div className="flex justify-between items-center mb-3">
-                <div className="flex items-center gap-2 font-medium">
-                  {'Section: ' + (index + 1)}
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => removeSection(index)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+          ) : (
+            sections.map((section, index) => (
+              <div key={section.id} className="mb-6 border rounded-lg p-4 relative group">
+                {renderSectionContent(section, index)}
               </div>
-              {renderSectionContent(section, index)}
-            </div>
-          ))}
+            ))
+          )}
         </CardContent>
-      </Card> */}
+      </Card>
     </div>
   );
 };
