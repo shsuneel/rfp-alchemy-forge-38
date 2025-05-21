@@ -514,7 +514,7 @@ const Requirements = ({
                 <Plus className="h-4 w-4 mr-1" /> Add New Requirement
               </Button>
               <AiSuggestionIcon
-                field="requirements_bulk" // Differentiate for bulk add
+                field="requirements" // Differentiate for bulk add
                 currentValue={getCurrentRequirementsContext()}
                 onSuggestionApplied={handleAiAddRequirements}
                 tooltipText="Suggest a list of new requirements based on existing ones"
@@ -629,7 +629,7 @@ const Requirements = ({
                     <Plus className="h-4 w-4 mr-1" /> Add Assumption
                 </Button>
                 <AiSuggestionIcon
-                    field="assumptions_bulk"
+                    field="assumptions"
                     currentValue={getCurrentAssumptionsContext()}
                     onSuggestionApplied={handleAiAddAssumptions}
                     tooltipText="Suggest a list of new assumptions"
