@@ -464,11 +464,6 @@ const Requirements = ({
           <div className="flex justify-between items-center">
             <CardTitle>Project Requirements</CardTitle>
             <div className="flex items-center gap-2">
-              <AiSuggestionIcon
-                field="requirements"
-                currentValue={getCurrentRequirementsContext()}
-                onSuggestionApplied={handleAiAddRequirements}
-              />
               <Button
                 type="button"
                 variant="outline"
@@ -477,6 +472,11 @@ const Requirements = ({
               >
                 <Plus className="h-4 w-4 mr-1" /> Add New Requirement
               </Button>
+              <AiSuggestionIcon
+                field="requirements"
+                currentValue={getCurrentRequirementsContext()}
+                onSuggestionApplied={handleAiAddRequirements}
+              />
             </div>
           </div>
           <CardDescription>Define the key requirements for your project in the table below. All fields are editable.</CardDescription>
@@ -487,10 +487,10 @@ const Requirements = ({
               <TableRow>
                 <TableHead className="w-[50px]">#</TableHead>
                 <TableHead>Description</TableHead>
-                <TableHead className="w-[150px]">Priority</TableHead>
-                <TableHead className="w-[200px]">Phase</TableHead>
-                <TableHead className="w-[200px]">Related Assumptions</TableHead>
-                <TableHead className="w-[200px]">Related Dependencies</TableHead>
+                {/* <TableHead className="w-[150px]">Priority</TableHead>
+                <TableHead className="w-[200px]">Phase</TableHead> */}
+                <TableHead className="w-[200px]">Assumptions</TableHead>
+                <TableHead className="w-[200px]">Dependencies</TableHead>
                 <TableHead className="w-[100px] text-center">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -514,7 +514,7 @@ const Requirements = ({
                         />
                     </div>
                   </TableCell>
-                  <TableCell>
+                  {/* <TableCell>
                     <Select
                       value={req.priority}
                       onValueChange={(value) => updateRequirement(index, "priority", value as "High" | "Medium" | "Low")}
@@ -535,7 +535,7 @@ const Requirements = ({
                       value={req.phase || ""}
                       onChange={(e) => updateRequirement(index, "phase", e.target.value)}
                     />
-                  </TableCell>
+                  </TableCell> */}
                   <TableCell>
                      <Textarea
                         placeholder="Assumptions specific to this requirement"
