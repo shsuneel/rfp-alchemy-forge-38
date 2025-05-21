@@ -66,7 +66,7 @@ const RfpList = () => {
   const handleEditRfp = (rfpId: string) => {
     dispatch(loadRfp(rfpId));
     toast.success("RFP loaded for editing");
-    navigateTo(ROUTES.HOME, undefined, { replace: false, state: { tab: "rfp" } });
+    navigateTo(ROUTES.FORGE, undefined, { replace: false, state: { tab: "rfp" } });
   };
 
   if (savedRfps.length === 10) {

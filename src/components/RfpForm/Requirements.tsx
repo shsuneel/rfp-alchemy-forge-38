@@ -528,10 +528,8 @@ const Requirements = ({
               <TableRow>
                 <TableHead className="w-[50px]">#</TableHead>
                 <TableHead>Description</TableHead>
-                <TableHead className="w-[150px]">Priority</TableHead>
-                <TableHead className="w-[200px]">Phase</TableHead>
-                <TableHead className="w-[200px]">Related Assumptions</TableHead>
-                <TableHead className="w-[200px]">Related Dependencies</TableHead>
+                <TableHead className="w-[200px]">Assumptions</TableHead>
+                <TableHead className="w-[200px]">Dependencies</TableHead>
                 <TableHead className="w-[100px] text-center">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -554,28 +552,6 @@ const Requirements = ({
                           onSuggestionApplied={(suggestion) => updateRequirement(index, "description", suggestion)}
                         />
                     </div>
-                  </TableCell>
-                  <TableCell>
-                    <Select
-                      value={req.priority}
-                      onValueChange={(value) => updateRequirement(index, "priority", value as "High" | "Medium" | "Low")}
-                    >
-                      <SelectTrigger id={`priority-${req.id}-item`}>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="High">High</SelectItem>
-                        <SelectItem value="Medium">Medium</SelectItem>
-                        <SelectItem value="Low">Low</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      placeholder="e.g., Development, Testing"
-                      value={req.phase || ""}
-                      onChange={(e) => updateRequirement(index, "phase", e.target.value)}
-                    />
                   </TableCell>
                   <TableCell>
                      <Textarea
