@@ -18,16 +18,22 @@ import {
   // Potentially add action to set template later: setRfpTemplate
 } from '@/store/rfpSlice';
 import { toast } from '@/components/ui/use-toast';
+import { generatePPTX } from '@/lib/utils';
 
 type Stage = 'initialPrompt' | 'outlineDisplay' | 'detailedInfoPrompt' | 'guidance' | 'templateSelection';
 
 // Simulated AI responses (placeholders)
 const simulateAiOutline = async (prompt: string): Promise<string> => {
   console.log("Simulating AI outline generation for:", prompt);
-   const response = await axios.post('http://localhost:3020/ai/suggestion', {
-          field: "outline",
-          currentValue: prompt,
-        });
+  const suggestionUri: string = 'http://localhost:3020/ai/suggestion';
+  const pptUri: string = 'http://localhost:3020/py/ppt';
+  const response = await axios.post(suggestionUri, {
+    field: "outline",
+    currentValue: prompt,
+  });
+
+  
+
   return response.data.suggestion || "Outline generation failed.";
 };
 
@@ -63,7 +69,7 @@ const HomePage = () => {
   const handleInitialPromptSubmit = async (prompt: string) => {
     setIsLoading(true);
     setRfpDescription(prompt);
-    dispatch(clearCurrentRfp()); 
+    dispatch(clearCurrentRfp());
     const outline = await simulateAiOutline(prompt);
     setContentOutline(outline);
     setCurrentStage('outlineDisplay');
@@ -79,13 +85,13 @@ const HomePage = () => {
     setDetailedInfo(details);
     const steps = await simulateAiGuidanceSteps(details);
     // Store a deep copy of the initial steps for later reference (e.g., for requirements)
-    setInitialGuidanceSteps(JSON.parse(JSON.stringify(steps))); 
+    setInitialGuidanceSteps(JSON.parse(JSON.stringify(steps)));
     setGuidanceSteps(steps); // These steps will be modified by user input/AI suggestions
     setCurrentGuidanceStepIndex(0);
     setCurrentStage('guidance');
     setIsLoading(false);
   };
-  
+
   const handleNextGuidanceStep = () => {
     if (currentGuidanceStepIndex < guidanceSteps.length - 1) {
       setCurrentGuidanceStepIndex(prev => prev + 1);
@@ -99,15 +105,15 @@ const HomePage = () => {
   };
 
   const handleGuidanceStepContentChange = (stepIndex: number, newContent: string) => {
-    setGuidanceSteps(prevSteps => 
-      prevSteps.map((step, index) => 
+    setGuidanceSteps(prevSteps =>
+      prevSteps.map((step, index) =>
         index === stepIndex ? { ...step, content: newContent } : step
       )
     );
   };
-  
+
   const handleCompleteGuidanceAndPrepareRfpData = () => {
-    dispatch(clearCurrentRfp()); 
+    dispatch(clearCurrentRfp());
 
     let combinedProjectDescription = rfpDescription;
     if (contentOutline) {
@@ -123,36 +129,36 @@ const HomePage = () => {
       });
     }
 
-    const projectName = rfpDescription 
+    const projectName = rfpDescription
       ? `RFP: ${rfpDescription.substring(0, 40)}${rfpDescription.length > 40 ? '...' : ''}`
       : 'New RFP Project';
 
     dispatch(setProjectInfo({
       name: projectName,
       description: combinedProjectDescription,
-      sector: '', 
-      clientInfo: '', 
+      sector: '',
+      clientInfo: '',
     }));
 
     const newRequirements: RequirementItem[] = guidanceSteps.map((step, index) => {
-        // Find the original step definition from initialGuidanceSteps
-        const originalStepDefinition = initialGuidanceSteps.find(s => s.title === step.title);
-        // Use the original content if available, otherwise fall back to current step's content (which might have been user-edited)
-        const requirementDescriptionContent = originalStepDefinition ? originalStepDefinition.content : step.content; 
+      // Find the original step definition from initialGuidanceSteps
+      const originalStepDefinition = initialGuidanceSteps.find(s => s.title === step.title);
+      // Use the original content if available, otherwise fall back to current step's content (which might have been user-edited)
+      const requirementDescriptionContent = originalStepDefinition ? originalStepDefinition.content : step.content;
 
-        return {
-         id: `guidance-req-${Date.now()}-${index}`,
-         description: `Consideration for "${step.title}": ${requirementDescriptionContent}`, 
-         priority: "Medium",
-        };
+      return {
+        id: `guidance-req-${Date.now()}-${index}`,
+        description: `Consideration for "${step.title}": ${requirementDescriptionContent}`,
+        priority: "Medium",
+      };
     });
 
     if (newRequirements.length > 0) {
       dispatch(setRequirements(newRequirements));
     }
-    
+
     console.log("RFP data collected and dispatched to Redux from guidance steps. Updated description includes step content.");
-    setCurrentStage('templateSelection'); 
+    setCurrentStage('templateSelection');
   };
 
   const handleSelectTemplate = (templateId: string) => {
@@ -179,7 +185,7 @@ const HomePage = () => {
   const handleBackToOutline = () => {
     setCurrentStage('outlineDisplay');
   };
-  
+
   const handleRestart = () => {
     dispatch(clearCurrentRfp()); // Clear Redux store on restart
     setRfpDescription('');
@@ -192,7 +198,7 @@ const HomePage = () => {
   };
 
   return (
-    <div 
+    <div
       className="min-h-screen flex flex-col items-center justify-center bg-cover bg-center p-4 sm:p-6 md:p-8 relative"
       style={{ backgroundImage: "url('https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1920&q=80')" }}
     >
@@ -200,31 +206,31 @@ const HomePage = () => {
 
       <div className="relative z-10 flex flex-col items-center justify-center w-full py-8"> {/* Added py-8 for padding */}
         {currentStage !== 'initialPrompt' && (
-           <Button 
-              variant="ghost" 
-              onClick={handleRestart} 
-              className="absolute top-4 left-4 text-sm text-white bg-black/40 hover:bg-black/60 m-2 sm:m-4" // Adjusted margin and opacity
-            >
-             <ArrowLeft className="mr-2 h-4 w-4" /> Start Over
-           </Button>
+          <Button
+            variant="ghost"
+            onClick={handleRestart}
+            className="absolute top-4 left-4 text-sm text-white bg-black/40 hover:bg-black/60 m-2 sm:m-4" // Adjusted margin and opacity
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" /> Start Over
+          </Button>
         )}
-         <Button 
-              variant="outline" 
-              onClick={() => navigate(ROUTES.FORGE, { state: { tab: 'rfpList' }})}
-              className="absolute top-4 right-4 text-sm text-white bg-black/40 hover:bg-black/60 border-white/50 hover:border-white/70 m-2 sm:m-4" // Adjusted margin and opacity
-            >
-             Go to RFP Forge <ArrowRight className="ml-2 h-4 w-4" />
-           </Button>
+        <Button
+          variant="outline"
+          onClick={() => navigate(ROUTES.FORGE, { state: { tab: 'rfpList' } })}
+          className="absolute top-4 right-4 text-sm text-white bg-black/40 hover:bg-black/60 border-white/50 hover:border-white/70 m-2 sm:m-4" // Adjusted margin and opacity
+        >
+          Go to RFP Forge <ArrowRight className="ml-2 h-4 w-4" />
+        </Button>
 
 
         <div className="w-full text-center mb-10 mt-16 sm:mt-8 p-6 rounded-lg bg-black/50 shadow-xl max-w-[60rem]"> {/* Adjusted margins */}
           <h1 className="text-4xl sm:text-5xl font-bold text-white drop-shadow-lg mb-3">
             AI-Powered RFP Assistant
           </h1>
-            <p className="text-lg text-gray-100 drop-shadow-md max-w-4xl mx-auto">
+          <p className="text-lg text-gray-100 drop-shadow-md max-w-4xl mx-auto">
             Let's craft your RFP together.<br />
             Start by describing your project, and RFP Builder powered by GenAI will help you build a comprehensive RFP.
-            </p>
+          </p>
         </div>
 
         {currentStage === 'initialPrompt' && (
@@ -235,9 +241,9 @@ const HomePage = () => {
 
         {currentStage === 'outlineDisplay' && (
           <div className="w-full max-w-[60rem] flex flex-col items-center space-y-6"> {/* This container remains max-w-lg as "Content Outline Display" was not specified for width change */}
-            <ContentOutlineDisplay 
-              outline={contentOutline} 
-              className="bg-card/80 backdrop-blur-md shadow-xl border border-border/30" 
+            <ContentOutlineDisplay
+              outline={contentOutline}
+              className="bg-card/80 backdrop-blur-md shadow-xl border border-border/30"
             />
             <Button onClick={handleProceedToDetailedInfo} className="w-full text-base py-3">
               Looks Good, Add More Details <ArrowRight className="ml-2 h-5 w-5" />
@@ -261,8 +267,8 @@ const HomePage = () => {
             currentStepIndex={currentGuidanceStepIndex}
             onNext={handleNextGuidanceStep}
             onPrevious={handlePreviousGuidanceStep}
-            onComplete={handleCompleteGuidanceAndPrepareRfpData} 
-            onStepContentChange={handleGuidanceStepContentChange} 
+            onComplete={handleCompleteGuidanceAndPrepareRfpData}
+            onStepContentChange={handleGuidanceStepContentChange}
             className="bg-card/80 backdrop-blur-md shadow-xl border border-border/30"
           />
         )}

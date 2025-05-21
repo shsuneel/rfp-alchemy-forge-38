@@ -39,6 +39,7 @@ import Resources from "./Resources";
 import Preview from "./Preview";
 import AiSuggestions from "./AiSuggestions";
 import AiSuggestionIcon from "@/components/ui/AiSuggestionIcon";
+import { generatePPTX } from "@/lib/utils";
 
 // Define the extended TechStackByLayer type here to include new categories
 interface TechStackByLayer {
@@ -88,7 +89,7 @@ const RfpForm = () => {
   const [sector, setSector] = useState(rfpState.sector);
   const [clientInfo, setClientInfo] = useState(rfpState.clientInfo);
   const [files, setFiles] = useState<File[]>([]);
-  
+
   // Updated techStack state to use our extended TechStackByLayer interface
   const [techStack, setTechStackState] = useState<TechStackByLayer>(rfpState.techStackByLayer as TechStackByLayer || {
     frontend: [],
@@ -111,6 +112,7 @@ const RfpForm = () => {
   const [resources, setResourcesState] = useState(rfpState.resources);
   const [status, setStatusState] = useState<RfpStatus>(rfpState.status || "Draft");
   const [remarks, setRemarksState] = useState(rfpState.remarks || "");
+  const rfp = useAppSelector(state => state.rfp);
 
   // Update local state when Redux state changes (for imported RFPs)
   useEffect(() => {
@@ -155,10 +157,10 @@ const RfpForm = () => {
         sector,
         clientInfo
       }));
-      
+
       // Also save team when moving from step 0
       dispatch(setTeam(team));
-      
+
       // Also set Thor ID if it exists
       const thorIdMember = team.find(m => m.id === "thor-id");
       if (thorIdMember) {
@@ -274,13 +276,16 @@ const RfpForm = () => {
     dispatch(setRemarks(newRemarks));
   };
 
-  const handleCreatePresentation = () => {
+  const handleCreatePresentation = async () => {
     dispatch(createFromRfp({
       projectName,
       projectDescription,
       clientInfo,
       requirements
     }));
+
+    const ppt = await generatePPTX(rfp);
+    window.open(ppt, 'new')
 
     toast.success("Presentation created from RFP data!");
   };
@@ -309,7 +314,7 @@ const RfpForm = () => {
   const handleTechStackSuggestion = (suggestion: string) => {
     const techItems = suggestion.split(',').map(item => item.trim()).filter(Boolean);
     const newTechStack = { ...techStack };
-    
+
     // Add to 'other' category by default
     newTechStack.other = [...newTechStack.other, ...techItems.filter(item => !newTechStack.other.includes(item))];
     setTechStackState(newTechStack);
@@ -352,7 +357,7 @@ const RfpForm = () => {
         const phaseName = match[1].trim();
         const durationMatch = match[2].match(/(\d+)-?(\d+)?\s*weeks?/i);
         let durationWeeks = 2; // Default
-        
+
         if (durationMatch) {
           // If range, take the average
           if (durationMatch[2]) {
@@ -361,7 +366,7 @@ const RfpForm = () => {
             durationWeeks = parseInt(durationMatch[1]);
           }
         }
-        
+
         newTimeline.push({
           id: `phase-${Date.now()}-${index}`,
           name: phaseName,
@@ -370,7 +375,7 @@ const RfpForm = () => {
         });
       }
     });
-    
+
     if (newTimeline.length > 1) { // If we added any new phases
       setTimelineState(newTimeline);
     }
@@ -404,7 +409,7 @@ const RfpForm = () => {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="project-description">Project Description</Label>
-                  <AiSuggestionIcon 
+                  <AiSuggestionIcon
                     field="projectDescription"
                     onSuggestionApplied={handleProjectDescriptionSuggestion}
                     currentValue={projectDescription}
@@ -418,11 +423,11 @@ const RfpForm = () => {
                   onChange={(e) => setProjectDescription(e.target.value)}
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="sector">Sector</Label>
-                  <AiSuggestionIcon 
+                  <AiSuggestionIcon
                     field="dependencies"
                     onSuggestionApplied={(suggestion) => setSector(suggestion.split(',')[0].trim())}
                     currentValue={projectDescription}
@@ -455,7 +460,7 @@ const RfpForm = () => {
                   }}
                 />
               </div>
-              
+
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-lg font-medium">Team</h3>
@@ -466,7 +471,7 @@ const RfpForm = () => {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="client-info">Client Information</Label>
-                  <AiSuggestionIcon 
+                  <AiSuggestionIcon
                     field="dependencies"
                     onSuggestionApplied={(suggestion) => setClientInfo(suggestion)}
                     currentValue={projectDescription}
@@ -492,11 +497,6 @@ const RfpForm = () => {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-medium">Technology Stack</h3>
-              <AiSuggestionIcon
-                field="techStack"
-                currentValue={projectDescription}
-                onSuggestionApplied={handleTechStackSuggestion}
-              />
             </div>
             <TechStack
               onTechStackChange={setTechStackState}
@@ -510,23 +510,6 @@ const RfpForm = () => {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-medium">Requirements, Assumptions & Dependencies</h3>
-              <div className="flex gap-2">
-                <AiSuggestionIcon
-                  field="requirements"
-                  onSuggestionApplied={handleRequirementsSuggestion}
-                  currentValue={projectDescription}
-                />
-                <AiSuggestionIcon
-                  field="assumptions"
-                  onSuggestionApplied={handleAssumptionsSuggestion}
-                  currentValue={projectDescription}
-                />
-                <AiSuggestionIcon
-                  field="dependencies"
-                  onSuggestionApplied={handleDependenciesSuggestion}
-                  currentValue={projectDescription}
-                />
-              </div>
             </div>
             <Requirements
               onRequirementsChange={setRequirementsState}
@@ -569,8 +552,8 @@ const RfpForm = () => {
                   const newResources = [...resources];
                   const lines = suggestion.split('\n').filter(line => line.trim());
                   lines.forEach((line, index) => {
-                    if (line.includes('developer') || line.includes('engineer') || 
-                        line.includes('designer') || line.includes('manager')) {
+                    if (line.includes('developer') || line.includes('engineer') ||
+                      line.includes('designer') || line.includes('manager')) {
                       newResources.push({
                         id: `resource-${Date.now()}-${index}`,
                         title: line.trim(),
@@ -599,10 +582,10 @@ const RfpForm = () => {
             clientInfo={clientInfo}
             files={files}
             techStack={[
-              ...techStack.frontend, 
-              ...techStack.backend, 
-              ...techStack.database, 
-              ...techStack.infrastructure, 
+              ...techStack.frontend,
+              ...techStack.backend,
+              ...techStack.database,
+              ...techStack.infrastructure,
               ...techStack.other,
               ...techStack.analyticsAndReporting,
               ...techStack.devops,

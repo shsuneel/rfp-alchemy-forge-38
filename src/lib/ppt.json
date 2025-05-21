@@ -1,0 +1,51 @@
+{
+  "num_slides": 3,
+  "template": "modern", 
+  "slides_data": [
+    {
+      "title": "Welcome to Our Presentation",
+      "content": "This presentation outlines our key strategies for 2025.",
+      "image": "images/intro.jpg",
+      "format": {
+        "title_font_size": 32,
+        "content_font_size": 20,
+        "title_color": "#003366",
+        "content_color": "#333333",
+        "alignment": "center"
+      },
+      "background": {
+        "color": "#f0f0f0"
+      }
+    },
+    {
+      "title": "Market Analysis",
+      "content": "• Growth in Asia-Pacific\n• Decline in Europe\n• Stable in North America",
+      "image": "images/market.png",
+      "format": {
+        "title_font_size": 28,
+        "content_font_size": 18,
+        "title_color": "#0055a5",
+        "content_color": "#000000",
+        "alignment": "left"
+      },
+      "background": {
+        "image": "images/bg_market.jpg"
+      }
+    },
+    {
+      "title": "Next Steps",
+      "content": "1. Finalize roadmap\n2. Assign teams\n3. Launch pilot",
+      "image": null,
+      "format": {
+        "title_font_size": 30,
+        "content_font_size": 18,
+        "title_color": "#006400",
+        "content_color": "#000000",
+        "alignment": "left"
+      },
+      "background": {
+        "color": "#ffffff"
+      }
+    }
+  ]
+}

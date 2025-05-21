@@ -393,28 +393,6 @@ const Requirements = ({
         <CardHeader>
           <div className="flex justify-between items-center">
             <CardTitle>Project Requirements</CardTitle>
-            <AiSuggestionIcon 
-              field="requirements"
-              onSuggestionApplied={(suggestion) => {
-                const newRequirements = [...requirements];
-                suggestion.split('\n').filter(line => line.trim()).forEach((line, idx) => {
-                  const trimmedLine = line.replace(/^\d+\.\s*/, '').trim();
-                  if (trimmedLine) {
-                    // If the first requirement is empty, replace it instead of adding a new one
-                    if (requirements.length === 1 && requirements[0].description === "" && idx === 0) {
-                      newRequirements[0] = { ...newRequirements[0], description: trimmedLine };
-                    } else {
-                      newRequirements.push({
-                        id: `req-${Date.now()}-${idx}`,
-                        description: trimmedLine,
-                        priority: "Medium"
-                      });
-                    }
-                  }
-                });
-                setRequirements(newRequirements.filter(r => r.id !== "req-default" || r.description !== "" || newRequirements.length === 1));
-              }}
-            />
           </div>
           <CardDescription>Define the key requirements for your project</CardDescription>
         </CardHeader>
@@ -480,26 +458,6 @@ const Requirements = ({
         <CardHeader>
           <div className="flex justify-between items-center">
             <CardTitle>Assumptions</CardTitle>
-            <AiSuggestionIcon 
-              field="assumptions"
-              onSuggestionApplied={(suggestion) => {
-                const newAssumptions = [...assumptions];
-                suggestion.split('\n').filter(line => line.trim()).forEach((line, idx) => {
-                  const trimmedLine = line.replace(/^\d+\.\s*/, '').trim();
-                  if (trimmedLine) {
-                     if (assumptions.length === 1 && assumptions[0].description === "" && idx === 0) {
-                      newAssumptions[0] = { ...newAssumptions[0], description: trimmedLine };
-                    } else {
-                      newAssumptions.push({
-                        id: `assump-${Date.now()}-${idx}`,
-                        description: trimmedLine
-                      });
-                    }
-                  }
-                });
-                setAssumptions(newAssumptions.filter(a => a.id !== "assump-default" || a.description !== "" || newAssumptions.length === 1));
-              }}
-            />
           </div>
           <CardDescription>List key assumptions for the project</CardDescription>
         </CardHeader>
@@ -544,26 +502,6 @@ const Requirements = ({
         <CardHeader>
           <div className="flex justify-between items-center">
             <CardTitle>Dependencies</CardTitle>
-            <AiSuggestionIcon 
-              field="dependencies"
-              onSuggestionApplied={(suggestion) => {
-                const newDependencies = [...dependencies];
-                suggestion.split('\n').filter(line => line.trim()).forEach((line, idx) => {
-                  const trimmedLine = line.replace(/^\d+\.\s*/, '').trim();
-                  if (trimmedLine) {
-                    if (dependencies.length === 1 && dependencies[0].description === "" && idx === 0) {
-                      newDependencies[0] = { ...newDependencies[0], description: trimmedLine };
-                    } else {
-                      newDependencies.push({
-                        id: `dep-${Date.now()}-${idx}`,
-                        description: trimmedLine
-                      });
-                    }
-                  }
-                });
-                setDependencies(newDependencies.filter(d => d.id !== "dep-default" || d.description !== "" || newDependencies.length === 1));
-              }}
-            />
           </div>
           <CardDescription>List external dependencies for the project</CardDescription>
         </CardHeader>

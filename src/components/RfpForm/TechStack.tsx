@@ -284,7 +284,7 @@ const TechStack = ({
     <Card>
       <CardHeader>
         <div className="flex justify-between items-center">
-          <CardTitle>Technology Stack</CardTitle>
+          Select or enter the technologies for the project, organized by layer.
           <AiSuggestionIcon
             field="techStack"
             onSuggestionApplied={handleExternalAiSuggestionApplied}
@@ -292,7 +292,6 @@ const TechStack = ({
           />
         </div>
         <CardDescription>
-          Select or enter the technologies for the project, organized by layer.
           {getTotalSelectedCount() > 0 && (
             <span className="ml-2 text-sm font-medium">
               ({getTotalSelectedCount()} selected)
