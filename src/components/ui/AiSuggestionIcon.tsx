@@ -1,19 +1,21 @@
+
 import React from 'react';
 import { Sparkles } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
+  // TooltipProvider, // Not strictly needed here if handled globally
 } from "@/components/ui/tooltip";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger,
+  PopoverTrigger, // Ensure this is imported
 } from "@/components/ui/popover";
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2 } from 'lucide-react';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/components/ui/use-toast'; // Corrected import path
 import axios from 'axios';
 
 interface AiSuggestionIconProps {
@@ -66,16 +68,14 @@ const AiSuggestionIcon: React.FC<AiSuggestionIconProps> = ({ field, onSuggestion
       : currentValue;
 
     try {
-      // console.log("Generating suggestion for field:", field, "with combined value:", combinedValue);
       const response = await axios.post('http://localhost:3020/ai/suggestion', {
         field,
-        currentValue: combinedValue, // Send combined value
+        currentValue: combinedValue,
       });
 
       if (response.data && response.data.suggestion) {
         setSuggestion(response.data.suggestion);
       } else {
-        // console.error('No suggestion received or invalid format', response.data);
         throw new Error('No suggestion received from the server');
       }
     } catch (error) {
@@ -85,7 +85,7 @@ const AiSuggestionIcon: React.FC<AiSuggestionIconProps> = ({ field, onSuggestion
         description: "Failed to generate suggestion. Please try again.",
         variant: "destructive",
       });
-      setSuggestion(""); // Ensure suggestion is cleared on error
+      setSuggestion("");
     } finally {
       setLoading(false);
     }
@@ -93,7 +93,7 @@ const AiSuggestionIcon: React.FC<AiSuggestionIconProps> = ({ field, onSuggestion
 
   const applySuggestion = () => {
     onSuggestionApplied(suggestion);
-    setIsOpen(false); // Close popover after applying
+    setIsOpen(false); 
     toast({
       title: "Suggestion Applied",
       description: `The AI suggestion has been applied to the ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`,
@@ -104,23 +104,26 @@ const AiSuggestionIcon: React.FC<AiSuggestionIconProps> = ({ field, onSuggestion
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
-      <Tooltip>
+      <Tooltip> {/* Tooltip Root */}
         <TooltipTrigger asChild>
-          {/* The Button's onClick is removed as PopoverTrigger handles opening */}
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6 rounded-full p-0 text-amber-500 hover:bg-amber-100"
-          >
-            <Sparkles className="h-4 w-4" />
-          </Button>
+          <PopoverTrigger asChild>
+            {/* The Button is the child of PopoverTrigger, which is the child of TooltipTrigger. Both use asChild. */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 rounded-full p-0 text-amber-500 hover:bg-amber-100"
+              aria-label={`Get AI suggestions for ${formattedFieldName}`}
+            >
+              <Sparkles className="h-4 w-4" />
+            </Button>
+          </PopoverTrigger>
         </TooltipTrigger>
         <TooltipContent>
           <p>Get AI suggestions for {formattedFieldName}</p>
         </TooltipContent>
-      </Tooltip>
+      </Tooltip> {/* Tooltip Root ends */}
 
-      <PopoverContent className="w-96"> {/* Increased width for better layout */}
+      <PopoverContent className="w-96">
         <div className="space-y-4">
           <div className="flex items-center gap-2 mb-2">
             <Sparkles className="h-5 w-5 text-amber-500" />
@@ -145,7 +148,7 @@ const AiSuggestionIcon: React.FC<AiSuggestionIconProps> = ({ field, onSuggestion
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setIsOpen(false)} // Just close, state resets on open
+                  onClick={() => setIsOpen(false)}
                 >
                   Cancel
                 </Button>
@@ -162,14 +165,14 @@ const AiSuggestionIcon: React.FC<AiSuggestionIconProps> = ({ field, onSuggestion
             // Prefix input stage
             <div className="space-y-3">
               <div>
-                <label htmlFor="ai-prefix-input" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor={`ai-prefix-input-${field}`} className="block text-sm font-medium text-gray-700 mb-1">
                   Refine AI Prompt for "{formattedFieldName}"
                 </label>
                 <p className="text-xs text-muted-foreground mb-2">
                   Optionally, add a prefix or specific instructions to guide the AI.
                 </p>
                 <Textarea
-                  id="ai-prefix-input"
+                  id={`ai-prefix-input-${field}`} // Unique ID per field instance
                   placeholder="e.g., Make this more concise:, Generate 3 examples for:"
                   value={userInputPrefix}
                   onChange={(e) => setUserInputPrefix(e.target.value)}
@@ -190,8 +193,13 @@ const AiSuggestionIcon: React.FC<AiSuggestionIconProps> = ({ field, onSuggestion
                   size="sm"
                   onClick={handleGenerateSuggestion}
                   className="bg-amber-500 hover:bg-amber-600 text-white"
+                  disabled={loading} // Disable button while loading
                 >
-                  <Sparkles className="h-4 w-4 mr-2" />
+                  {loading ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Sparkles className="h-4 w-4 mr-2" />
+                  )}
                   Generate Suggestion
                 </Button>
               </div>
@@ -204,3 +212,4 @@ const AiSuggestionIcon: React.FC<AiSuggestionIconProps> = ({ field, onSuggestion
 };
 
 export default AiSuggestionIcon;
+
