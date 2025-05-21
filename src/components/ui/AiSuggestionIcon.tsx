@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Sparkles } from 'lucide-react';
 import {
@@ -45,167 +44,157 @@ const AiSuggestionIcon: React.FC<AiSuggestionIconProps> = ({ field, onSuggestion
   const [loading, setLoading] = React.useState(false);
   const [suggestion, setSuggestion] = React.useState("");
   const [isOpen, setIsOpen] = React.useState(false);
+  const [userInputPrefix, setUserInputPrefix] = React.useState("");
 
-  const generateSuggestion = async () => {
+  React.useEffect(() => {
+    if (isOpen) {
+      // Reset state when popover opens
+      setUserInputPrefix("");
+      setSuggestion("");
+      setLoading(false);
+    }
+  }, [isOpen]);
+
+  const handleGenerateSuggestion = async () => {
     if (loading) return;
 
     setLoading(true);
-    setSuggestion("");
+    setSuggestion(""); // Clear previous suggestion before new API call
+
+    const combinedValue = userInputPrefix
+      ? `${userInputPrefix}\n${currentValue || ""}`.trim()
+      : currentValue;
 
     try {
-      // In a real implementation, this would call an actual AI service
-      // For now, we'll simulate the API call with a timeout
+      // console.log("Generating suggestion for field:", field, "with combined value:", combinedValue);
       const response = await axios.post('http://localhost:3020/ai/suggestion', {
         field,
-        currentValue,
+        currentValue: combinedValue, // Send combined value
       });
 
       if (response.data && response.data.suggestion) {
         setSuggestion(response.data.suggestion);
       } else {
+        // console.error('No suggestion received or invalid format', response.data);
         throw new Error('No suggestion received from the server');
       }
     } catch (error) {
+      // console.error("Failed to generate suggestion:", error);
       toast({
         title: "Error",
         description: "Failed to generate suggestion. Please try again.",
         variant: "destructive",
       });
+      setSuggestion(""); // Ensure suggestion is cleared on error
     } finally {
       setLoading(false);
     }
   };
 
-  const generateSampleFieldResponse = (fieldType: string, context: string): string => {
-    const baseContext = context.toLowerCase();
-
-    switch (fieldType) {
-      case 'projectDescription':
-        return `This project aims to develop a comprehensive digital platform that integrates multiple user touchpoints into a unified experience. The system will support real-time data synchronization, advanced analytics, and secure user authentication. Key objectives include improving operational efficiency, enhancing user engagement, and providing actionable insights through data visualization.`;
-
-      case 'requirements':
-        return baseContext.includes('mobile') ?
-          `1. Develop responsive mobile UI with native-like experience
-2. Implement offline data synchronization capabilities
-3. Integrate secure biometric authentication
-4. Ensure cross-platform compatibility
-5. Optimize for battery efficiency and performance` :
-          `1. Create a scalable web architecture supporting 1000+ concurrent users
-2. Implement role-based access control system
-3. Develop RESTful APIs with comprehensive documentation
-4. Ensure WCAG 2.1 AA compliance for accessibility
-5. Build comprehensive analytics dashboard`;
-
-      case 'techStack':
-        return baseContext.includes('mobile') ?
-          `React Native, TypeScript, Redux, Firebase, Jest` :
-          `React, TypeScript, Node.js, Express, PostgreSQL, Redis, Docker, AWS`;
-
-      case 'assumptions':
-        return `1. Client will provide necessary API documentation
-2. Project timeline will be 3-6 months depending on scope
-3. Existing user data will be migrated to the new system
-4. Third-party integrations are available with documented APIs
-5. Client has dedicated team for testing and feedback`;
-
-      case 'timeline':
-        return `Phase 1 (Discovery): 2-3 weeks
-Phase 2 (Design & Architecture): 3-4 weeks
-Phase 3 (Development): 8-10 weeks
-Phase 4 (Testing & QA): 3-4 weeks
-Phase 5 (Deployment & Training): 2-3 weeks`;
-
-      case 'dependencies':
-        return `1. Access to client's existing systems for integration
-2. Timely feedback cycles for UI/UX approvals
-3. Third-party API access credentials
-4. Security compliance requirements documentation
-5. Content and assets from client marketing team`;
-
-      default:
-        return `AI-generated suggestion for ${fieldType}`;
-    }
-  };
-
   const applySuggestion = () => {
     onSuggestionApplied(suggestion);
-    setIsOpen(false);
+    setIsOpen(false); // Close popover after applying
     toast({
       title: "Suggestion Applied",
       description: `The AI suggestion has been applied to the ${field.replace(/([A-Z])/g, ' $1').toLowerCase()}`,
     });
   };
 
+  const formattedFieldName = field.replace(/([A-Z])/g, ' $1').toLowerCase();
+
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <PopoverTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 rounded-full p-0 text-amber-500 hover:bg-amber-100"
-              onClick={() => {
-                if (!isOpen) {
-                  generateSuggestion();
-                }
-              }}
-            >
-              <Sparkles className="h-4 w-4" />
-            </Button>
-          </PopoverTrigger>
+          {/* The Button's onClick is removed as PopoverTrigger handles opening */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 rounded-full p-0 text-amber-500 hover:bg-amber-100"
+          >
+            <Sparkles className="h-4 w-4" />
+          </Button>
         </TooltipTrigger>
         <TooltipContent>
-          <p>Get AI suggestions for {field.replace(/([A-Z])/g, ' $1').toLowerCase()}</p>
+          <p>Get AI suggestions for {formattedFieldName}</p>
         </TooltipContent>
       </Tooltip>
 
-      <PopoverContent className="w-80">
+      <PopoverContent className="w-96"> {/* Increased width for better layout */}
         <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-amber-500" />
-            <h4 className="font-medium">AI Suggestion</h4>
+          <div className="flex items-center gap-2 mb-2">
+            <Sparkles className="h-5 w-5 text-amber-500" />
+            <h4 className="font-semibold text-lg">AI Suggestion</h4>
           </div>
 
           {loading ? (
-            <div className="flex flex-col items-center justify-center p-4">
-              <Loader2 className="h-8 w-8 animate-spin text-amber-500 mb-2" />
-              <p className="text-sm text-muted-foreground">Generating suggestions...</p>
+            <div className="flex flex-col items-center justify-center p-6">
+              <Loader2 className="h-10 w-10 animate-spin text-amber-500 mb-3" />
+              <p className="text-md text-muted-foreground">Generating suggestions...</p>
             </div>
           ) : suggestion ? (
             <>
+              <p className="text-sm font-medium text-gray-700">Generated Suggestion:</p>
               <Textarea
                 value={suggestion}
                 onChange={(e) => setSuggestion(e.target.value)}
-                className="min-h-[150px] text-sm"
+                className="min-h-[180px] text-sm"
+                rows={8}
               />
-              <div className="flex justify-end gap-2">
+              <div className="flex justify-end gap-2 mt-3">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setIsOpen(false)}
+                  onClick={() => setIsOpen(false)} // Just close, state resets on open
                 >
                   Cancel
                 </Button>
                 <Button
                   size="sm"
                   onClick={applySuggestion}
+                  className="bg-amber-500 hover:bg-amber-600 text-white"
                 >
-                  Apply
+                  Apply Suggestion
                 </Button>
               </div>
             </>
           ) : (
-            <div className="text-center p-4">
-              <p className="text-sm text-muted-foreground">{fieldPlaceholders[field]}</p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-2"
-                onClick={generateSuggestion}
-              >
-                Generate Suggestion
-              </Button>
+            // Prefix input stage
+            <div className="space-y-3">
+              <div>
+                <label htmlFor="ai-prefix-input" className="block text-sm font-medium text-gray-700 mb-1">
+                  Refine AI Prompt for "{formattedFieldName}"
+                </label>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Optionally, add a prefix or specific instructions to guide the AI.
+                </p>
+                <Textarea
+                  id="ai-prefix-input"
+                  placeholder="e.g., Make this more concise:, Generate 3 examples for:"
+                  value={userInputPrefix}
+                  onChange={(e) => setUserInputPrefix(e.target.value)}
+                  rows={3}
+                  className="text-sm"
+                />
+              </div>
+
+              {currentValue && currentValue.trim() !== "" && (
+                <div className="text-xs text-muted-foreground p-2 border rounded-md bg-gray-50 max-h-24 overflow-y-auto">
+                  <p className="font-semibold mb-0.5">Current context:</p>
+                  <p className="whitespace-pre-wrap break-words">{currentValue}</p>
+                </div>
+              )}
+              
+              <div className="flex justify-end mt-4">
+                <Button
+                  size="sm"
+                  onClick={handleGenerateSuggestion}
+                  className="bg-amber-500 hover:bg-amber-600 text-white"
+                >
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Generate Suggestion
+                </Button>
+              </div>
             </div>
           )}
         </div>

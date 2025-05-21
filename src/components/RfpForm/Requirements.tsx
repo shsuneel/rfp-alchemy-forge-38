@@ -514,10 +514,9 @@ const Requirements = ({
                 <Plus className="h-4 w-4 mr-1" /> Add New Requirement
               </Button>
               <AiSuggestionIcon
-                field="requirements" // Differentiate for bulk add
+                field="requirements" // Changed from requirements_bulk
                 currentValue={getCurrentRequirementsContext()}
                 onSuggestionApplied={handleAiAddRequirements}
-                tooltipText="Suggest a list of new requirements based on existing ones"
               />
             </div>
           </div>
@@ -550,10 +549,9 @@ const Requirements = ({
                         rows={2}
                       />
                        <AiSuggestionIcon
-                          field="requirement_item" 
+                          field="requirements" // Changed from requirement_item
                           currentValue={req.description}
                           onSuggestionApplied={(suggestion) => updateRequirement(index, "description", suggestion)}
-                          tooltipText="Suggest improvements for this requirement"
                         />
                     </div>
                   </TableCell>
@@ -629,10 +627,9 @@ const Requirements = ({
                     <Plus className="h-4 w-4 mr-1" /> Add Assumption
                 </Button>
                 <AiSuggestionIcon
-                    field="assumptions"
+                    field="assumptions" // Changed from assumptions_bulk
                     currentValue={getCurrentAssumptionsContext()}
                     onSuggestionApplied={handleAiAddAssumptions}
-                    tooltipText="Suggest a list of new assumptions"
                 />
             </div>
           </div>
@@ -659,10 +656,9 @@ const Requirements = ({
                         rows={2}
                       />
                       <AiSuggestionIcon
-                        field="assumption_item"
+                        field="assumptions" // Changed from assumption_item
                         currentValue={assumption.description}
                         onSuggestionApplied={(suggestion) => updateAssumption(index, suggestion)}
-                        tooltipText="Suggest improvements for this assumption"
                       />
                     </div>
                   </TableCell>
@@ -698,10 +694,9 @@ const Requirements = ({
                     <Plus className="h-4 w-4 mr-1" /> Add Dependency
                 </Button>
                 <AiSuggestionIcon
-                    field="dependencies_bulk"
+                    field="dependencies" // Changed from dependencies_bulk
                     currentValue={getCurrentDependenciesContext()}
                     onSuggestionApplied={handleAiAddDependencies}
-                    tooltipText="Suggest a list of new dependencies"
                 />
             </div>
           </div>
@@ -728,10 +723,9 @@ const Requirements = ({
                         rows={2}
                       />
                       <AiSuggestionIcon
-                        field="dependency_item"
+                        field="dependencies" // Changed from dependency_item
                         currentValue={dependency.description}
                         onSuggestionApplied={(suggestion) => updateDependency(index, suggestion)}
-                        tooltipText="Suggest improvements for this dependency"
                       />
                     </div>
                   </TableCell>
