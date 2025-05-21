@@ -8,6 +8,9 @@ export interface RequirementItem {
   id: string;
   description: string;
   priority: "High" | "Medium" | "Low";
+  phase?: string; // New field for phase
+  relatedAssumptions?: string; // New field for assumptions specific to this requirement
+  relatedDependencies?: string; // New field for dependencies specific to this requirement
 }
 
 export interface AssumptionItem {
@@ -73,7 +76,7 @@ export interface RfpData {
   clientInfo: string;
   techStack: string[];
   techStackByLayer: TechStackByLayer;
-  requirements: RequirementItem[];
+  requirements: RequirementItem[]; // Will use the updated interface
   assumptions: AssumptionItem[];
   dependencies: DependencyItem[];
   sections: SectionItem[];
@@ -94,7 +97,7 @@ interface RfpState {
   clientInfo: string;
   techStack: string[];
   techStackByLayer: TechStackByLayer; // Uses the updated interface
-  requirements: RequirementItem[];
+  requirements: RequirementItem[]; // Will use the updated interface
   assumptions: AssumptionItem[];
   dependencies: DependencyItem[];
   sections: SectionItem[];
@@ -134,7 +137,14 @@ const initialState: RfpState = {
     testing: []
   },
   requirements: [
-    { id: "req-default", description: "", priority: "Medium" }
+    { 
+      id: "req-default", 
+      description: "", 
+      priority: "Medium",
+      phase: "", // Initialize new field
+      relatedAssumptions: "", // Initialize new field
+      relatedDependencies: "" // Initialize new field
+    }
   ],
   assumptions: [
     { id: "assump-default", description: "" }
@@ -194,7 +204,12 @@ export const rfpSlice = createSlice({
       };
     },
     setRequirements: (state, action: PayloadAction<RequirementItem[]>) => {
-      state.requirements = action.payload;
+      state.requirements = action.payload.map(req => ({
+        phase: "", // Default if not provided
+        relatedAssumptions: "", // Default if not provided
+        relatedDependencies: "", // Default if not provided
+        ...req, 
+      }));
     },
     setAssumptions: (state, action: PayloadAction<AssumptionItem[]>) => {
       state.assumptions = action.payload;
@@ -230,11 +245,16 @@ export const rfpSlice = createSlice({
         sector: state.sector,
         clientInfo: state.clientInfo,
         techStack: state.techStack,
-        techStackByLayer: { // Ensure all keys are present
+        techStackByLayer: { 
             ...initialState.techStackByLayer,
             ...state.techStackByLayer,
         },
-        requirements: state.requirements,
+        requirements: state.requirements.map(req => ({ // Ensure new fields are saved
+            phase: "",
+            relatedAssumptions: "",
+            relatedDependencies: "",
+            ...req
+        })),
         assumptions: state.assumptions,
         dependencies: state.dependencies,
         sections: state.sections,
@@ -298,8 +318,12 @@ export const rfpSlice = createSlice({
           ? { ...defaultTechStackByLayer, ...rfpToLoad.techStackByLayer }
           : defaultTechStackByLayer;
 
-
-        state.requirements = rfpToLoad.requirements;
+        state.requirements = rfpToLoad.requirements.map(req => ({ // Ensure new fields are loaded with defaults
+          phase: "",
+          relatedAssumptions: "",
+          relatedDependencies: "",
+          ...req
+        }));
         state.assumptions = rfpToLoad.assumptions;
         state.dependencies = rfpToLoad.dependencies;
         state.sections = rfpToLoad.sections || [];
@@ -334,7 +358,14 @@ export const rfpSlice = createSlice({
         security: [],
         testing: []
       };
-      state.requirements = [{ id: "req-default", description: "", priority: "Medium" }];
+      state.requirements = [{ 
+        id: "req-default", 
+        description: "", 
+        priority: "Medium",
+        phase: "", // Reset new field
+        relatedAssumptions: "", // Reset new field
+        relatedDependencies: "" // Reset new field
+      }];
       state.assumptions = [{ id: "assump-default", description: "" }];
       state.dependencies = [{ id: "dep-default", description: "" }];
       state.sections = [];
@@ -351,24 +382,26 @@ export const rfpSlice = createSlice({
     },
     setExtractedInfo: (state, action: PayloadAction<{
       projectDescription?: string;
-      requirements?: RequirementItem[];
+      requirements?: RequirementItem[]; // Will use updated RequirementItem
       techStack?: string[];
       assumptions?: AssumptionItem[];
       dependencies?: DependencyItem[];
     }>) => {
-      // Update state with extracted information
       if (action.payload.projectDescription) {
         state.projectDescription = action.payload.projectDescription;
       }
       
       if (action.payload.requirements && action.payload.requirements.length > 0) {
-        state.requirements = action.payload.requirements;
+        state.requirements = action.payload.requirements.map(req => ({
+          phase: "", // Default if not provided
+          relatedAssumptions: "", // Default if not provided
+          relatedDependencies: "", // Default if not provided
+          ...req,
+        }));
       }
       
       if (action.payload.techStack && action.payload.techStack.length > 0) {
-        // Flatten tech stack for now, could be improved to sort by category
         state.techStack = action.payload.techStack;
-        // Add to 'other' category by default, actual categorization would need NLP
         state.techStackByLayer.other = [
           ...state.techStackByLayer.other,
           ...action.payload.techStack.filter(tech => 
@@ -389,7 +422,15 @@ export const rfpSlice = createSlice({
     builder
     .addCase(fetchInitialData.fulfilled, (state, action) => {
       state.initialData = action.payload;
-      state.savedRfps = action.payload.rfps;
+      state.savedRfps = action.payload.rfps.map((rfp: RfpData) => ({
+        ...rfp,
+        requirements: rfp.requirements.map(req => ({
+          phase: "",
+          relatedAssumptions: "",
+          relatedDependencies: "",
+          ...req,
+        }))
+      }));
     })
     .addCase(fetchInitialData.rejected, (state, action) => {
       console.error("Error fetching initial data:", action.error.message);
@@ -398,8 +439,6 @@ export const rfpSlice = createSlice({
       // Optionally handle loading state
     })
   },
-  // Add any additional reducers if needed
-  // e.g., for handling async actions or other state updates
 });
 
 export const {

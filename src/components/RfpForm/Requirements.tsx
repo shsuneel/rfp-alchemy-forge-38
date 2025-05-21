@@ -5,7 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableHead,
+  TableRow,
+  TableCell,
+} from "@/components/ui/table";
 import {
   Trash2,
   Plus,
@@ -45,12 +52,26 @@ const Requirements = ({
   onAssumptionsChange,
   onDependenciesChange,
   onSectionsChange,
-  initialRequirements = [{ id: "req-1", description: "", priority: "Medium" }],
+  initialRequirements = [{ 
+    id: "req-1", 
+    description: "", 
+    priority: "Medium", 
+    phase: "", 
+    relatedAssumptions: "", 
+    relatedDependencies: "" 
+  }],
   initialAssumptions = [{ id: "assump-1", description: "" }],
   initialDependencies = [{ id: "dep-1", description: "" }],
   initialSections = []
 }: RequirementsProps) => {
-  const [requirements, setRequirements] = useState<RequirementItem[]>(initialRequirements);
+  const [requirements, setRequirements] = useState<RequirementItem[]>(
+    initialRequirements.map(req => ({
+      phase: "",
+      relatedAssumptions: "",
+      relatedDependencies: "",
+      ...req
+    }))
+  );
   const [assumptions, setAssumptions] = useState<AssumptionItem[]>(initialAssumptions);
   const [dependencies, setDependencies] = useState<DependencyItem[]>(initialDependencies);
   const [sections, setSections] = useState<SectionItem[]>(initialSections);
@@ -59,7 +80,12 @@ const Requirements = ({
   // Use useEffect to update local state when props change
   useEffect(() => {
     if (initialRequirements) {
-      setRequirements(initialRequirements);
+      setRequirements(initialRequirements.map(req => ({
+        phase: "",
+        relatedAssumptions: "",
+        relatedDependencies: "",
+        ...req
+      })));
     }
     if (initialAssumptions) {
       setAssumptions(initialAssumptions);
@@ -91,25 +117,69 @@ const Requirements = ({
     }
   }, [sections, onSectionsChange]);
 
-  // Requirements handling
+
   const addRequirement = () => {
     setRequirements([
       ...requirements,
-      { id: `req-${Date.now()}`, description: "", priority: "Medium" }
+      {
+        id: `req-${Date.now()}`,
+        description: "",
+        priority: "Medium",
+        phase: "",
+        relatedAssumptions: "",
+        relatedDependencies: ""
+      }
     ]);
   };
 
   const updateRequirement = (index: number, field: keyof RequirementItem, value: any) => {
     const newRequirements = [...requirements];
-    newRequirements[index] = { ...newRequirements[index], [field]: value };
+    // Ensure all fields exist on the item being updated
+    const currentReq = newRequirements[index];
+    newRequirements[index] = {
+        phase: "", // default if not present
+        relatedAssumptions: "", // default if not present
+        relatedDependencies: "", // default if not present
+        ...currentReq, 
+        [field]: value 
+    };
     setRequirements(newRequirements);
   };
 
   const removeRequirement = (index: number) => {
-    if (requirements.length > 1) {
-      setRequirements(requirements.filter((_, i) => i !== index));
+    if (requirements.length > 1 || (requirements.length === 1 && requirements[0].description !== "")) { // Allow deleting the last one if it's not truly empty
+        setRequirements(requirements.filter((_, i) => i !== index));
+    }
+    if (requirements.length === 1 && requirements.filter((_, i) => i !== index).length === 0) {
+        // If all requirements are removed, add a default blank one back
+        addRequirement();
     }
   };
+  
+  const handleAiAddRequirements = (suggestion: string) => {
+    const newReqDescriptions = suggestion.split('\n').filter(desc => desc.trim() !== '');
+    const newReqItems: RequirementItem[] = newReqDescriptions.map((desc, idx) => ({
+      id: `req-ai-${Date.now()}-${idx}`,
+      description: desc,
+      priority: "Medium",
+      phase: "",
+      relatedAssumptions: "",
+      relatedDependencies: "",
+    }));
+    if (newReqItems.length > 0) {
+      // If the only requirement is the default empty one, replace it
+      if (requirements.length === 1 && requirements[0].description === "" && requirements[0].id.startsWith("req-default")) {
+        setRequirements(newReqItems);
+      } else {
+        setRequirements(prev => [...prev, ...newReqItems]);
+      }
+    }
+  };
+  
+  const getCurrentRequirementsContext = () => {
+    return requirements.map(req => req.description).filter(desc => desc.trim() !== "").join("\n");
+  };
+
 
   // Assumptions handling
   const addAssumption = () => {
@@ -393,96 +463,149 @@ const Requirements = ({
         <CardHeader>
           <div className="flex justify-between items-center">
             <CardTitle>Project Requirements</CardTitle>
-          </div>
-          <CardDescription>Define the key requirements for your project</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {requirements.map((req, index) => (
-            <div key={req.id} className="flex gap-2 items-start mb-4">
-              <div className="flex-1 space-y-2">
-                <div className="flex items-center gap-2">
-                  <Input
-                    placeholder="Requirement description"
-                    value={req.description}
-                    onChange={(e) => updateRequirement(index, "description", e.target.value)}
-                    className="flex-1"
-                  />
-                  <AiSuggestionIcon
-                    field="requirements"
-                    currentValue={req.description}
-                    onSuggestionApplied={(suggestion) => updateRequirement(index, "description", suggestion)}
-                  />
-                </div>
-                <div className="flex items-center">
-                  <Label htmlFor={`priority-${req.id}-item`} className="mr-2 text-sm">Priority:</Label>
-                  <Select
-                    value={req.priority}
-                    onValueChange={(value) => updateRequirement(index, "priority", value as "High" | "Medium" | "Low")}
-                  >
-                    <SelectTrigger id={`priority-${req.id}-item`} className="w-32 h-9">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="High">High</SelectItem>
-                      <SelectItem value="Medium">Medium</SelectItem>
-                      <SelectItem value="Low">Low</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+            <div className="flex items-center gap-2">
+              <AiSuggestionIcon
+                field="requirements"
+                currentValue={getCurrentRequirementsContext()}
+                onSuggestionApplied={handleAiAddRequirements}
+              />
               <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => removeRequirement(index)}
-                disabled={requirements.length === 1}
-                className="mt-1" // Aligns better with the top of the input field
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addRequirement}
               >
-                <Trash2 className="h-4 w-4" />
+                <Plus className="h-4 w-4 mr-1" /> Add New Requirement
               </Button>
             </div>
-          ))}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={addRequirement}
-            className="mt-2"
-          >
-            <Plus className="h-4 w-4 mr-1" /> Add Requirement
-          </Button>
+          </div>
+          <CardDescription>Define the key requirements for your project in the table below. All fields are editable.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[50px]">#</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead className="w-[150px]">Priority</TableHead>
+                <TableHead className="w-[200px]">Phase</TableHead>
+                <TableHead className="w-[200px]">Related Assumptions</TableHead>
+                <TableHead className="w-[200px]">Related Dependencies</TableHead>
+                <TableHead className="w-[100px] text-center">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {requirements.map((req, index) => (
+                <TableRow key={req.id}>
+                  <TableCell>{index + 1}</TableCell>
+                  <TableCell>
+                    <div className="flex items-start gap-2">
+                      <Textarea
+                        placeholder="Requirement description"
+                        value={req.description}
+                        onChange={(e) => updateRequirement(index, "description", e.target.value)}
+                        className="min-h-[60px] flex-grow"
+                        rows={2}
+                      />
+                       <AiSuggestionIcon
+                          field="requirements" // context is a single requirement here
+                          currentValue={req.description}
+                          onSuggestionApplied={(suggestion) => updateRequirement(index, "description", suggestion)}
+                        />
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Select
+                      value={req.priority}
+                      onValueChange={(value) => updateRequirement(index, "priority", value as "High" | "Medium" | "Low")}
+                    >
+                      <SelectTrigger id={`priority-${req.id}-item`}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="High">High</SelectItem>
+                        <SelectItem value="Medium">Medium</SelectItem>
+                        <SelectItem value="Low">Low</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  <TableCell>
+                    <Input
+                      placeholder="e.g., Development, Testing"
+                      value={req.phase || ""}
+                      onChange={(e) => updateRequirement(index, "phase", e.target.value)}
+                    />
+                  </TableCell>
+                  <TableCell>
+                     <Textarea
+                        placeholder="Assumptions specific to this requirement"
+                        value={req.relatedAssumptions || ""}
+                        onChange={(e) => updateRequirement(index, "relatedAssumptions", e.target.value)}
+                        rows={2}
+                        className="min-h-[60px]"
+                      />
+                  </TableCell>
+                  <TableCell>
+                     <Textarea
+                        placeholder="Dependencies specific to this requirement"
+                        value={req.relatedDependencies || ""}
+                        onChange={(e) => updateRequirement(index, "relatedDependencies", e.target.value)}
+                        rows={2}
+                        className="min-h-[60px]"
+                      />
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeRequirement(index)}
+                       disabled={requirements.length === 1 && requirements[0].description === ""}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 
-      {/* Assumptions */}
+      {/* Assumptions Card (remains unchanged) */}
       <Card>
         <CardHeader>
           <div className="flex justify-between items-center">
-            <CardTitle>Assumptions</CardTitle>
+            <CardTitle>Project Assumptions</CardTitle>
+            {/* Original AI Suggestion for whole section */}
           </div>
-          <CardDescription>List key assumptions for the project</CardDescription>
+          <CardDescription>List key assumptions for the project. These are general assumptions, distinct from those tied to specific requirements.</CardDescription>
         </CardHeader>
         <CardContent>
           {assumptions.map((assumption, index) => (
-            <div key={assumption.id} className="flex gap-2 items-center mb-4">
-              <Input
+            <div key={assumption.id} className="flex gap-2 items-start mb-4">
+              <Textarea
                 placeholder="Assumption description"
                 value={assumption.description}
                 onChange={(e) => updateAssumption(index, e.target.value)}
                 className="flex-1"
+                rows={2}
               />
-              <AiSuggestionIcon
-                field="assumptions"
-                currentValue={assumption.description}
-                onSuggestionApplied={(suggestion) => updateAssumption(index, suggestion)}
-              />
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => removeAssumption(index)}
-                disabled={assumptions.length === 1}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              <div className="flex flex-col gap-1">
+                <AiSuggestionIcon
+                  field="assumptions"
+                  currentValue={assumption.description}
+                  onSuggestionApplied={(suggestion) => updateAssumption(index, suggestion)}
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => removeAssumption(index)}
+                  disabled={assumptions.length === 1}
+                  className="mt-0"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           ))}
           <Button
@@ -497,36 +620,41 @@ const Requirements = ({
         </CardContent>
       </Card>
 
-      {/* Dependencies */}
+      {/* Dependencies Card (remains unchanged) */}
       <Card>
         <CardHeader>
           <div className="flex justify-between items-center">
-            <CardTitle>Dependencies</CardTitle>
+            <CardTitle>Project Dependencies</CardTitle>
+            {/* Original AI Suggestion for whole section */}
           </div>
-          <CardDescription>List external dependencies for the project</CardDescription>
+          <CardDescription>List external dependencies for the project. These are general dependencies, distinct from those tied to specific requirements.</CardDescription>
         </CardHeader>
         <CardContent>
           {dependencies.map((dependency, index) => (
-            <div key={dependency.id} className="flex gap-2 items-center mb-4">
-              <Input
+            <div key={dependency.id} className="flex gap-2 items-start mb-4">
+              <Textarea
                 placeholder="Dependency description"
                 value={dependency.description}
                 onChange={(e) => updateDependency(index, e.target.value)}
                 className="flex-1"
+                rows={2}
               />
-              <AiSuggestionIcon
-                field="dependencies"
-                currentValue={dependency.description}
-                onSuggestionApplied={(suggestion) => updateDependency(index, suggestion)}
-              />
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => removeDependency(index)}
-                disabled={dependencies.length === 1}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+               <div className="flex flex-col gap-1">
+                <AiSuggestionIcon
+                  field="dependencies"
+                  currentValue={dependency.description}
+                  onSuggestionApplied={(suggestion) => updateDependency(index, suggestion)}
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => removeDependency(index)}
+                  disabled={dependencies.length === 1}
+                  className="mt-0"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
             </div>
           ))}
           <Button
