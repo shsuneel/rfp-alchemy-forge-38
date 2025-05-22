@@ -5,8 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronLeft, ChevronRight, Save, Presentation } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, Save, Presentation, Tag } from "lucide-react";
 import { toast } from "sonner";
+import { format, parseISO } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 
 import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { useAppSelector } from "@/hooks/useAppSelector";
@@ -23,9 +27,13 @@ import {
   setThorId,
   setStatus,
   setRemarks,
+  setDeadlineDate,
+  setNotes,
+  setTags,
   saveRfp,
   SectionItem,
   RfpStatus,
+  TeamMember,
 } from "@/store/rfpSlice";
 import { createFromRfp } from "@/store/presentationSlice";
 
@@ -34,14 +42,13 @@ import FileUpload from "./FileUpload";
 import TechStack from "./TechStack";
 import Requirements from "./Requirements";
 import Timeline from "./Timeline";
-import Team from "./Team";
+import TeamComponent from "./Team";
 import Resources from "./Resources";
 import Preview from "./Preview";
 import AiSuggestions from "./AiSuggestions";
 import AiSuggestionIcon from "@/components/ui/AiSuggestionIcon";
 import { generatePPTX } from "@/lib/utils";
 
-// Define the extended TechStackByLayer type here to include new categories
 interface TechStackByLayer {
   frontend: string[];
   backend: string[];
@@ -90,7 +97,6 @@ const RfpForm = () => {
   const [clientInfo, setClientInfo] = useState(rfpState.clientInfo);
   const [files, setFiles] = useState<File[]>([]);
 
-  // Updated techStack state to use our extended TechStackByLayer interface
   const [techStack, setTechStackState] = useState<TechStackByLayer>(rfpState.techStackByLayer as TechStackByLayer || {
     frontend: [],
     backend: [],
@@ -108,19 +114,24 @@ const RfpForm = () => {
   const [dependencies, setDependenciesState] = useState(rfpState.dependencies);
   const [sections, setSectionsState] = useState<SectionItem[]>(rfpState.sections || []);
   const [timeline, setTimelineState] = useState(rfpState.timeline);
-  const [team, setTeamState] = useState(rfpState.team);
+  const [team, setTeamState] = useState<TeamMember[]>(rfpState.team);
   const [resources, setResourcesState] = useState(rfpState.resources);
   const [status, setStatusState] = useState<RfpStatus>(rfpState.status || "Draft");
   const [remarks, setRemarksState] = useState(rfpState.remarks || "");
+  const [deadlineDate, setDeadlineDateState] = useState<Date | undefined>(
+    rfpState.deadlineDate ? parseISO(rfpState.deadlineDate) : undefined
+  );
+  const [notes, setNotesState] = useState(rfpState.notes || "");
+  const [tagsString, setTagsStringState] = useState((rfpState.tags || []).join(", "));
+
   const rfp = useAppSelector(state => state.rfp);
 
-  // Update local state when Redux state changes (for imported RFPs)
   useEffect(() => {
+    setThorIdState(rfpState.thorId || "");
     setProjectName(rfpState.projectName);
     setProjectDescription(rfpState.projectDescription);
     setSector(rfpState.sector);
     setClientInfo(rfpState.clientInfo);
-    // Updated techStackState update to include new categories
     setTechStackState((rfpState.techStackByLayer as TechStackByLayer) || {
       frontend: [],
       backend: [],
@@ -141,6 +152,9 @@ const RfpForm = () => {
     setResourcesState(rfpState.resources);
     setStatusState(rfpState.status || "Draft");
     setRemarksState(rfpState.remarks || "");
+    setDeadlineDateState(rfpState.deadlineDate ? parseISO(rfpState.deadlineDate) : undefined);
+    setNotesState(rfpState.notes || "");
+    setTagsStringState((rfpState.tags || []).join(", "));
   }, [rfpState]);
 
   const handleNext = () => {
@@ -149,7 +163,6 @@ const RfpForm = () => {
       return;
     }
 
-    // Save data to Redux based on current step
     if (currentStep === 0) {
       dispatch(setProjectInfo({
         name: projectName,
@@ -157,19 +170,13 @@ const RfpForm = () => {
         sector,
         clientInfo
       }));
-
-      // Also save team when moving from step 0
       dispatch(setTeam(team));
-
-      // Also set Thor ID if it exists
-      const thorIdMember = team.find(m => m.id === "thor-id");
-      if (thorIdMember) {
-        dispatch(setThorId(thorIdMember.name));
-      } else if (thorId) {
-        dispatch(setThorId(thorId));
-      }
+      dispatch(setThorId(thorId));
+      dispatch(setDeadlineDate(deadlineDate ? deadlineDate.toISOString() : undefined));
+      dispatch(setNotes(notes));
+      const parsedTags = tagsString.split(',').map(tag => tag.trim()).filter(Boolean);
+      dispatch(setTags(parsedTags));
     } else if (currentStep === 2) {
-      // Get flattened tech stack for backward compatibility
       const flattenedTechStack = [
         ...techStack.frontend,
         ...techStack.backend,
@@ -193,7 +200,6 @@ const RfpForm = () => {
     } else if (currentStep === 4) {
       dispatch(setTimeline(timeline));
     } else if (currentStep === 5) {
-      // Now only set resources here, team is set in step 0
       dispatch(setResources(resources));
     }
 
@@ -211,15 +217,12 @@ const RfpForm = () => {
   };
 
   const handleSave = () => {
-    // Save all data to Redux
     dispatch(setProjectInfo({
       name: projectName,
       description: projectDescription,
       sector,
       clientInfo
     }));
-
-    // Get flattened tech stack for backward compatibility
     const flattenedTechStack = [
       ...techStack.frontend,
       ...techStack.backend,
@@ -231,41 +234,28 @@ const RfpForm = () => {
       ...techStack.security,
       ...techStack.testing
     ];
-
     dispatch(setTechStack({
       flattenedStack: flattenedTechStack,
       byLayer: techStack
     }));
-
     dispatch(setRequirements(requirements));
     dispatch(setAssumptions(assumptions));
     dispatch(setDependencies(dependencies));
     dispatch(setSections(sections));
     dispatch(setTimeline(timeline));
-
-    // Save team and resources
     dispatch(setTeam(team));
     dispatch(setResources(resources));
-
-    // Also set Thor ID if it exists
-    const thorIdMember = team.find(m => m.id === "thor-id");
-    if (thorIdMember) {
-      dispatch(setThorId(thorIdMember.name));
-    } else if (thorId) {
-      dispatch(setThorId(thorId));
-    }
-
-    // Save status and remarks
+    dispatch(setThorId(thorId));
     dispatch(setStatus(status));
     dispatch(setRemarks(remarks));
-
-    // Save to storage
+    dispatch(setDeadlineDate(deadlineDate ? deadlineDate.toISOString() : undefined));
+    dispatch(setNotes(notes));
+    const parsedTags = tagsString.split(',').map(tag => tag.trim()).filter(Boolean);
+    dispatch(setTags(parsedTags));
     dispatch(saveRfp());
-
     toast.success("RFP saved successfully!");
   };
 
-  // Add handlers for status and remarks
   const handleStatusChange = (newStatus: RfpStatus) => {
     setStatusState(newStatus);
     dispatch(setStatus(newStatus));
@@ -290,16 +280,14 @@ const RfpForm = () => {
     toast.success("Presentation created from RFP data!");
   };
 
-  // Add new handlers for AI suggestions
   const handleProjectDescriptionSuggestion = (suggestion: string) => {
     setProjectDescription(suggestion);
   };
 
   const handleRequirementsSuggestion = (suggestion: string) => {
-    // Create a requirement from the suggestion
     const newRequirements = [...requirements];
     suggestion.split('\n').filter(line => line.trim()).forEach((line, index) => {
-      const trimmedLine = line.replace(/^\d+\.\s*/, '').trim(); // Remove numbering
+      const trimmedLine = line.replace(/^\d+\.\s*/, '').trim(); 
       if (trimmedLine) {
         newRequirements.push({
           id: `req-${Date.now()}-${index}`,
@@ -314,8 +302,6 @@ const RfpForm = () => {
   const handleTechStackSuggestion = (suggestion: string) => {
     const techItems = suggestion.split(',').map(item => item.trim()).filter(Boolean);
     const newTechStack = { ...techStack };
-
-    // Add to 'other' category by default
     newTechStack.other = [...newTechStack.other, ...techItems.filter(item => !newTechStack.other.includes(item))];
     setTechStackState(newTechStack);
   };
@@ -323,7 +309,7 @@ const RfpForm = () => {
   const handleAssumptionsSuggestion = (suggestion: string) => {
     const newAssumptions = [...assumptions];
     suggestion.split('\n').filter(line => line.trim()).forEach((line, index) => {
-      const trimmedLine = line.replace(/^\d+\.\s*/, '').trim(); // Remove numbering
+      const trimmedLine = line.replace(/^\d+\.\s*/, '').trim();
       if (trimmedLine) {
         newAssumptions.push({
           id: `assump-${Date.now()}-${index}`,
@@ -337,7 +323,7 @@ const RfpForm = () => {
   const handleDependenciesSuggestion = (suggestion: string) => {
     const newDependencies = [...dependencies];
     suggestion.split('\n').filter(line => line.trim()).forEach((line, index) => {
-      const trimmedLine = line.replace(/^\d+\.\s*/, '').trim(); // Remove numbering
+      const trimmedLine = line.replace(/^\d+\.\s*/, '').trim();
       if (trimmedLine) {
         newDependencies.push({
           id: `dep-${Date.now()}-${index}`,
@@ -351,15 +337,13 @@ const RfpForm = () => {
   const handleTimelineSuggestion = (suggestion: string) => {
     const newTimeline = [...timeline];
     suggestion.split('\n').filter(line => line.trim()).forEach((line, index) => {
-      // Extract phase name and duration (if available)
       const match = line.match(/^(?:Phase\s*\d*\s*\(?(.*?)\)?:?\s*)?(.*)$/i);
       if (match && match[1]) {
         const phaseName = match[1].trim();
         const durationMatch = match[2].match(/(\d+)-?(\d+)?\s*weeks?/i);
-        let durationWeeks = 2; // Default
+        let durationWeeks = 2; 
 
         if (durationMatch) {
-          // If range, take the average
           if (durationMatch[2]) {
             durationWeeks = Math.round((parseInt(durationMatch[1]) + parseInt(durationMatch[2])) / 2);
           } else {
@@ -376,12 +360,11 @@ const RfpForm = () => {
       }
     });
 
-    if (newTimeline.length > 1) { // If we added any new phases
+    if (newTimeline.length > timeline.length) { // Check if timeline actually changed
       setTimelineState(newTimeline);
     }
   };
 
-  // Form steps rendering
   const renderFormStep = () => {
     switch (currentStep) {
       case 0:
@@ -390,20 +373,36 @@ const RfpForm = () => {
             <CardHeader>
               <CardTitle>Project Information</CardTitle>
               <CardDescription>
-                Provide basic information about your project
+                Provide basic information about your project, including deadline and collaborators.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
                   <Label htmlFor="project-name">Project Name <span className="text-red-500">*</span></Label>
+                  <Input
+                    id="project-name"
+                    placeholder="e.g., Customer Portal Modernization"
+                    value={projectName}
+                    onChange={(e) => setProjectName(e.target.value)}
+                  />
                 </div>
-                <Input
-                  id="project-name"
-                  placeholder="e.g., Customer Portal Modernization"
-                  value={projectName}
-                  onChange={(e) => setProjectName(e.target.value)}
-                />
+
+                <div className="space-y-2">
+                  <Label htmlFor="sector">Sector</Label>
+                  <Select value={sector} onValueChange={setSector}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select sector" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SECTORS.map(sectorOption => (
+                        <SelectItem key={sectorOption} value={sectorOption}>
+                          {sectorOption}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -423,60 +422,77 @@ const RfpForm = () => {
                   onChange={(e) => setProjectDescription(e.target.value)}
                 />
               </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="sector">Sector</Label>
-                  <AiSuggestionIcon
-                    field="dependencies"
-                    onSuggestionApplied={(suggestion) => setSector(suggestion.split(',')[0].trim())}
-                    currentValue={projectDescription}
-                  />
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="deadlineDate">Deadline Date</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !deadlineDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {deadlineDate ? format(deadlineDate, "PPP") : <span>Pick a date</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 pointer-events-auto" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={deadlineDate}
+                        onSelect={setDeadlineDateState}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
-                <Select value={sector} onValueChange={setSector}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select sector" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SECTORS.map(sectorOption => (
-                      <SelectItem key={sectorOption} value={sectorOption}>
-                        {sectorOption}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+
+                <div className="space-y-2">
+                  <Label htmlFor="tags">Tags <span className="text-xs text-muted-foreground">(comma-separated)</span></Label>
+                  <div className="relative">
+                    <Tag className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="tags"
+                      placeholder="e.g., urgent, client-facing, phase1"
+                      value={tagsString}
+                      onChange={(e) => setTagsStringState(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="thorId">Thor ID</Label>
-                </div>
+                <Label htmlFor="notes">Notes</Label>
+                <Textarea
+                  id="notes"
+                  placeholder="Additional comments or context for the RFP"
+                  rows={3}
+                  value={notes}
+                  onChange={(e) => setNotesState(e.target.value)}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="thorId">Thor ID</Label>
                 <Input
                   id="thorId"
                   placeholder="Enter Thor ID"
                   value={thorId}
-                  onChange={(e) => {
-                    setThorIdState(e.target.value);
-                  }}
+                  onChange={(e) => setThorIdState(e.target.value)}
                 />
               </div>
 
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="text-lg font-medium">Team</h3>
-                </div>
-                <Team onTeamChange={setTeamState} initialTeam={team} />
-              </div>
-
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="client-info">Client Information</Label>
-                  <AiSuggestionIcon
-                    field="dependencies"
+                <Label htmlFor="client-info">Client Information</Label>
+                 <AiSuggestionIcon
+                    field="clientInfo"
                     onSuggestionApplied={(suggestion) => setClientInfo(suggestion)}
-                    currentValue={projectDescription}
+                    currentValue={clientInfo}
                   />
-                </div>
                 <Textarea
                   id="client-info"
                   placeholder="Information about the client and stakeholders"
@@ -485,6 +501,11 @@ const RfpForm = () => {
                   onChange={(e) => setClientInfo(e.target.value)}
                 />
               </div>
+
+              <div>
+                <TeamComponent onTeamChange={setTeamState} initialTeam={team} />
+              </div>
+
             </CardContent>
           </Card>
         );
@@ -497,6 +518,11 @@ const RfpForm = () => {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-medium">Technology Stack</h3>
+               <AiSuggestionIcon
+                field="techStack"
+                onSuggestionApplied={handleTechStackSuggestion}
+                currentValue={projectDescription} 
+              />
             </div>
             <TechStack
               onTechStackChange={setTechStackState}
@@ -545,10 +571,8 @@ const RfpForm = () => {
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-medium">Resources</h3>
               <AiSuggestionIcon
-                field="dependencies"
+                field="resources"
                 onSuggestionApplied={(suggestion) => {
-                  // Attempt to parse resources from the suggestion
-                  // This is simplified - in a real app, you'd want more sophisticated parsing
                   const newResources = [...resources];
                   const lines = suggestion.split('\n').filter(line => line.trim());
                   lines.forEach((line, index) => {
@@ -566,7 +590,7 @@ const RfpForm = () => {
                     setResourcesState(newResources);
                   }
                 }}
-                currentValue={projectDescription}
+                currentValue={projectDescription} 
               />
             </div>
             <Resources onResourcesChange={setResourcesState} initialResources={resources} />
@@ -602,6 +626,9 @@ const RfpForm = () => {
             thorId={thorId}
             status={status}
             remarks={remarks}
+            deadlineDate={deadlineDate ? deadlineDate.toISOString() : undefined}
+            notes={notes}
+            tags={tagsString.split(',').map(tag => tag.trim()).filter(Boolean)}
             onStatusChange={handleStatusChange}
             onRemarksChange={handleRemarksChange}
           />

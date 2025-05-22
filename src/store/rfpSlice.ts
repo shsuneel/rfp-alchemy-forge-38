@@ -55,6 +55,7 @@ export interface TeamMember {
   name: string;
   email: string;
   role: string;
+  responsibilities?: string; // New field
 }
 
 export interface ResourceLevel {
@@ -87,6 +88,9 @@ export interface RfpData {
   remarks: string;
   createdAt: string;
   updatedAt: string;
+  deadlineDate?: string; // New field (ISO string)
+  notes?: string; // New field
+  tags?: string[]; // New field
 }
 
 interface RfpState {
@@ -108,6 +112,9 @@ interface RfpState {
   remarks: string;
   initialData: any;
   savedRfps: RfpData[];
+  deadlineDate?: string; // New field
+  notes?: string; // New field
+  tags?: string[]; // New field
 }
 
 // Load saved RFPs from localStorage if available
@@ -162,13 +169,16 @@ const initialState: RfpState = {
     }
   ],
   team: [
-    { id: "team-default", name: "", email: "", role: "" }
+    { id: "team-default", name: "", email: "", role: "", responsibilities: "" } // Added responsibilities
   ],
   resources: [
     { id: "res-consultant", title: "", level: "", hourlyRate: 75 },
   ],
   status: "Draft",
   remarks: "",
+  deadlineDate: undefined, // Initialize new field
+  notes: "", // Initialize new field
+  tags: [], // Initialize new field
   initialData: {},
   savedRfps: getSavedRfps()
 };
@@ -224,7 +234,10 @@ export const rfpSlice = createSlice({
       state.timeline = action.payload;
     },
     setTeam: (state, action: PayloadAction<TeamMember[]>) => {
-      state.team = action.payload;
+      state.team = action.payload.map(member => ({
+        ...member,
+        responsibilities: member.responsibilities || "", // Ensure responsibilities has a default
+      }));
     },
     setResources: (state, action: PayloadAction<ResourceLevel[]>) => {
       state.resources = action.payload;
@@ -235,8 +248,16 @@ export const rfpSlice = createSlice({
     setRemarks: (state, action: PayloadAction<string>) => {
       state.remarks = action.payload;
     },
+    setDeadlineDate: (state, action: PayloadAction<string | undefined>) => { // New reducer
+      state.deadlineDate = action.payload;
+    },
+    setNotes: (state, action: PayloadAction<string>) => { // New reducer
+      state.notes = action.payload;
+    },
+    setTags: (state, action: PayloadAction<string[]>) => { // New reducer
+      state.tags = action.payload;
+    },
     saveRfp: (state) => {
-      // Generate a new RFP data object with current state
       const newRfp: RfpData = {
         id: `rfp-${Date.now()}`,
         thorId: state.thorId,
@@ -249,7 +270,7 @@ export const rfpSlice = createSlice({
             ...initialState.techStackByLayer,
             ...state.techStackByLayer,
         },
-        requirements: state.requirements.map(req => ({ // Ensure new fields are saved
+        requirements: state.requirements.map(req => ({
             phase: "",
             relatedAssumptions: "",
             relatedDependencies: "",
@@ -259,10 +280,13 @@ export const rfpSlice = createSlice({
         dependencies: state.dependencies,
         sections: state.sections,
         timeline: state.timeline,
-        team: state.team,
+        team: state.team.map(member => ({ ...member, responsibilities: member.responsibilities || "" })), // Save responsibilities
         resources: state.resources,
         status: state.status,
         remarks: state.remarks,
+        deadlineDate: state.deadlineDate, // Save new field
+        notes: state.notes, // Save new field
+        tags: state.tags, // Save new field
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         client: state.clientInfo.split('\n')[0] || '', 
@@ -300,7 +324,6 @@ export const rfpSlice = createSlice({
         state.sector = rfpToLoad.sector;
         state.clientInfo = rfpToLoad.clientInfo;
         state.techStack = rfpToLoad.techStack;
-
         // Handle compatibility with older saved RFPs
         const defaultTechStackByLayer = {
             frontend: [],
@@ -318,7 +341,7 @@ export const rfpSlice = createSlice({
           ? { ...defaultTechStackByLayer, ...rfpToLoad.techStackByLayer }
           : defaultTechStackByLayer;
 
-        state.requirements = rfpToLoad.requirements.map(req => ({ // Ensure new fields are loaded with defaults
+        state.requirements = rfpToLoad.requirements.map(req => ({
           phase: "",
           relatedAssumptions: "",
           relatedDependencies: "",
@@ -328,10 +351,16 @@ export const rfpSlice = createSlice({
         state.dependencies = rfpToLoad.dependencies;
         state.sections = rfpToLoad.sections || [];
         state.timeline = rfpToLoad.timeline;
-        state.team = rfpToLoad.team || initialState.team;
+        state.team = (rfpToLoad.team || initialState.team).map(member => ({ // Load responsibilities
+          ...member,
+          responsibilities: member.responsibilities || ""
+        }));
         state.resources = rfpToLoad.resources || initialState.resources;
         state.status = rfpToLoad.status || "Draft"; // Changed default to Draft
         state.remarks = rfpToLoad.remarks || "";
+        state.deadlineDate = rfpToLoad.deadlineDate; // Load new field
+        state.notes = rfpToLoad.notes || ""; // Load new field
+        state.tags = rfpToLoad.tags || []; // Load new field
       }
     },
     deleteRfp: (state, action: PayloadAction<string>) => {
@@ -347,7 +376,8 @@ export const rfpSlice = createSlice({
       state.sector = '';
       state.clientInfo = '';
       state.techStack = [];
-      state.techStackByLayer = { // Ensure this resets to the full structure
+      // Ensure this resets to the full structure
+      state.techStackByLayer = {
         frontend: [],
         backend: [],
         database: [],
@@ -375,10 +405,13 @@ export const rfpSlice = createSlice({
         description: "Initial requirements gathering and analysis",
         durationWeeks: 2
       }];
-      state.team = [{ id: "team-default", name: "", email: "", role: "Project Manager" }];
+      state.team = [{ id: "team-default", name: "", email: "", role: "Project Manager", responsibilities: "" }]; // Reset responsibilities
       state.resources = initialState.resources; // Keep default resources
       state.status = "Draft"; // Default status
       state.remarks = "";
+      state.deadlineDate = undefined; // Reset new field
+      state.notes = ""; // Reset new field
+      state.tags = []; // Reset new field
     },
     setExtractedInfo: (state, action: PayloadAction<{
       projectDescription?: string;
@@ -422,6 +455,7 @@ export const rfpSlice = createSlice({
     builder
     .addCase(fetchInitialData.fulfilled, (state, action) => {
       state.initialData = action.payload;
+      // Ensure new fields are handled when mapping fetched RFPs
       state.savedRfps = action.payload.rfps.map((rfp: RfpData) => ({
         ...rfp,
         requirements: rfp.requirements.map(req => ({
@@ -429,7 +463,11 @@ export const rfpSlice = createSlice({
           relatedAssumptions: "",
           relatedDependencies: "",
           ...req,
-        }))
+        })),
+        team: (rfp.team || []).map(member => ({ ...member, responsibilities: member.responsibilities || "" })),
+        deadlineDate: rfp.deadlineDate,
+        notes: rfp.notes || "",
+        tags: rfp.tags || [],
       }));
     })
     .addCase(fetchInitialData.rejected, (state, action) => {
@@ -454,6 +492,9 @@ export const {
   setResources,
   setStatus,
   setRemarks,
+  setDeadlineDate,
+  setNotes,
+  setTags,
   saveRfp,
   loadRfp,
   deleteRfp,
