@@ -1,13 +1,13 @@
-
 import { useState, useEffect } from "react";
-import { X, Plus, Users } from "lucide-react"; // LinkIcon removed
+import { X, Plus, Users } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-// toast import removed as handleGenerateLink is removed
+import { toast } from "sonner";
+import axios from "axios";
 import { TeamMember } from "@/store/rfpSlice";
 
 interface TeamProps {
@@ -33,7 +33,7 @@ const Team = ({ onTeamChange, initialTeam }: TeamProps) => {
   
   const emailPlaceholder = `Subject: Invitation to Collaborate on RFP
   
-  Body:
+Body:
 Dear [Collaborator's Name],
 
 I hope this message finds you well.
@@ -49,8 +49,9 @@ Looking forward to your valuable input.
 
 Best regards,
 [Your Name]
-[Your Organization]`
+[Your Organization]`;
   const [emailBody, setEmailBody] = useState<string>(emailPlaceholder);
+  const [isSendingEmail, setIsSendingEmail] = useState<boolean>(false);
 
   useEffect(() => {
     if (initialTeam) {
@@ -87,9 +88,43 @@ Best regards,
     onTeamChange(newTeam);
   };
 
-  const handleEmailBody = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleEmailBodyChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setEmailBody(e.target.value);
-  }
+  };
+
+  const handleSendEmail = async () => {
+    setIsSendingEmail(true);
+    try {
+      const validTeamMembers = team.filter(member => member.id !== "team-default" && member.email.trim() !== "");
+      if (validTeamMembers.length === 0) {
+        toast.error("No collaborators with valid emails to send to.");
+        setIsSendingEmail(false);
+        return;
+      }
+
+      const response = await axios.post("http://localhost:3020/inviteCollaborators", {
+        emailBody: emailBody,
+        collaborators: validTeamMembers,
+      });
+
+      if (response.status === 200 || response.status === 201) {
+        toast.success("Emails sent successfully to collaborators!");
+      } else {
+        toast.error(`Failed to send emails: ${response.data.message || "Unknown error"}`);
+      }
+    } catch (error) {
+      console.error("Error sending email:", error);
+      if (axios.isAxiosError(error) && error.response) {
+        toast.error(`Error: ${error.response.data.message || error.message}`);
+      } else if (error instanceof Error) {
+        toast.error(`Error: ${error.message}`);
+      } else {
+        toast.error("An unexpected error occurred while sending emails.");
+      }
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
 
   return (
     <Card>
@@ -107,7 +142,6 @@ Best regards,
           <div className="flex items-center justify-between">
             <Label>Collaborators</Label>
             <div className="flex gap-2">
-              {/* "Invite via Link" button removed */}
               <Button
                 type="button"
                 size="sm"
@@ -120,7 +154,7 @@ Best regards,
             </div>
           </div>
 
-          {team.filter(m => m.id !== "thor-id").map((member, index) => (
+          {team.filter(m => m.id !== "thor-id" && m.id !== "team-default").map((member, index) => (
             <div key={member.id} className="p-4 border rounded-md relative space-y-3">
               <Button
                 type="button"
@@ -197,8 +231,10 @@ Best regards,
             Compose an email to collaborators.
           </p>
           <div className="space-y-2 mt-2">
-            <Textarea value={emailBody} onChange={handleEmailBody} rows={10} />
-            <Button disabled>Send Email</Button>
+            <Textarea value={emailBody} onChange={handleEmailBodyChange} rows={10} />
+            <Button onClick={handleSendEmail} disabled={isSendingEmail || team.filter(member => member.id !== "team-default" && member.email.trim() !== "").length === 0}>
+              {isSendingEmail ? "Sending..." : "Send Email"}
+            </Button>
           </div>
         </div>
       </CardContent>

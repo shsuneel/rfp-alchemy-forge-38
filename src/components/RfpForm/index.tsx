@@ -600,7 +600,6 @@ const RfpForm = () => {
             thorId={thorId}
             status={status}
             remarks={remarks}
-            notes={notes}
             tags={tagsString.split(',').map(tag => tag.trim()).filter(Boolean)}
             onStatusChange={handleStatusChange}
             onRemarksChange={handleRemarksChange}
