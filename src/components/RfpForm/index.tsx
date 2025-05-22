@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
+import axios from "axios";
 
 import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { useAppSelector } from "@/hooks/useAppSelector";
@@ -126,6 +127,7 @@ const RfpForm = () => {
   const [tagsString, setTagsStringState] = useState((rfpState.tags || []).join(", "));
 
   const rfp = useAppSelector(state => state.rfp);
+  const [isSendingUpdateEmail, setIsSendingUpdateEmail] = useState(false);
 
   useEffect(() => {
     setThorIdState(rfpState.thorId || "");
@@ -158,13 +160,28 @@ const RfpForm = () => {
     setTagsStringState((rfpState.tags || []).join(", "));
   }, [rfpState]);
 
-  const handleNext = () => {
-    if (currentStep === 0 && !projectName.trim()) {
-      toast.error("Project name is required");
-      return;
+  const validateProjectInfo = () => {
+    if (!projectName.trim()) {
+      toast.error("Project Name is required.");
+      return false;
     }
+    if (!projectDescription.trim()) {
+      toast.error("Project Description is required.");
+      return false;
+    }
+    const actualTeamMembers = team.filter(member => member.id !== "team-default" && (member.name.trim() !== "" || member.email.trim() !== ""));
+    if (actualTeamMembers.length === 0) {
+      toast.error("At least one collaborator must be added.");
+      return false;
+    }
+    return true;
+  };
 
+  const handleNext = () => {
     if (currentStep === 0) {
+      if (!validateProjectInfo()) {
+        return;
+      }
       dispatch(setProjectInfo({
         name: projectName,
         description: projectDescription,
@@ -217,7 +234,46 @@ const RfpForm = () => {
     }
   };
 
-  const handleSave = () => {
+  const sendUpdateNotificationEmail = async (collaborators: TeamMember[]) => {
+    const validTeamMembers = collaborators.filter(member => member.id !== "team-default" && member.email.trim() !== "");
+    if (validTeamMembers.length === 0) {
+      toast.info("No collaborators with valid emails to notify of update.");
+      return;
+    }
+
+    const emailBody = "The RFP has been updated. Please review the latest changes at your earliest convenience.";
+    
+    setIsSendingUpdateEmail(true);
+    try {
+      const response = await axios.post("http://localhost:3020/notifyCollaboratorsOfUpdate", {
+        emailBody: emailBody,
+        collaborators: validTeamMembers,
+      });
+
+      if (response.status === 200 || response.status === 201) {
+        toast.success("Update notification email sent to collaborators!");
+      } else {
+        toast.error(`Failed to send update email: ${response.data.message || "Unknown error"}`);
+      }
+    } catch (error) {
+      console.error("Error sending update email:", error);
+      if (axios.isAxiosError(error) && error.response) {
+        toast.error(`Error: ${error.response.data.message || error.message}`);
+      } else if (error instanceof Error) {
+        toast.error(`Error: ${error.message}`);
+      } else {
+        toast.error("An unexpected error occurred while sending update emails.");
+      }
+    } finally {
+      setIsSendingUpdateEmail(false);
+    }
+  };
+
+  const handleSave = async () => {
+    if (!validateProjectInfo()) {
+      return;
+    }
+
     dispatch(setProjectInfo({
       name: projectName,
       description: projectDescription,
@@ -253,8 +309,16 @@ const RfpForm = () => {
     dispatch(setNotes(notes));
     const parsedTags = tagsString.split(',').map(tag => tag.trim()).filter(Boolean);
     dispatch(setTags(parsedTags));
+    
+    // Save RFP first
     dispatch(saveRfp());
     toast.success("RFP saved successfully!");
+
+    // Then send notification email
+    const actualTeamMembers = team.filter(member => member.id !== "team-default" && member.email.trim() !== "");
+    if (actualTeamMembers.length > 0) {
+      await sendUpdateNotificationEmail(actualTeamMembers);
+    }
   };
 
   const handleStatusChange = (newStatus: RfpStatus) => {
@@ -361,7 +425,7 @@ const RfpForm = () => {
       }
     });
 
-    if (newTimeline.length > timeline.length) { // Check if timeline actually changed
+    if (newTimeline.length > timeline.length) { 
       setTimelineState(newTimeline);
     }
   };
@@ -408,7 +472,7 @@ const RfpForm = () => {
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="project-description">Project Description</Label>
+                  <Label htmlFor="project-description">Project Description <span className="text-red-500">*</span></Label>
                   <AiSuggestionIcon
                     field="projectDescription"
                     onSuggestionApplied={handleProjectDescriptionSuggestion}
@@ -600,7 +664,7 @@ const RfpForm = () => {
             thorId={thorId}
             status={status}
             remarks={remarks}
-            tags={tagsString.split(',').map(tag => tag.trim()).filter(Boolean)}
+            // Removed 'tags' prop as it's not accepted by Preview
             onStatusChange={handleStatusChange}
             onRemarksChange={handleRemarksChange}
           />
@@ -633,8 +697,14 @@ const RfpForm = () => {
         </Button>
 
         <div className="flex space-x-2">
-          <Button type="button" onClick={handleSave} className="flex items-center">
-            <Save className="h-4 w-4 mr-2" /> Save RFP
+          <Button 
+            type="button" 
+            onClick={handleSave} 
+            className="flex items-center"
+            disabled={isSendingUpdateEmail} // Disable button while sending email
+          >
+            <Save className="h-4 w-4 mr-2" /> 
+            {isSendingUpdateEmail ? "Saving & Notifying..." : "Save RFP"}
           </Button>
 
           {isLastStep && (
