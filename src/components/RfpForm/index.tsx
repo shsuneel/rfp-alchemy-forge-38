@@ -34,6 +34,7 @@ import {
   SectionItem,
   RfpStatus,
   TeamMember,
+  RequirementItem,
 } from "@/store/rfpSlice";
 import { createFromRfp } from "@/store/presentationSlice";
 
@@ -109,7 +110,7 @@ const RfpForm = () => {
     testing: []
   });
 
-  const [requirements, setRequirementsState] = useState(rfpState.requirements);
+  const [requirements, setRequirementsState] = useState<RequirementItem[]>(rfpState.requirements);
   const [assumptions, setAssumptionsState] = useState(rfpState.assumptions);
   const [dependencies, setDependenciesState] = useState(rfpState.dependencies);
   const [sections, setSectionsState] = useState<SectionItem[]>(rfpState.sections || []);
@@ -488,12 +489,7 @@ const RfpForm = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="client-info">Client Information</Label>
-                 <AiSuggestionIcon
-                    field="clientInfo"
-                    onSuggestionApplied={(suggestion) => setClientInfo(suggestion)}
-                    currentValue={clientInfo}
-                  />
-                <Textarea
+                 <Textarea
                   id="client-info"
                   placeholder="Information about the client and stakeholders"
                   rows={3}
@@ -570,28 +566,6 @@ const RfpForm = () => {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-medium">Resources</h3>
-              <AiSuggestionIcon
-                field="resources"
-                onSuggestionApplied={(suggestion) => {
-                  const newResources = [...resources];
-                  const lines = suggestion.split('\n').filter(line => line.trim());
-                  lines.forEach((line, index) => {
-                    if (line.includes('developer') || line.includes('engineer') ||
-                      line.includes('designer') || line.includes('manager')) {
-                      newResources.push({
-                        id: `resource-${Date.now()}-${index}`,
-                        title: line.trim(),
-                        level: 'Mid',
-                        hourlyRate: 100
-                      });
-                    }
-                  });
-                  if (newResources.length > resources.length) {
-                    setResourcesState(newResources);
-                  }
-                }}
-                currentValue={projectDescription} 
-              />
             </div>
             <Resources onResourcesChange={setResourcesState} initialResources={resources} />
           </div>
@@ -626,7 +600,6 @@ const RfpForm = () => {
             thorId={thorId}
             status={status}
             remarks={remarks}
-            deadlineDate={deadlineDate ? deadlineDate.toISOString() : undefined}
             notes={notes}
             tags={tagsString.split(',').map(tag => tag.trim()).filter(Boolean)}
             onStatusChange={handleStatusChange}
