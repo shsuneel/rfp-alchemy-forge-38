@@ -59,7 +59,22 @@ Best regards,
     }
   }, [initialTeam]);
 
+  const userEnteredCollaborators = team.filter(m => m.id !== "thor-id" && m.id !== "team-default");
+
+  const canAddMoreCollaborators = () => {
+    if (userEnteredCollaborators.length === 0) {
+      return true;
+    }
+    const lastMember = userEnteredCollaborators[userEnteredCollaborators.length - 1];
+    return lastMember.name.trim() !== "" && lastMember.email.trim() !== "";
+  };
+
   const handleAddMember = () => {
+    if (!canAddMoreCollaborators()) {
+      toast.error("Please fill in the Name and Email for the current collaborator before adding a new one.");
+      return;
+    }
+
     const newMember: TeamMember = {
       id: Math.random().toString(36).substring(2, 9),
       name: "",
@@ -94,17 +109,38 @@ Best regards,
 
   const handleSendEmail = async () => {
     setIsSendingEmail(true);
-    try {
-      const validTeamMembers = team.filter(member => member.id !== "team-default" && member.email.trim() !== "");
-      if (validTeamMembers.length === 0) {
+
+    const collaboratorsToSend = userEnteredCollaborators;
+
+    if (collaboratorsToSend.length === 0) {
+      toast.error("Please add at least one collaborator.");
+      setIsSendingEmail(false);
+      return;
+    }
+
+    const invalidCollaborator = collaboratorsToSend.find(
+      member => !member.name.trim() || !member.email.trim()
+    );
+
+    if (invalidCollaborator) {
+      toast.error("Please ensure all collaborators have a name and email filled out.");
+      setIsSendingEmail(false);
+      return;
+    }
+    
+    // Filter again to ensure only valid emails are processed, though name is also checked now
+    const validEmailCollaborators = collaboratorsToSend.filter(member => member.email.trim() !== "");
+    if (validEmailCollaborators.length === 0) {
         toast.error("No collaborators with valid emails to send to.");
         setIsSendingEmail(false);
         return;
-      }
+    }
 
+
+    try {
       const response = await axios.post("http://localhost:3020/inviteCollaborators", {
         emailBody: emailBody,
-        collaborators: validTeamMembers,
+        collaborators: validEmailCollaborators, // Send only those who passed all checks
       });
 
       if (response.status === 200 || response.status === 201) {
@@ -124,6 +160,13 @@ Best regards,
     } finally {
       setIsSendingEmail(false);
     }
+  };
+  
+  const areAllCollaboratorsValid = () => {
+    if (userEnteredCollaborators.length === 0) return false; // No collaborators to send to
+    return userEnteredCollaborators.every(
+      member => member.name.trim() !== "" && member.email.trim() !== ""
+    );
   };
 
   return (
@@ -148,13 +191,14 @@ Best regards,
                 variant="outline"
                 onClick={handleAddMember}
                 className="flex items-center gap-1"
+                disabled={!canAddMoreCollaborators()}
               >
                 <Plus className="h-3 w-3" /> Add Collaborator
               </Button>
             </div>
           </div>
 
-          {team.filter(m => m.id !== "thor-id" && m.id !== "team-default").map((member, index) => (
+          {userEnteredCollaborators.map((member, index) => (
             <div key={member.id} className="p-4 border rounded-md relative space-y-3">
               <Button
                 type="button"
@@ -168,18 +212,19 @@ Best regards,
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
                 <div>
-                  <Label htmlFor={`member-name-${index}`}>Name</Label>
+                  <Label htmlFor={`member-name-${index}`}>Name <span className="text-destructive">*</span></Label>
                   <Input
                     id={`member-name-${index}`}
                     value={member.name}
                     onChange={(e) => handleMemberChange(member.id, 'name', e.target.value)}
                     placeholder="Enter name"
                     className="mt-1"
+                    required
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor={`member-email-${index}`}>Email</Label>
+                  <Label htmlFor={`member-email-${index}`}>Email <span className="text-destructive">*</span></Label>
                   <Input
                     id={`member-email-${index}`}
                     value={member.email}
@@ -187,6 +232,7 @@ Best regards,
                     placeholder="Enter email"
                     type="email"
                     className="mt-1"
+                    required
                   />
                 </div>
 
@@ -232,7 +278,10 @@ Best regards,
           </p>
           <div className="space-y-2 mt-2">
             <Textarea value={emailBody} onChange={handleEmailBodyChange} rows={10} />
-            <Button onClick={handleSendEmail} disabled={isSendingEmail || team.filter(member => member.id !== "team-default" && member.email.trim() !== "").length === 0}>
+            <Button 
+              onClick={handleSendEmail} 
+              disabled={isSendingEmail || !areAllCollaboratorsValid()}
+            >
               {isSendingEmail ? "Sending..." : "Send Email"}
             </Button>
           </div>
