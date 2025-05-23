@@ -85,6 +85,10 @@ const BotInteraction: React.FC<BotInteractionProps> = ({ onRfpCreationComplete, 
     addMessage('user', text, 'text');
   };
   
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setCurrentInputValue(e.target.value);
+  };
+  
   const renderInputForQuestion = (question: RfpQuestion) => {
     if (question.type === 'file') {
       return (
@@ -106,13 +110,12 @@ const BotInteraction: React.FC<BotInteractionProps> = ({ onRfpCreationComplete, 
       );
     }
     
-    // Use controlled component pattern with value and onChange
     return (
       <form onSubmit={handleInputSubmit} className="mt-2 flex flex-col sm:flex-row items-stretch gap-2">
         {question.type === 'textarea' ? (
           <Textarea
             value={currentInputValue}
-            onChange={(e) => setCurrentInputValue(e.target.value)}
+            onChange={handleInputChange}
             placeholder="Your response..."
             rows={3}
             className="flex-grow"
@@ -123,7 +126,7 @@ const BotInteraction: React.FC<BotInteractionProps> = ({ onRfpCreationComplete, 
         ) : (
           <Input
             value={currentInputValue}
-            onChange={(e) => setCurrentInputValue(e.target.value)}
+            onChange={handleInputChange}
             placeholder="Type here..."
             className="flex-grow"
             required={question.required}
