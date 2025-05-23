@@ -40,6 +40,7 @@ const BotInteraction: React.FC<BotInteractionProps> = ({ onRfpCreationComplete, 
   const [isBotTyping, setIsBotTyping] = useState(false);
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -104,17 +105,32 @@ const BotInteraction: React.FC<BotInteractionProps> = ({ onRfpCreationComplete, 
         </div>
       );
     }
-    const InputComponent = question.type === 'textarea' ? Textarea : Input;
+    
+    // Use controlled component pattern with value and onChange
     return (
       <form onSubmit={handleInputSubmit} className="mt-2 flex flex-col sm:flex-row items-stretch gap-2">
-        <InputComponent
-          value={currentInputValue} 
-          onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setCurrentInputValue(e.target.value)}
-          placeholder={question.type === 'textarea' ? "Your response..." : "Type here..."}
-          rows={question.type === 'textarea' ? 3 : undefined}
-          className="flex-grow"
-          required={question.required}
-        />
+        {question.type === 'textarea' ? (
+          <Textarea
+            value={currentInputValue}
+            onChange={(e) => setCurrentInputValue(e.target.value)}
+            placeholder="Your response..."
+            rows={3}
+            className="flex-grow"
+            required={question.required}
+            ref={inputRef as React.RefObject<HTMLTextAreaElement>}
+            autoFocus
+          />
+        ) : (
+          <Input
+            value={currentInputValue}
+            onChange={(e) => setCurrentInputValue(e.target.value)}
+            placeholder="Type here..."
+            className="flex-grow"
+            required={question.required}
+            ref={inputRef as React.RefObject<HTMLInputElement>}
+            autoFocus
+          />
+        )}
         <Button type="submit" className="sm:self-end">
           <Send className="h-4 w-4" />
         </Button>
@@ -177,7 +193,6 @@ const BotInteraction: React.FC<BotInteractionProps> = ({ onRfpCreationComplete, 
        setRfpData(prev => ({ ...prev, [currentQuestion.key]: "" })); // Store empty for skipped
     }
 
-
     setCurrentInputValue(''); // Clear for next input
 
     const nextIndex = currentQuestionIndex + 1;
@@ -215,7 +230,6 @@ const BotInteraction: React.FC<BotInteractionProps> = ({ onRfpCreationComplete, 
         )}
         <div ref={messagesEndRef} />
       </div>
-       {/* Input area is now rendered within ChatMessage for 'input-prompt' type */}
     </div>
   );
 };
