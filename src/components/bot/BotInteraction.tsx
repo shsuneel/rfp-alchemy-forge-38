@@ -4,7 +4,7 @@ import ChatMessage, { Message } from './ChatMessage';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Paperclip, Send, MessageSquarePlus, ListChecks } from 'lucide-react';
+import { Paperclip, Send, MessageSquarePlus, ListChecks, Bot } from 'lucide-react';
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -108,7 +108,7 @@ const BotInteraction: React.FC<BotInteractionProps> = ({ onRfpCreationComplete, 
     return (
       <form onSubmit={handleInputSubmit} className="mt-2 flex flex-col sm:flex-row items-stretch gap-2">
         <InputComponent
-          value={currentInputValue}
+          value={currentInputValue} 
           onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setCurrentInputValue(e.target.value)}
           placeholder={question.type === 'textarea' ? "Your response..." : "Type here..."}
           rows={question.type === 'textarea' ? 3 : undefined}
