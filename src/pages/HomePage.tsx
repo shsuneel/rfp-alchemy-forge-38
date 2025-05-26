@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import RfpPromptInput from '@/components/home/RfpPromptInput';
 import ContentOutlineDisplay from '@/components/home/ContentOutlineDisplay';
 import DetailedInfoPrompt from '@/components/home/DetailedInfoPrompt';
 import GuidedStepsNavigator from '@/components/home/GuidedStepsNavigator';
 import TemplateSelectionView from '@/components/home/TemplateSelectionView';
+import BotInteraction from '@/components/bot/BotInteraction'; // New import
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight, MessageSquarePlus, ListChecks } from 'lucide-react'; // Added icons
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/routes';
 import { useAppDispatch } from '@/hooks/useAppDispatch';
@@ -15,12 +16,11 @@ import {
   setProjectInfo,
   setRequirements,
   RequirementItem,
-  // Potentially add action to set template later: setRfpTemplate
 } from '@/store/rfpSlice';
 import { toast } from '@/components/ui/use-toast';
 import { generatePPTX } from '@/lib/utils';
 
-type Stage = 'initialPrompt' | 'outlineDisplay' | 'detailedInfoPrompt' | 'guidance' | 'templateSelection';
+type Stage = 'botInterface' | 'initialPrompt' | 'outlineDisplay' | 'detailedInfoPrompt' | 'guidance' | 'templateSelection';
 
 // Simulated AI responses (placeholders)
 const simulateAiOutline = async (prompt: string): Promise<string> => {
@@ -54,17 +54,28 @@ const simulateAiGuidanceSteps = (details: string): Promise<{ title: string; cont
 
 // Removed the simulateAiGuidanceSteps.initialData related logic as it's now handled by a state variable.
 
+const getGreeting = () => {
+  const hour = new Date().getHours();
+  // Assuming a user name, e.g., from auth context or hardcoded for now
+  const userName = "Valued User"; // Placeholder, ideally from user context
+  if (hour < 12) return `Good Morning, ${userName}`;
+  if (hour < 18) return `Good Afternoon, ${userName}`;
+  return `Good Evening, ${userName}`;
+};
+
 const HomePage = () => {
-  const [currentStage, setCurrentStage] = useState<Stage>('initialPrompt');
+  const [currentStage, setCurrentStage] = useState<Stage>('botInterface'); // Default to new bot interface
   const [rfpDescription, setRfpDescription] = useState('');
   const [contentOutline, setContentOutline] = useState('');
   const [detailedInfo, setDetailedInfo] = useState('');
   const [guidanceSteps, setGuidanceSteps] = useState<{ title: string; content: string }[]>([]);
-  const [initialGuidanceSteps, setInitialGuidanceSteps] = useState<{ title: string; content: string }[]>([]); // New state for original steps
+  const [initialGuidanceSteps, setInitialGuidanceSteps] = useState<{ title: string; content: string }[]>([]);
   const [currentGuidanceStepIndex, setCurrentGuidanceStepIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+
+  const greetingMessage = getGreeting();
 
   const handleInitialPromptSubmit = async (prompt: string) => {
     setIsLoading(true);
@@ -186,6 +197,18 @@ const HomePage = () => {
     setCurrentStage('outlineDisplay');
   };
 
+  const handleStartNewRfpBotFlow = () => {
+    dispatch(clearCurrentRfp()); // Clear any previous RFP data
+    // The BotInteraction component will handle its own state for conversation
+    // No need to set a specific 'stage' for BotInteraction's internal steps here,
+    // as BotInteraction itself becomes the content for the 'botInterface' stage.
+    // If BotInteraction needed to navigate HomePage stages, we'd do that from BotInteraction via a callback.
+  };
+
+  const handleNavigateToExistingRfps = () => {
+    navigate(ROUTES.FORGE, { state: { tab: 'rfpList' } });
+  };
+
   const handleRestart = () => {
     dispatch(clearCurrentRfp()); // Clear Redux store on restart
     setRfpDescription('');
@@ -194,6 +217,11 @@ const HomePage = () => {
     setGuidanceSteps([]);
     setInitialGuidanceSteps([]); // Clear initial steps as well
     setCurrentGuidanceStepIndex(0);
+    setCurrentStage('botInterface'); // Restart to the new bot interface greeting
+  };
+  
+  // Function to switch to the old flow, if needed, or could be removed if new UI replaces old.
+  const switchToOldFlow = () => {
     setCurrentStage('initialPrompt');
   };
 
@@ -205,7 +233,7 @@ const HomePage = () => {
       <div className="absolute inset-0 bg-black/70 backdrop-blur-lg"></div> {/* Increased blur and darkness */}
 
       <div className="relative z-10 flex flex-col items-center justify-center w-full py-8"> {/* Added py-8 for padding */}
-        {currentStage !== 'initialPrompt' && (
+        {currentStage !== 'botInterface' && ( // Show restart only if not on initial bot screen
           <Button
             variant="ghost"
             onClick={handleRestart}
@@ -222,19 +250,47 @@ const HomePage = () => {
           Go to RFP Forge <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
 
-
         <div className="w-full text-center mb-10 mt-16 sm:mt-8 p-6 rounded-lg bg-black/50 shadow-xl max-w-[60rem]"> {/* Adjusted margins */}
           <h1 className="text-4xl sm:text-5xl font-bold text-white drop-shadow-lg mb-3">
             AI-Powered RFP Assistant
           </h1>
-          <p className="text-lg text-gray-100 drop-shadow-md max-w-4xl mx-auto">
-            Let's craft your RFP together.<br />
-            Start by describing your project, and RFP Builder powered by GenAI will help you build a comprehensive RFP.
-          </p>
+           {currentStage === 'botInterface' ? (
+            <p className="text-xl text-gray-100 drop-shadow-md max-w-4xl mx-auto">
+              {greetingMessage}
+            </p>
+          ) : (
+            <p className="text-lg text-gray-100 drop-shadow-md max-w-4xl mx-auto">
+              Let's craft your RFP together.<br />
+              Start by describing your project, and RFP Builder powered by GenAI will help you build a comprehensive RFP.
+            </p>
+          )}
         </div>
 
+        {currentStage === 'botInterface' && (
+          <div className="w-full max-w-[60rem] p-6 rounded-xl bg-card/80 backdrop-blur-md shadow-xl border border-border/30">
+            <BotInteraction 
+              onRfpCreationComplete={(rfpData) => {
+                // Handle the data collected by the bot.
+                // For now, let's assume it populates Redux similar to the old flow
+                // and then navigates or moves to template selection.
+                console.log("Bot interaction collected RFP Data:", rfpData);
+                // Example: dispatch(setProjectInfo({ name: rfpData.projectDescription.substring(0,30), description: rfpData.projectDescription, ...}));
+                toast({ title: "RFP Data Collected", description: "Proceeding to next steps."});
+                // Potentially navigate to forge or template selection
+                // setCurrentStage('templateSelection'); // Or navigate directly
+                navigate(ROUTES.FORGE, { state: { tab: 'rfp', fromHomePage: true, rfpDataFromBot: rfpData } });
+              }}
+              onNavigateToExistingRfps={handleNavigateToExistingRfps}
+            />
+            {/* Button to access the old flow if needed during transition */}
+            {/* <Button variant="link" onClick={switchToOldFlow} className="mt-4 text-white/80">
+              Or use the classic RFP builder
+            </Button> */}
+          </div>
+        )}
+
         {currentStage === 'initialPrompt' && (
-          <div className="w-full max-w-[60rem] p-6 rounded-xl bg-card/80 backdrop-blur-md shadow-xl border border-border/30"> {/* Changed max-w-lg to max-w-[60rem] */}
+          <div className="w-full max-w-[60rem] p-6 rounded-xl bg-card/80 backdrop-blur-md shadow-xl border border-border/30">
             <RfpPromptInput onSubmit={handleInitialPromptSubmit} isLoading={isLoading} />
           </div>
         )}
