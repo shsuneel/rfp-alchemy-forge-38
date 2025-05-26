@@ -4,7 +4,7 @@ import ChatMessage, { Message } from './ChatMessage';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Paperclip, Send, MessageSquarePlus, ListChecks, Bot } from 'lucide-react';
+import { Paperclip, Send, MessageSquarePlus, ListChecks, Bot as BotIcon, Check, X, FileText } from 'lucide-react'; // Added BotIcon, Check, X, FileText
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -23,9 +23,15 @@ interface RfpQuestion {
   required?: boolean;
 }
 
+// Simplified extracted info type for bot display
+interface BotExtractedInfo {
+  projectDescription?: string;
+  keyPoints?: string[];
+}
+
 const rfpCreationQuestions: RfpQuestion[] = [
   { id: uuidv4(), key: 'projectDescription', prompt: "Great! Let's start with your new RFP. Please provide a brief project description.", type: 'textarea', required: true },
-  { id: uuidv4(), key: 'documentUpload', prompt: "Would you like to upload a document?", type: 'file', required: false },
+  { id: uuidv4(), key: 'documentUpload', prompt: "Would you like to upload any existing documents (like project briefs, requirement lists, etc.)? This can help me understand your needs better.", type: 'file', required: false },
   { id: uuidv4(), key: 'rfpPurpose', prompt: "What is the main purpose or goal of this RFP?", type: 'textarea', required: true },
   { id: uuidv4(), key: 'problemStatement', prompt: "Can you describe the problem this project aims to solve?", type: 'textarea', required: false },
   // Add more questions as needed
@@ -40,8 +46,11 @@ const BotInteraction: React.FC<BotInteractionProps> = ({ onRfpCreationComplete, 
   const [isBotTyping, setIsBotTyping] = useState(false);
   const messagesEndRef = useRef<null | HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  // Ensure inputRef can correctly type hint for both Input and Textarea
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
+
+  const [botExtractedInfo, setBotExtractedInfo] = useState<BotExtractedInfo | null>(null);
+  const [isAwaitingExtractionChoice, setIsAwaitingExtractionChoice] = useState(false);
+
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -57,8 +66,11 @@ const BotInteraction: React.FC<BotInteractionProps> = ({ onRfpCreationComplete, 
             setBotStage('creatingRfp');
             setCurrentQuestionIndex(0);
             setMessages([]); 
+            setRfpData({});
+            setBotExtractedInfo(null);
+            setIsAwaitingExtractionChoice(false);
             if (rfpCreationQuestions.length > 0) {
-                addBotMessage(rfpCreationQuestions[0].prompt, 'input-prompt'); // No longer passes input JSX here
+                addBotMessage(rfpCreationQuestions[0].prompt, 'input-prompt');
             }
           }} className="w-full sm:w-auto">
             <MessageSquarePlus className="mr-2 h-4 w-4" /> Create New RFP
@@ -81,6 +93,12 @@ const BotInteraction: React.FC<BotInteractionProps> = ({ onRfpCreationComplete, 
     setTimeout(() => {
       addMessage('bot', text, type, children);
       setIsBotTyping(false);
+      if (type === 'input-prompt' || type === 'file-upload-prompt') {
+        const currentQuestion = rfpCreationQuestions[currentQuestionIndex];
+        if (currentQuestion && (currentQuestion.type === 'text' || currentQuestion.type === 'textarea') && inputRef.current) {
+          setTimeout(() => inputRef.current?.focus(), 50); // Ensure focus after bot message is rendered
+        }
+      }
     }, 500 + Math.random() * 500);
   };
 
@@ -91,45 +109,114 @@ const BotInteraction: React.FC<BotInteractionProps> = ({ onRfpCreationComplete, 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setCurrentInputValue(e.target.value);
   };
+
+  const proceedToNextStepOrComplete = () => {
+    setCurrentInputValue(''); // Clear input for next question
+    const nextIndex = currentQuestionIndex + 1;
+    if (nextIndex < rfpCreationQuestions.length) {
+      setCurrentQuestionIndex(nextIndex);
+      addBotMessage(rfpCreationQuestions[nextIndex].prompt, 'input-prompt');
+    } else {
+      completeRfpCreation();
+    }
+  };
   
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files && files.length > 0) {
-      const fileNames = Array.from(files).map(f => f.name).join(', ');
+      const uploadedFiles = Array.from(files);
+      const fileNames = uploadedFiles.map(f => f.name).join(', ');
       addUserMessage(`Uploaded: ${fileNames}`);
       
       const currentQuestion = rfpCreationQuestions[currentQuestionIndex];
-      setRfpData(prev => ({ ...prev, [currentQuestion.key]: Array.from(files) })); 
+      setRfpData(prev => ({ ...prev, [currentQuestion.key]: uploadedFiles })); 
 
-      setCurrentInputValue(''); 
-      
-      const nextIndex = currentQuestionIndex + 1;
-      if (nextIndex < rfpCreationQuestions.length) {
-        setCurrentQuestionIndex(nextIndex);
-        addBotMessage(rfpCreationQuestions[nextIndex].prompt, 'input-prompt'); // No input JSX
-      } else {
-        completeRfpCreation();
-      }
+      // Simulate extraction
+      setIsBotTyping(true);
+      setTimeout(() => {
+        const mockExtracted: BotExtractedInfo = {
+          projectDescription: `From '${fileNames}', it seems the project is about developing a new web platform.`,
+          keyPoints: [
+            "User authentication is required.",
+            "Data visualization dashboard needed.",
+            "Mobile responsiveness is crucial."
+          ]
+        };
+        setBotExtractedInfo(mockExtracted);
+        setIsAwaitingExtractionChoice(true);
+        setIsBotTyping(false);
+
+        addBotMessage(
+          "I've quickly scanned the document(s). Here's a summary:",
+          'text',
+          (
+            <div className="mt-2 p-3 rounded-md bg-background/50 border border-border">
+              {mockExtracted.projectDescription && (
+                <p className="text-sm mb-1"><strong>Project Overview:</strong> {mockExtracted.projectDescription}</p>
+              )}
+              {mockExtracted.keyPoints && mockExtracted.keyPoints.length > 0 && (
+                <>
+                  <p className="text-sm font-medium mt-2 mb-1">Key Points:</p>
+                  <ul className="list-disc list-inside text-sm space-y-0.5">
+                    {mockExtracted.keyPoints.map((point, idx) => <li key={idx}>{point}</li>)}
+                  </ul>
+                </>
+              )}
+              <div className="flex gap-2 mt-4">
+                <Button onClick={handleUseBotExtractedData} size="sm">
+                  <Check className="mr-2 h-4 w-4" /> Use This Info
+                </Button>
+                <Button onClick={handleIgnoreBotExtractedData} variant="outline" size="sm">
+                  <X className="mr-2 h-4 w-4" /> Ignore
+                </Button>
+              </div>
+            </div>
+          )
+        );
+      }, 1500); // Simulate delay for extraction
     }
     if (fileInputRef.current) {
-        fileInputRef.current.value = "";
+        fileInputRef.current.value = ""; // Reset file input
     }
   };
+
+  const handleUseBotExtractedData = () => {
+    addUserMessage("Okay, I'll use the extracted information.");
+    if (botExtractedInfo) {
+      const updates: Record<string, any> = {};
+      if (botExtractedInfo.projectDescription) {
+        // Only update projectDescription in rfpData if it's not already set by user or if this is a good override point
+        if (!rfpData.projectDescription || rfpData.projectDescription.length < botExtractedInfo.projectDescription.length) {
+             updates.projectDescription = botExtractedInfo.projectDescription;
+        }
+      }
+      updates.botExtractedKeyPoints = botExtractedInfo.keyPoints || []; // Store key points
+
+      setRfpData(prev => ({ ...prev, ...updates }));
+      if(updates.projectDescription) {
+        addBotMessage("I've updated the project description with the extracted info. You can edit it later if needed.");
+      } else {
+        addBotMessage("Noted the key points from the document.");
+      }
+    }
+    setBotExtractedInfo(null);
+    setIsAwaitingExtractionChoice(false);
+    proceedToNextStepOrComplete();
+  };
+
+  const handleIgnoreBotExtractedData = () => {
+    addUserMessage("Alright, I'll ignore the extracted summary.");
+    setBotExtractedInfo(null);
+    setIsAwaitingExtractionChoice(false);
+    proceedToNextStepOrComplete();
+  };
+
 
   const handleProceedWithoutFile = () => {
     addUserMessage("Skipped file upload for this step.");
     const currentQuestion = rfpCreationQuestions[currentQuestionIndex];
     setRfpData(prev => ({ ...prev, [currentQuestion.key]: null })); 
-    
-    setCurrentInputValue(''); 
-    
-    const nextIndex = currentQuestionIndex + 1;
-    if (nextIndex < rfpCreationQuestions.length) {
-      setCurrentQuestionIndex(nextIndex);
-      addBotMessage(rfpCreationQuestions[nextIndex].prompt, 'input-prompt'); // No input JSX
-    } else {
-      completeRfpCreation();
-    }
+    proceedToNextStepOrComplete();
   };
 
   const handleInputSubmit = (e?: React.FormEvent<HTMLFormElement>) => {
@@ -150,49 +237,39 @@ const BotInteraction: React.FC<BotInteractionProps> = ({ onRfpCreationComplete, 
        addUserMessage("(Skipped)"); 
        setRfpData(prev => ({ ...prev, [currentQuestion.key]: "" })); 
     }
-
-    setCurrentInputValue(''); 
-
-    const nextIndex = currentQuestionIndex + 1;
-    if (nextIndex < rfpCreationQuestions.length) {
-      setCurrentQuestionIndex(nextIndex);
-      const nextQuestion = rfpCreationQuestions[nextIndex];
-      addBotMessage(nextQuestion.prompt, 'input-prompt'); // No input JSX
-    } else {
-      completeRfpCreation();
-    }
+    proceedToNextStepOrComplete();
   };
   
   const completeRfpCreation = () => {
-    const finalRfpData = { ...rfpData };
-    if (currentInputValue.trim() && currentQuestionIndex < rfpCreationQuestions.length) {
-        const lastQuestionKey = rfpCreationQuestions[currentQuestionIndex].key;
-        finalRfpData[lastQuestionKey] = currentInputValue;
-    }
-
+    // Ensure last input value is captured if not submitted through form explicitly
+    // This case is mostly handled by handleInputSubmit or file handlers now.
+    // However, if proceedToNextStepOrComplete is called directly when last question is active and has input,
+    // this logic could be relevant. For now, assuming currentInputValue is processed before this.
+    
     addBotMessage("Thank you! I've collected all the initial information. What's next?", 'action-request', (
         <div className="flex flex-col sm:flex-row gap-2 mt-2">
-            <Button onClick={() => onRfpCreationComplete(finalRfpData)}>Proceed to RFP Builder</Button>
+            <Button onClick={() => onRfpCreationComplete(rfpData)}>Proceed to RFP Builder</Button>
         </div>
     ));
-    setBotStage('initialActions'); 
-    setRfpData({});
-    setCurrentQuestionIndex(0);
-    setCurrentInputValue('');
+    // Reset for a potential new RFP creation without full page reload
+    setBotStage('initialActions'); // This will trigger the initial message setup via useEffect
+    // setRfpData({}); // Moved to initialActions setup
+    // setCurrentQuestionIndex(0); // Moved to initialActions setup
+    // setCurrentInputValue(''); // Moved to initialActions setup
   };
 
   useEffect(() => {
-    if (botStage === 'creatingRfp') {
+    if (botStage === 'creatingRfp' && !isAwaitingExtractionChoice) { // Only focus if not waiting for extraction choice
       const currentQuestion = rfpCreationQuestions[currentQuestionIndex];
-      // Ensure currentQuestion is defined before accessing its type
       if (currentQuestion && (currentQuestion.type === 'text' || currentQuestion.type === 'textarea') && inputRef.current) {
         setTimeout(() => inputRef.current?.focus(), 100);
       }
     }
-  }, [currentQuestionIndex, botStage, rfpCreationQuestions]); // Added rfpCreationQuestions as it's used to get currentQuestion
+  }, [currentQuestionIndex, botStage, isAwaitingExtractionChoice]);
 
   const renderActiveInputArea = () => {
-    if (botStage !== 'creatingRfp' || currentQuestionIndex >= rfpCreationQuestions.length) {
+    // Do not render input area if awaiting extraction choice, the choice buttons are in chat.
+    if (botStage !== 'creatingRfp' || currentQuestionIndex >= rfpCreationQuestions.length || isAwaitingExtractionChoice) {
       return null;
     }
 
@@ -210,6 +287,7 @@ const BotInteraction: React.FC<BotInteractionProps> = ({ onRfpCreationComplete, 
             className="hidden"
             multiple
             onChange={handleFileSelect}
+            accept=".pdf,.doc,.docx,.txt,.md" // Added common document types
           />
            <Button type="button" onClick={handleProceedWithoutFile} variant="ghost" className="mt-2 w-full text-sm">
             Skip / Proceed without file
@@ -254,18 +332,16 @@ const BotInteraction: React.FC<BotInteractionProps> = ({ onRfpCreationComplete, 
           <ChatMessage key={msg.id} message={msg} />
         ))}
         {isBotTyping && (
-          <div className="flex items-center self-start p-4 animate-pulse">
-            <Bot className="h-6 w-6 text-secondary-foreground mr-3" />
-            <span className="text-sm text-muted-foreground">Bot is typing...</span>
+          <div className="flex items-center self-start p-3 ml-2"> {/* Adjusted padding/margin */}
+            <BotIcon className="h-6 w-6 text-secondary-foreground mr-2" /> {/* Explicitly use BotIcon */}
+            <span className="text-sm text-muted-foreground animate-pulse">Bot is typing...</span>
           </div>
         )}
         <div ref={messagesEndRef} />
       </div>
-      {/* Render the active input area here */}
       {renderActiveInputArea()}
     </div>
   );
 };
 
 export default BotInteraction;
-

@@ -5,7 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Upload, FileText, X, Scan, ScanText } from "lucide-react";
 import { toast } from "sonner";
 import { RequirementItem, AssumptionItem, DependencyItem, setPendingFilesForExtraction } from "@/store/rfpSlice";
-import { useAppSelector, useAppDispatch } from "@/hooks/useAppDispatch"; // useAppDispatch for both selector and dispatch
+import { useAppDispatch } from "@/hooks/useAppDispatch";
+import { useAppSelector } from "@/hooks/useAppSelector";
 
 interface FileUploadProps {
   onFilesChange: (files: File[]) => void;

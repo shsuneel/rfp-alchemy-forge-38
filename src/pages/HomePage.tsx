@@ -6,7 +6,7 @@ import GuidedStepsNavigator from '@/components/home/GuidedStepsNavigator';
 import TemplateSelectionView from '@/components/home/TemplateSelectionView';
 import BotInteraction from '@/components/bot/BotInteraction';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowRight, MessageSquarePlus, ListChecks } from 'lucide-react';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/routes';
 import { useAppDispatch } from '@/hooks/useAppDispatch';
@@ -177,7 +177,7 @@ const HomePage = () => {
     // Here you would typically dispatch an action to apply the template
     // e.g., dispatch(applyRfpTemplate(templateId));
     // For now, we'll just toast and navigate
-    toast({
+    shadcnToast({
       title: "Template Selected (Illustrative)",
       description: `You selected template "${templateId}". Proceeding with your entered data. Full template functionality is a future enhancement.`,
     });
@@ -186,7 +186,7 @@ const HomePage = () => {
 
   const handleStartBlankRfp = () => {
     console.log("Starting with a blank RFP using collected data.");
-    toast({
+    shadcnToast({
       title: "Starting Blank RFP",
       description: "Proceeding to RFP Builder with the information you provided.",
     });
@@ -236,7 +236,9 @@ const HomePage = () => {
     if (rfpData.problemStatement) {
       fullDescription += `\n\nProblem Statement:\n${rfpData.problemStatement}`;
     }
-    // Add any other text fields from rfpData to fullDescription similarly
+    if (rfpData.botExtractedKeyPoints && rfpData.botExtractedKeyPoints.length > 0) {
+        fullDescription += `\n\nKey points extracted by Bot from documents:\n- ${rfpData.botExtractedKeyPoints.join('\n- ')}`;
+    }
 
     dispatch(setProjectInfo({
       name: rfpData.projectDescription 
