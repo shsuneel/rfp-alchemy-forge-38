@@ -23,7 +23,7 @@ import {
   setDependencies,
   setSections,
   setTimeline,
-  setTeam,
+  setCollaborators,
   setResources,
   setThorId,
   setStatus,
@@ -34,7 +34,7 @@ import {
   saveRfp,
   SectionItem,
   RfpStatus,
-  Collaborators,
+  Collaborator,
   RequirementItem,
 } from "@/store/rfpSlice";
 import { createFromRfp } from "@/store/presentationSlice";
@@ -116,7 +116,7 @@ const RfpForm = () => {
   const [dependencies, setDependenciesState] = useState(rfpState.dependencies);
   const [sections, setSectionsState] = useState<SectionItem[]>(rfpState.sections || []);
   const [timeline, setTimelineState] = useState(rfpState.timeline);
-  const [collaborator, setTeamState] = useState<Collaborators[]>(rfpState.collaborator);
+  const [collaborators, setCollaboratorsState] = useState<Collaborator[]>(rfpState.collaborators);
   const [resources, setResourcesState] = useState(rfpState.resources);
   const [status, setStatusState] = useState<RfpStatus>(rfpState.status || "Draft");
   const [remarks, setRemarksState] = useState(rfpState.remarks || "");
@@ -151,7 +151,7 @@ const RfpForm = () => {
     setDependenciesState(rfpState.dependencies);
     setSectionsState(rfpState.sections || []);
     setTimelineState(rfpState.timeline);
-    setTeamState(rfpState.collaborator);
+    setCollaboratorsState(rfpState.collaborators);
     setResourcesState(rfpState.resources);
     setStatusState(rfpState.status || "Draft");
     setRemarksState(rfpState.remarks || "");
@@ -169,7 +169,7 @@ const RfpForm = () => {
       toast.error("Project Description is required.");
       return false;
     }
-    const actualCollaborators = collaborator.filter(member => member.id !== "collaborator-default" && (member.name.trim() !== "" || member.email.trim() !== ""));
+    const actualCollaborators = collaborators.filter(member => member.id !== "collaborator-default" && (member.name.trim() !== "" || member.email.trim() !== ""));
     if (actualCollaborators.length === 0) {
       toast.error("At least one collaborator must be added.");
       return false;
@@ -188,7 +188,7 @@ const RfpForm = () => {
         sector,
         clientInfo
       }));
-      dispatch(setTeam(collaborator));
+      dispatch(setCollaborators(collaborators));
       dispatch(setThorId(thorId));
       dispatch(setDeadlineDate(deadlineDate ? deadlineDate.toISOString() : undefined));
       dispatch(setNotes(notes));
@@ -234,7 +234,7 @@ const RfpForm = () => {
     }
   };
 
-  const sendUpdateNotificationEmail = async (collaborators: Collaborators[]) => {
+  const sendUpdateNotificationEmail = async (collaborators: Collaborator[]) => {
     const validTeamMembers = collaborators.filter(member => member.id !== "collaborator-default" && member.email.trim() !== "");
     if (validTeamMembers.length === 0) {
       toast.info("No collaborators with valid emails to notify of update.");
@@ -300,7 +300,7 @@ const RfpForm = () => {
     dispatch(setDependencies(dependencies));
     dispatch(setSections(sections));
     dispatch(setTimeline(timeline));
-    dispatch(setTeam(collaborator));
+    dispatch(setCollaborators(collaborators));
     dispatch(setResources(resources));
     dispatch(setThorId(thorId));
     dispatch(setStatus(status));
@@ -315,7 +315,7 @@ const RfpForm = () => {
     toast.success("RFP saved successfully!");
 
     // Then send notification email
-    const actualCollaborators = collaborator.filter(member => member.id !== "collaborator-default" && member.email.trim() !== "");
+    const actualCollaborators = collaborators.filter(member => member.id !== "collaborator-default" && member.email.trim() !== "");
     if (actualCollaborators.length > 0) {
       await sendUpdateNotificationEmail(actualCollaborators);
     }
@@ -563,7 +563,7 @@ const RfpForm = () => {
               </div>
 
               <div>
-                <TeamComponent onTeamChange={setTeamState} initialTeam={collaborator} />
+                <TeamComponent onTeamChange={setCollaboratorsState} initialTeam={collaborators} />
               </div>
 
             </CardContent>
@@ -658,7 +658,7 @@ const RfpForm = () => {
             assumptions={assumptions}
             dependencies={dependencies}
             timeline={timeline}
-            collaborator={collaborator}
+            collaborators={collaborators}
             resources={resources}
             sections={sections}
             thorId={thorId}

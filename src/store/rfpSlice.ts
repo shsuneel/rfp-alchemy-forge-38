@@ -82,7 +82,7 @@ export interface RfpData {
   dependencies: DependencyItem[];
   sections: SectionItem[];
   timeline: Phase[];
-  collaborator: Collaborator[];
+  collaborators: Collaborator[];
   resources: ResourceLevel[];
   status: RfpStatus;
   remarks: string;
@@ -106,7 +106,7 @@ interface RfpState {
   dependencies: DependencyItem[];
   sections: SectionItem[];
   timeline: Phase[];
-  collaborator: Collaborator[];
+  collaborators: Collaborator[];
   resources: ResourceLevel[];
   status: RfpStatus;
   remarks: string;
@@ -168,9 +168,7 @@ const initialState: RfpState = {
       durationWeeks: 2
     }
   ],
-  collaborator: [
-    { id: "collaborator-default", name: "", email: "", role: "", responsibilities: "" } // Added responsibilities
-  ],
+  collaborators: [],
   resources: [
     { id: "res-consultant", title: "", level: "", hourlyRate: 75 },
   ],
@@ -233,8 +231,8 @@ export const rfpSlice = createSlice({
     setTimeline: (state, action: PayloadAction<Phase[]>) => {
       state.timeline = action.payload;
     },
-    setTeam: (state, action: PayloadAction<Collaborator[]>) => {
-      state.collaborator = action.payload.map(member => ({
+    setCollaborators: (state, action: PayloadAction<Collaborator[]>) => {
+      state.collaborators = action.payload.map(member => ({
         ...member,
         responsibilities: member.responsibilities || "", // Ensure responsibilities has a default
       }));
@@ -280,7 +278,7 @@ export const rfpSlice = createSlice({
         dependencies: state.dependencies,
         sections: state.sections,
         timeline: state.timeline,
-        collaborator: state.collaborator.map(member => ({ ...member, responsibilities: member.responsibilities || "" })), // Save responsibilities
+        collaborators: state.collaborators.map(member => ({ ...member, responsibilities: member.responsibilities || "" })), // Save responsibilities
         resources: state.resources,
         status: state.status,
         remarks: state.remarks,
@@ -351,7 +349,7 @@ export const rfpSlice = createSlice({
         state.dependencies = rfpToLoad.dependencies;
         state.sections = rfpToLoad.sections || [];
         state.timeline = rfpToLoad.timeline;
-        state.collaborator = (rfpToLoad.collaborator || initialState.collaborator).map(member => ({ // Load responsibilities
+        state.collaborators = (rfpToLoad.collaborators || initialState.collaborators).map(member => ({ // Load responsibilities
           ...member,
           responsibilities: member.responsibilities || ""
         }));
@@ -405,7 +403,7 @@ export const rfpSlice = createSlice({
         description: "Initial requirements gathering and analysis",
         durationWeeks: 2
       }];
-      state.collaborator = [{ id: "collaborator-default", name: "", email: "", role: "Project Manager", responsibilities: "" }]; // Reset responsibilities
+      state.collaborators = [{ id: "collaborator-default", name: "", email: "", role: "Project Manager", responsibilities: "" }]; // Reset responsibilities
       state.resources = initialState.resources; // Keep default resources
       state.status = "Draft"; // Default status
       state.remarks = "";
@@ -464,7 +462,7 @@ export const rfpSlice = createSlice({
           relatedDependencies: "",
           ...req,
         })),
-        collaborator: (rfp.collaborator || []).map(member => ({ ...member, responsibilities: member.responsibilities || "" })),
+        collaborators: (rfp.collaborators || []).map(member => ({ ...member, responsibilities: member.responsibilities || "" })),
         deadlineDate: rfp.deadlineDate,
         notes: rfp.notes || "",
         tags: rfp.tags || [],
@@ -488,7 +486,7 @@ export const {
   setDependencies,
   setSections,
   setTimeline,
-  setTeam,
+  setCollaborators,
   setResources,
   setStatus,
   setRemarks,

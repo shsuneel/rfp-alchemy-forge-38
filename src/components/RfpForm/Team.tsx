@@ -11,7 +11,7 @@ import axios from "axios";
 import { Collaborator } from "@/store/rfpSlice";
 
 interface TeamProps {
-  onTeamChange: (collaborator: Collaborator[]) => void;
+  onTeamChange: (collaborators: Collaborator[]) => void;
   initialTeam: Collaborator[];
 }
 
@@ -29,7 +29,7 @@ const ROLES = [
 ];
 
 const Team = ({ onTeamChange, initialTeam }: TeamProps) => {
-  const [collaborator, setTeam] = useState<Collaborator[]>(initialTeam);
+  const [collaborators, setCollaborators] = useState<Collaborator[]>(initialTeam);
   
   const emailPlaceholder = `Subject: Invitation to Collaborate on RFP
   
@@ -55,11 +55,11 @@ Best regards,
 
   useEffect(() => {
     if (initialTeam) {
-      setTeam(initialTeam.map(member => ({ ...member, responsibilities: member.responsibilities || "" })));
+      setCollaborators(initialTeam.map(member => ({ ...member, responsibilities: member.responsibilities || "" })));
     }
   }, [initialTeam]);
 
-  const userEnteredCollaborators = collaborator.filter(m => m.id !== "thor-id" && m.id !== "collaborator-default");
+  const userEnteredCollaborators = collaborators.filter(m => m.id !== "thor-id" && m.id !== "collaborator-default");
 
   const canAddMoreCollaborators = () => {
     if (userEnteredCollaborators.length === 0) {
@@ -83,23 +83,23 @@ Best regards,
       responsibilities: ""
     };
 
-    const newTeam = [...collaborator, newMember];
-    setTeam(newTeam);
+    const newTeam = [...collaborators, newMember];
+    setCollaborators(newTeam);
     onTeamChange(newTeam);
   };
 
   const handleRemoveMember = (id: string) => {
-    const newTeam = collaborator.filter(member => member.id !== id);
-    setTeam(newTeam);
+    const newTeam = collaborators.filter(member => member.id !== id);
+    setCollaborators(newTeam);
     onTeamChange(newTeam);
   };
 
   const handleMemberChange = (id: string, field: keyof Collaborator, value: string) => {
-    const newTeam = collaborator.map(member =>
+    const newTeam = collaborators.map(member =>
       member.id === id ? { ...member, [field]: value } : member
     );
 
-    setTeam(newTeam);
+    setCollaborators(newTeam);
     onTeamChange(newTeam);
   };
 
