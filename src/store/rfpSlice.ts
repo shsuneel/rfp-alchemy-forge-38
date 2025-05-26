@@ -1,8 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
-
 import axios from 'axios';
-
 
 export interface RequirementItem {
   id: string;
@@ -115,6 +113,7 @@ interface RfpState {
   deadlineDate?: string; // New field
   notes?: string; // New field
   tags?: string[]; // New field
+  pendingFilesForExtraction: File[] | null; // New field for bot files
 }
 
 // Load saved RFPs from localStorage if available
@@ -178,7 +177,8 @@ const initialState: RfpState = {
   notes: "", // Initialize new field
   tags: [], // Initialize new field
   initialData: {},
-  savedRfps: getSavedRfps()
+  savedRfps: getSavedRfps(),
+  pendingFilesForExtraction: null, // Initialize new field
 };
 
 export const fetchInitialData = createAsyncThunk(
@@ -254,6 +254,9 @@ export const rfpSlice = createSlice({
     },
     setTags: (state, action: PayloadAction<string[]>) => { // New reducer
       state.tags = action.payload;
+    },
+    setPendingFilesForExtraction: (state, action: PayloadAction<File[] | null>) => { // New reducer
+      state.pendingFilesForExtraction = action.payload;
     },
     saveRfp: (state) => {
       const newRfp: RfpData = {
@@ -359,6 +362,7 @@ export const rfpSlice = createSlice({
         state.deadlineDate = rfpToLoad.deadlineDate; // Load new field
         state.notes = rfpToLoad.notes || ""; // Load new field
         state.tags = rfpToLoad.tags || []; // Load new field
+        state.pendingFilesForExtraction = null; // Reset new field
       }
     },
     deleteRfp: (state, action: PayloadAction<string>) => {
@@ -410,6 +414,7 @@ export const rfpSlice = createSlice({
       state.deadlineDate = undefined; // Reset new field
       state.notes = ""; // Reset new field
       state.tags = []; // Reset new field
+      state.pendingFilesForExtraction = null; // Reset new field
     },
     setExtractedInfo: (state, action: PayloadAction<{
       projectDescription?: string;
@@ -493,6 +498,7 @@ export const {
   setDeadlineDate,
   setNotes,
   setTags,
+  setPendingFilesForExtraction,
   saveRfp,
   loadRfp,
   deleteRfp,

@@ -1,11 +1,11 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Upload, FileText, X, Scan, ScanText } from "lucide-react";
 import { toast } from "sonner";
-import { RequirementItem, AssumptionItem, DependencyItem } from "@/store/rfpSlice";
+import { RequirementItem, AssumptionItem, DependencyItem, setPendingFilesForExtraction } from "@/store/rfpSlice";
+import { useAppSelector, useAppDispatch } from "@/hooks/useAppDispatch"; // useAppDispatch for both selector and dispatch
 
 interface FileUploadProps {
   onFilesChange: (files: File[]) => void;
@@ -26,6 +26,19 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFilesChange }) => {
   const [isExtracting, setIsExtracting] = useState(false);
   const [extractedInfo, setExtractedInfo] = useState<ExtractedInfo | null>(null);
 
+  const dispatch = useAppDispatch();
+  const pendingFiles = useAppSelector(state => state.rfp.pendingFilesForExtraction);
+
+  useEffect(() => {
+    if (pendingFiles && pendingFiles.length > 0 && files.length === 0) {
+      // Only process if there are pending files and current files list is empty
+      // to avoid re-processing on component re-renders after initial load.
+      addFiles(pendingFiles); // This will also call onFilesChange
+      extractInformation(pendingFiles); // Pass files to extract function
+      dispatch(setPendingFilesForExtraction(null)); // Clear pending files from store
+    }
+  }, [pendingFiles, dispatch, files.length]); // Added files.length to dependency array
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
       const newFiles = Array.from(event.target.files);
@@ -34,24 +47,32 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFilesChange }) => {
   };
 
   const addFiles = (newFiles: File[]) => {
-    const updatedFiles = [...files, ...newFiles];
-    setFiles(updatedFiles);
-    onFilesChange(updatedFiles);
+    // Prevent adding duplicates if filesFromBot are processed and then user adds more
+    const uniqueNewFiles = newFiles.filter(nf => !files.some(f => f.name === nf.name && f.size === nf.size));
+    if (uniqueNewFiles.length === 0 && newFiles.length > 0) {
+        // If all newFiles were duplicates of already existing files
+        if (newFiles.length === 1) toast.info(`File "${newFiles[0].name}" is already listed.`);
+        else toast.info(`${newFiles.length} files are already listed.`);
+        return;
+    }
     
-    if (newFiles.length > 0) {
-      toast.success(`${newFiles.length} file(s) uploaded successfully`);
-      // Reset extracted info when new files are added
-      setExtractedInfo(null);
+    const updatedFiles = [...files, ...uniqueNewFiles];
+    setFiles(updatedFiles);
+    onFilesChange(updatedFiles); // Notify parent about all current files
+    
+    if (uniqueNewFiles.length > 0) {
+      toast.success(`${uniqueNewFiles.length} file(s) uploaded successfully`);
+      setExtractedInfo(null); // Reset extracted info when new distinct files are added
     }
   };
 
   const removeFile = (index: number) => {
     const updatedFiles = [...files];
-    updatedFiles.splice(index, 1);
+    const removedFile = updatedFiles.splice(index, 1);
     setFiles(updatedFiles);
-    onFilesChange(updatedFiles);
+    onFilesChange(updatedFiles); // Notify parent
+    toast.info(`File "${removedFile[0].name}" removed.`);
     
-    // Reset extracted info if all files are removed
     if (updatedFiles.length === 0) {
       setExtractedInfo(null);
     }
@@ -71,44 +92,41 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFilesChange }) => {
     setIsDragging(false);
     
     if (e.dataTransfer.files) {
-      const newFiles = Array.from(e.dataTransfer.files);
-      addFiles(newFiles);
+      const newFilesToDrop = Array.from(e.dataTransfer.files);
+      addFiles(newFilesToDrop);
     }
   };
 
-  const extractInformation = () => {
-    if (files.length === 0) {
+  const extractInformation = (filesToExtract?: File[]) => {
+    const currentFiles = filesToExtract || files; // Use provided files or current state
+    if (currentFiles.length === 0) {
       toast.error("Please upload files first");
       return;
     }
 
     setIsExtracting(true);
+    setExtractedInfo(null); // Clear previous extractions
 
-    // This would normally be an API call to a backend service
-    // For now, we'll simulate the extraction with a timeout
     setTimeout(() => {
-      // Mock extracted data - in a real implementation, this would come from the backend
       const mockExtractedInfo: ExtractedInfo = {
-        projectDescription: "AI-extracted project description: A comprehensive RFP management system with automated document analysis capabilities.",
+        projectDescription: `AI-extracted project description from ${currentFiles.map(f=>f.name).join(', ')}: A comprehensive RFP management system.`,
         requirements: [
           { id: "req-1", description: "System must extract information from uploaded documents", priority: "High" },
           { id: "req-2", description: "Extracted information should be editable", priority: "Medium" },
         ],
-        techStack: ["React", "Node.js", "TensorFlow", "OpenAI", "PostgreSQL"],
+        techStack: ["React", "Node.js", "Simulated API"],
         assumptions: [
-          { id: "assump-1", description: "Documents will be primarily in PDF, DOCX, or TXT format" },
-          { id: "assump-2", description: "Users have necessary permissions to share document content" },
+          { id: "assump-1", description: "Documents are in a readable format" },
         ],
         dependencies: [
-          { id: "dep-1", description: "Document parsing API" },
-          { id: "dep-2", description: "Natural Language Processing service" },
+          { id: "dep-1", description: "Mock Document Parsing Service" },
         ],
-        externalSystems: ["Document Management System", "Knowledge Base", "CRM Integration"],
+        externalSystems: ["Simulated External System"],
       };
 
       setExtractedInfo(mockExtractedInfo);
       setIsExtracting(false);
-      toast.success("Information extracted successfully");
+      toast.success(`Information extracted successfully from ${currentFiles.length} file(s)`);
     }, 2000);
   };
 
@@ -141,6 +159,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFilesChange }) => {
               className="hidden"
               id="file-upload"
               onChange={handleFileChange}
+              accept=".pdf,.doc,.docx,.txt,.md" // Example: common document types
             />
             <Button asChild>
               <label htmlFor="file-upload">Select Files</label>
@@ -158,13 +177,13 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFilesChange }) => {
             <ul className="space-y-2">
               {files.map((file, index) => (
                 <li
-                  key={index}
+                  key={`${file.name}-${file.lastModified}-${index}`} // More robust key
                   className="flex items-center justify-between p-2 rounded bg-muted"
                 >
                   <div className="flex items-center">
                     <FileText className="h-5 w-5 mr-2 text-muted-foreground" />
-                    <span className="font-medium">{file.name}</span>
-                    <span className="text-xs text-muted-foreground ml-2">
+                    <span className="font-medium truncate max-w-xs sm:max-w-md md:max-w-lg" title={file.name}>{file.name}</span>
+                    <span className="text-xs text-muted-foreground ml-2 whitespace-nowrap">
                       ({(file.size / 1024).toFixed(1)} KB)
                     </span>
                   </div>
@@ -181,7 +200,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onFilesChange }) => {
             
             <div className="mt-4">
               <Button 
-                onClick={extractInformation}
+                onClick={() => extractInformation()} // Call without args to use current `files` state
                 className="w-full flex items-center justify-center"
                 disabled={isExtracting || files.length === 0}
               >

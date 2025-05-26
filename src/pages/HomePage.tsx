@@ -4,9 +4,9 @@ import ContentOutlineDisplay from '@/components/home/ContentOutlineDisplay';
 import DetailedInfoPrompt from '@/components/home/DetailedInfoPrompt';
 import GuidedStepsNavigator from '@/components/home/GuidedStepsNavigator';
 import TemplateSelectionView from '@/components/home/TemplateSelectionView';
-import BotInteraction from '@/components/bot/BotInteraction'; // New import
+import BotInteraction from '@/components/bot/BotInteraction';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, ArrowRight, MessageSquarePlus, ListChecks } from 'lucide-react'; // Added icons
+import { ArrowLeft, ArrowRight, MessageSquarePlus, ListChecks } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/routes';
 import { useAppDispatch } from '@/hooks/useAppDispatch';
@@ -16,9 +16,10 @@ import {
   setProjectInfo,
   setRequirements,
   RequirementItem,
+  setPendingFilesForExtraction,
 } from '@/store/rfpSlice';
-import { toast } from '@/components/ui/use-toast';
-import { generatePPTX } from '@/lib/utils';
+import { toast as sonnerToast } from 'sonner';
+import { useToast } from '@/components/ui/use-toast';
 
 type Stage = 'botInterface' | 'initialPrompt' | 'outlineDisplay' | 'detailedInfoPrompt' | 'guidance' | 'templateSelection';
 
@@ -31,8 +32,6 @@ const simulateAiOutline = async (prompt: string): Promise<string> => {
     field: "outline",
     currentValue: prompt,
   });
-
-  
 
   return response.data.suggestion || "Outline generation failed.";
 };
@@ -74,6 +73,7 @@ const HomePage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const { toast: shadcnToast } = useToast();
 
   const greetingMessage = getGreeting();
 
@@ -225,6 +225,38 @@ const HomePage = () => {
     setCurrentStage('initialPrompt');
   };
 
+  const handleBotRfpCreationComplete = (rfpData: Record<string, any>) => {
+    console.log("Bot interaction collected RFP Data:", rfpData);
+    dispatch(clearCurrentRfp());
+
+    let fullDescription = rfpData.projectDescription || '';
+    if (rfpData.rfpPurpose) {
+      fullDescription += `\n\nPurpose of RFP:\n${rfpData.rfpPurpose}`;
+    }
+    if (rfpData.problemStatement) {
+      fullDescription += `\n\nProblem Statement:\n${rfpData.problemStatement}`;
+    }
+    // Add any other text fields from rfpData to fullDescription similarly
+
+    dispatch(setProjectInfo({
+      name: rfpData.projectDescription 
+        ? `RFP: ${rfpData.projectDescription.substring(0, 40)}${rfpData.projectDescription.length > 40 ? '...' : ''}` 
+        : 'New RFP (from Bot)',
+      description: fullDescription,
+      sector: '', // Placeholder, or extract from rfpData if available
+      clientInfo: '', // Placeholder, or extract from rfpData if available
+    }));
+
+    if (rfpData.documentUpload && rfpData.documentUpload.length > 0) {
+      dispatch(setPendingFilesForExtraction(rfpData.documentUpload as File[]));
+    } else {
+      dispatch(setPendingFilesForExtraction(null));
+    }
+
+    sonnerToast.success("RFP Data Collected", { description: "Proceeding to RFP Builder." });
+    navigate(ROUTES.FORGE, { state: { tab: 'rfp', fromHomePage: true } }); // Removed rfpDataFromBot from state
+  };
+
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center bg-cover bg-center p-4 sm:p-6 md:p-8 relative"
@@ -269,17 +301,7 @@ const HomePage = () => {
         {currentStage === 'botInterface' && (
           <div className="w-full max-w-[60rem] p-6 rounded-xl bg-card/80 backdrop-blur-md shadow-xl border border-border/30">
             <BotInteraction 
-              onRfpCreationComplete={(rfpData) => {
-                // Handle the data collected by the bot.
-                // For now, let's assume it populates Redux similar to the old flow
-                // and then navigates or moves to template selection.
-                console.log("Bot interaction collected RFP Data:", rfpData);
-                // Example: dispatch(setProjectInfo({ name: rfpData.projectDescription.substring(0,30), description: rfpData.projectDescription, ...}));
-                toast({ title: "RFP Data Collected", description: "Proceeding to next steps."});
-                // Potentially navigate to forge or template selection
-                // setCurrentStage('templateSelection'); // Or navigate directly
-                navigate(ROUTES.FORGE, { state: { tab: 'rfp', fromHomePage: true, rfpDataFromBot: rfpData } });
-              }}
+              onRfpCreationComplete={handleBotRfpCreationComplete} // Updated handler
               onNavigateToExistingRfps={handleNavigateToExistingRfps}
             />
             {/* Button to access the old flow if needed during transition */}
