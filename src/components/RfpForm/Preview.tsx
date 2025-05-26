@@ -17,7 +17,7 @@ export interface PreviewProps {
   assumptions: any[];
   dependencies: any[];
   timeline: any[];
-  team: any[];
+  collaborator: any[];
   resources: any[];
   sections: any[];
   thorId: string;
@@ -143,7 +143,7 @@ const Preview: React.FC<PreviewProps> = (props) => {
           </Section>
 
           <Section title="Team">
-            {props.team.map((member, index) => (
+            {props.collaborator.map((member, index) => (
               <div key={index} className="mb-2">
                 <h4 className="text-sm font-medium">{member.name}</h4>
                 <p>Role: {member.role || "N/A"}</p>

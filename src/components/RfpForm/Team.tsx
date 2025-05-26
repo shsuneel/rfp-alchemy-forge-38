@@ -8,11 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import axios from "axios";
-import { TeamMember } from "@/store/rfpSlice";
+import { Collaborator } from "@/store/rfpSlice";
 
 interface TeamProps {
-  onTeamChange: (team: TeamMember[]) => void;
-  initialTeam: TeamMember[];
+  onTeamChange: (collaborator: Collaborator[]) => void;
+  initialTeam: Collaborator[];
 }
 
 const ROLES = [
@@ -29,7 +29,7 @@ const ROLES = [
 ];
 
 const Team = ({ onTeamChange, initialTeam }: TeamProps) => {
-  const [team, setTeam] = useState<TeamMember[]>(initialTeam);
+  const [collaborator, setTeam] = useState<Collaborator[]>(initialTeam);
   
   const emailPlaceholder = `Subject: Invitation to Collaborate on RFP
   
@@ -59,7 +59,7 @@ Best regards,
     }
   }, [initialTeam]);
 
-  const userEnteredCollaborators = team.filter(m => m.id !== "thor-id" && m.id !== "team-default");
+  const userEnteredCollaborators = collaborator.filter(m => m.id !== "thor-id" && m.id !== "collaborator-default");
 
   const canAddMoreCollaborators = () => {
     if (userEnteredCollaborators.length === 0) {
@@ -75,7 +75,7 @@ Best regards,
       return;
     }
 
-    const newMember: TeamMember = {
+    const newMember: Collaborator = {
       id: Math.random().toString(36).substring(2, 9),
       name: "",
       email: "",
@@ -83,19 +83,19 @@ Best regards,
       responsibilities: ""
     };
 
-    const newTeam = [...team, newMember];
+    const newTeam = [...collaborator, newMember];
     setTeam(newTeam);
     onTeamChange(newTeam);
   };
 
   const handleRemoveMember = (id: string) => {
-    const newTeam = team.filter(member => member.id !== id);
+    const newTeam = collaborator.filter(member => member.id !== id);
     setTeam(newTeam);
     onTeamChange(newTeam);
   };
 
-  const handleMemberChange = (id: string, field: keyof TeamMember, value: string) => {
-    const newTeam = team.map(member =>
+  const handleMemberChange = (id: string, field: keyof Collaborator, value: string) => {
+    const newTeam = collaborator.map(member =>
       member.id === id ? { ...member, [field]: value } : member
     );
 
@@ -138,7 +138,7 @@ Best regards,
 
 
     try {
-      const response = await axios.post("http://localhost:3020/inviteCollaborators", {
+      const response = await axios.post("http://localhost:3020/rfp/inviteCollaborators", {
         emailBody: emailBody,
         collaborators: validEmailCollaborators, // Send only those who passed all checks
       });
@@ -174,7 +174,7 @@ Best regards,
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Users className="h-5 w-5" />
-          Collaborators
+          Collaborator
         </CardTitle>
         <CardDescription>
           Add collaborators who will be involved in this RFP. Invited collaborators will get access to the RFP builder.
